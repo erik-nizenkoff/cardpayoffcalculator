@@ -13,6 +13,12 @@
   <meta property="og:site_name" content="Card Payoff Calculator">
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#0f2444">
+  <!-- Privacy-friendly analytics by Plausible -->
+  <script async src="https://plausible.io/js/pa-mYBwitol8vFmYdQ-pqsNR.js"></script>
+  <script>
+    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+    plausible.init()
+  </script>
   <style>
     :root {
       --navy: #0f2444;
@@ -255,6 +261,72 @@
     .amount-cell { width: 128px; }
     .remove-cell { width: 50px; text-align: right; }
 
+    .intro-cell {
+      min-width: 116px;
+    }
+
+    .inline-link {
+      min-height: auto;
+      border: 0;
+      background: transparent;
+      color: var(--navy);
+      padding: 0;
+      font-size: .82rem;
+      font-weight: 900;
+      text-align: left;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .inline-link:hover,
+    .inline-link:focus-visible {
+      background: transparent;
+      color: var(--green-dark);
+    }
+
+    .intro-row td {
+      padding-top: 0;
+      background: #fbfdff;
+    }
+
+    .intro-fields {
+      display: flex;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 8px 0 2px;
+    }
+
+    .intro-fields label {
+      display: grid;
+      gap: 5px;
+      min-width: 150px;
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .intro-fields input {
+      min-height: 36px;
+    }
+
+    .subsection-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      margin: 24px 0 12px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .subsection-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .93rem;
+    }
+
     .button-row {
       display: flex;
       align-items: center;
@@ -407,9 +479,71 @@
     }
 
     .compare-panel,
+    .visual-panel,
     .schedule-panel,
     .content-grid {
       margin-top: 20px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .chart-box {
+      position: relative;
+      min-width: 0;
+    }
+
+    .chart-box h3 {
+      margin-bottom: 6px;
+    }
+
+    .chart-canvas {
+      display: block;
+      width: 100%;
+      height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      z-index: 2;
+      pointer-events: none;
+      max-width: 220px;
+      border: 1px solid #b8c6d9;
+      border-radius: 6px;
+      background: rgba(255,255,255,.96);
+      color: var(--ink);
+      padding: 7px 9px;
+      font-size: .82rem;
+      box-shadow: 0 8px 24px rgba(15, 36, 68, .14);
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 8px 14px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex: 0 0 auto;
     }
 
     .best-row {
@@ -496,6 +630,7 @@
     @media (max-width: 900px) {
       .header-grid,
       .calculator-layout,
+      .chart-grid,
       .content-grid {
         grid-template-columns: 1fr;
       }
@@ -619,7 +754,7 @@
       <div>
         <p class="eyebrow">Card Payoff Calculator</p>
         <h1>Credit Card Payoff Calculator</h1>
-        <p class="subtitle">Estimate your debt-free date, total interest, target-date payment, and savings from extra monthly payments across up to 10 credit cards.</p>
+        <p class="subtitle">Estimate your debt-free date, total interest, target-date payment, and savings from extra monthly payments across up to 20 credit cards.</p>
       </div>
       <div class="privacy-note" aria-label="Privacy note">
         <strong>Private by design</strong>
@@ -647,6 +782,7 @@
                 <th>Balance ($)</th>
                 <th>APR (%)</th>
                 <th>Minimum ($)</th>
+                <th>Promo</th>
                 <th aria-label="Remove card"></th>
               </tr>
             </thead>
@@ -656,7 +792,31 @@
 
         <div class="button-row">
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
-          <span id="rowLimitNote" class="hint">Up to 10 cards.</span>
+          <span id="rowLimitNote" class="hint">Up to 20 cards.</span>
+        </div>
+
+        <div class="subsection-head">
+          <div>
+            <h2>Installment Loans (optional)</h2>
+            <p>Add fixed-payment debts such as personal, auto, or student loans.</p>
+          </div>
+          <button type="button" class="secondary" id="addLoanButton">Add Loan</button>
+        </div>
+
+        <div class="table-scroll">
+          <table class="loan-table">
+            <thead>
+              <tr>
+                <th>Loan Name</th>
+                <th>Balance ($)</th>
+                <th>Interest Rate (%)</th>
+                <th>Fixed Monthly Payment ($)</th>
+                <th>Remaining Term (months)</th>
+                <th aria-label="Remove loan"></th>
+              </tr>
+            </thead>
+            <tbody id="loanRows"></tbody>
+          </table>
         </div>
 
         <div class="settings-grid" aria-label="Payoff settings">
@@ -672,7 +832,7 @@
           <div class="field-stack">
             <label for="extraPayment">Extra Monthly Payment ($)</label>
             <input id="extraPayment" type="number" inputmode="decimal" min="0" step="25" value="250">
-            <p class="hint">Applied after all active cards receive their calculated minimum.</p>
+            <p class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
           <div class="field-stack">
@@ -718,6 +878,27 @@
           <div class="summary-line"><span>Total paid</span><strong id="totalPaid">$0</strong></div>
         </div>
       </aside>
+    </section>
+
+    <section class="panel visual-panel" aria-label="Debt payoff visualizations">
+      <div class="section-head">
+        <div>
+          <h2>Visualizations</h2>
+          <p>See total balance over time and how each debt falls away.</p>
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-box">
+          <h3>Total Balance Over Time</h3>
+          <canvas id="balanceLineChart" class="chart-canvas" height="300" aria-label="Line chart showing total remaining balance by month"></canvas>
+          <div id="lineChartTooltip" class="chart-tooltip hidden"></div>
+        </div>
+        <div class="chart-box">
+          <h3>Balance by Debt</h3>
+          <canvas id="debtStackChart" class="chart-canvas" height="300" aria-label="Stacked bar chart showing remaining balance for each debt by month"></canvas>
+          <div id="chartLegend" class="chart-legend"></div>
+        </div>
+      </div>
     </section>
 
     <section class="panel compare-panel">
