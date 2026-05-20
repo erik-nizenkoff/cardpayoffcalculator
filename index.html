@@ -3,54 +3,614 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Credit Card Payoff Calculator | Card Payoff Calculator</title>
-  <meta name="description" content="Free credit card payoff calculator. Compare avalanche, snowball, fixed payment, and custom payoff plans with extra monthly payments, target dates, interest, and payoff timeline.">
+  <title>Credit Card Payoff Calculator — How Long to Pay Off Your Debt?</title>
+  <meta name="description" content="Use this free credit card payoff calculator to estimate your payoff date, total interest, required payment by a target date, and savings from extra monthly payments.">
   <link rel="canonical" href="https://cardpayoffcalculator.com/">
   <meta property="og:title" content="Credit Card Payoff Calculator">
-  <meta property="og:description" content="Compare credit card payoff methods, extra payments, target dates, total interest, and payoff timeline.">
+  <meta property="og:description" content="Estimate when your credit card debt will be paid off, how much interest you will pay, and whether avalanche or snowball saves more.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cardpayoffcalculator.com/">
+  <meta property="og:site_name" content="Card Payoff Calculator">
   <meta name="twitter:card" content="summary">
-  <link rel="stylesheet" href="styles.css">
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is the debt avalanche method?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The debt avalanche method pays minimums on every card, then sends extra money to the highest APR balance first. It usually minimizes interest."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What is the debt snowball method?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The debt snowball method pays minimums on every card, then sends extra money to the smallest balance first. It can create faster account payoff wins, but may cost more interest."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How does extra monthly payment affect payoff time?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Extra monthly payments reduce principal sooner, which can shorten the payoff timeline and lower total interest. The impact depends on balances, APRs, minimum payments, and payoff method."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is this credit counseling or financial advice?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "No. This calculator is an educational estimate based on the numbers entered. It is not credit counseling, legal advice, tax advice, or lender approval."
-          }
-        }
-      ]
+  <meta name="theme-color" content="#0f2444">
+  <style>
+    :root {
+      --navy: #0f2444;
+      --navy-2: #18385f;
+      --green: #38a169;
+      --green-dark: #26744c;
+      --orange: #c05621;
+      --red: #c53030;
+      --ink: #172033;
+      --text: #364156;
+      --muted: #667085;
+      --line: #d9e2ef;
+      --soft: #f5f8fc;
+      --panel: #ffffff;
+      --shadow: 0 18px 45px rgba(15, 36, 68, 0.10);
     }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: #fbfcff;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 7px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 9px 14px;
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: var(--green-dark);
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--navy);
+      border: 1px solid #b8c6d9;
+    }
+
+    button.secondary:hover,
+    button.secondary:focus-visible {
+      background: #eef4fb;
+    }
+
+    button.danger {
+      background: #fff5f2;
+      color: var(--red);
+      border: 1px solid #f4c7c1;
+    }
+
+    button.icon-button {
+      width: 34px;
+      min-width: 34px;
+      min-height: 34px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 6px;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 30px 0;
+    }
+
+    .header-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 24px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: #a7d8bd;
+      font-size: .82rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      color: #fff;
+      font-size: clamp(2rem, 4vw, 3.45rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin-bottom: 0;
+      color: #dce8f7;
+      font-size: 1.04rem;
+    }
+
+    .privacy-note {
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 8px;
+      background: rgba(255,255,255,.07);
+      padding: 16px;
+      color: #dce8f7;
+    }
+
+    .privacy-note strong {
+      display: block;
+      color: #fff;
+      margin-bottom: 5px;
+    }
+
+    main {
+      padding: 24px 0 44px;
+    }
+
+    .calculator-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .section-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .93rem;
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+      font-size: .9rem;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: .76rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    td input {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #c4cfdf;
+      border-radius: 6px;
+      padding: 7px 8px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    td input:focus,
+    .field-stack input:focus,
+    .field-stack select:focus {
+      outline: 3px solid rgba(56, 161, 105, .18);
+      border-color: var(--green);
+    }
+
+    .name-cell { min-width: 150px; }
+    .amount-cell { width: 128px; }
+    .remove-cell { width: 50px; text-align: right; }
+
+    .button-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .field-stack {
+      display: grid;
+      gap: 6px;
+      align-content: start;
+    }
+
+    label,
+    .field-label {
+      color: var(--ink);
+      font-weight: 800;
+      font-size: .9rem;
+    }
+
+    .field-stack input,
+    .field-stack select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #c4cfdf;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+    }
+
+    .notice {
+      margin-top: 14px;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: .92rem;
+    }
+
+    .notice.warning {
+      border: 1px solid #f6c177;
+      background: #fff8ed;
+      color: #7b341e;
+    }
+
+    .notice.error {
+      border: 1px solid #feb2b2;
+      background: #fff5f5;
+      color: #822727;
+    }
+
+    .results-panel {
+      position: sticky;
+      top: 16px;
+    }
+
+    .results-empty {
+      border: 1px dashed #b8c6d9;
+      border-radius: 8px;
+      background: #f7fafc;
+      padding: 16px;
+      color: var(--muted);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      padding: 12px;
+      min-height: 88px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--navy);
+      font-size: clamp(1.2rem, 2vw, 1.55rem);
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .metric.positive strong { color: var(--green-dark); }
+
+    .summary-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .summary-line strong {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .target-card,
+    .savings-card {
+      margin-top: 12px;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .target-card {
+      border: 1px solid #bdd7ff;
+      background: #f1f7ff;
+      color: #173d70;
+    }
+
+    .savings-card {
+      border: 1px solid #bfe7cf;
+      background: #f1fbf5;
+      color: #22543d;
+    }
+
+    .savings-card strong,
+    .target-card strong {
+      color: inherit;
+    }
+
+    .compare-panel,
+    .schedule-panel,
+    .content-grid {
+      margin-top: 20px;
+    }
+
+    .best-row {
+      background: #f1fbf5;
+    }
+
+    .schedule-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .schedule-head p {
+      color: var(--muted);
+      margin-bottom: 0;
+      font-size: .93rem;
+    }
+
+    .schedule-table tbody tr:nth-child(even) {
+      background: #fbfdff;
+    }
+
+    .schedule-table td,
+    .schedule-table th {
+      white-space: nowrap;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .content-section {
+      border-top: 4px solid var(--navy);
+      box-shadow: none;
+    }
+
+    .content-section p,
+    .content-section li {
+      color: #4a5568;
+    }
+
+    .content-section ul,
+    .content-section ol {
+      padding-left: 20px;
+      margin-bottom: 0;
+    }
+
+    details {
+      border-top: 1px solid var(--line);
+      padding: 12px 0;
+    }
+
+    details:first-of-type {
+      margin-top: 8px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    details p {
+      margin: 8px 0 0;
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      padding: 18px 0;
+      font-size: .88rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .header-grid,
+      .calculator-layout,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .results-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 24px, 1180px);
+      }
+
+      .site-header {
+        padding: 24px 0;
+      }
+
+      main {
+        padding-top: 14px;
+      }
+
+      .panel {
+        padding: 14px;
+      }
+
+      .section-head,
+      .schedule-head {
+        display: block;
+      }
+
+      .section-head button,
+      .schedule-head button {
+        margin-top: 10px;
+      }
+
+      .settings-grid,
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        min-width: 650px;
+      }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does a credit card payoff calculator work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A credit card payoff calculator estimates monthly interest from each card's APR, applies minimum payments, applies any extra payment to the selected payoff method, and repeats the process until all balances are paid or the model reaches its time limit."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is avalanche or snowball better for paying off credit cards?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Avalanche usually saves the most interest because extra money goes to the highest APR card first. Snowball pays the smallest balance first, which can close an account sooner and may help with motivation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why can minimum payments take so long?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Credit card minimums can be close to the monthly interest charge. When most of the payment goes to interest instead of principal, the balance may fall slowly or fail to amortize in a reasonable time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does this calculator store my debt numbers?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. The calculator runs in your browser. It has no analytics, no account system, and no form that submits your debt data anywhere."
+        }
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to calculate your credit card payoff plan",
+    "description": "Estimate how long it will take to pay off credit card debt and how much interest you may pay.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Enter your cards",
+        "text": "Add each credit card balance, APR, and minimum payment."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Choose a payoff method",
+        "text": "Compare avalanche, snowball, or minimum-only payments."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Add extra payment",
+        "text": "Enter any extra monthly amount you can pay above the calculated minimums."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Review the payoff schedule",
+        "text": "Use the results and monthly schedule to see payoff timing, total interest, and savings."
+      }
+    ]
+  }
   </script>
 </head>
 <body>
@@ -58,12 +618,12 @@
     <div class="shell header-grid">
       <div>
         <p class="eyebrow">Card Payoff Calculator</p>
-        <h1>Credit card payoff calculator</h1>
-        <p class="lede">Compare avalanche, snowball, fixed payment, and custom payoff plans using your balances, APRs, minimum payments, extra monthly payment, and target payoff date.</p>
+        <h1>Credit Card Payoff Calculator</h1>
+        <p class="subtitle">Estimate your debt-free date, total interest, target-date payment, and savings from extra monthly payments across up to 10 credit cards.</p>
       </div>
-      <div class="header-panel" aria-label="Privacy note">
-        <strong>No sign-up. No tracking. No saved debt data.</strong>
-        <span>Calculations run locally in your browser.</span>
+      <div class="privacy-note" aria-label="Privacy note">
+        <strong>Private by design</strong>
+        No login, no tracking, and no submitted forms. Your numbers stay in this browser.
       </div>
     </div>
   </header>
@@ -73,100 +633,98 @@
       <form id="calculatorForm" class="panel input-panel">
         <div class="section-head">
           <div>
-            <h2>Your cards</h2>
-            <p>Enter each credit card balance, APR, and statement minimum payment.</p>
+            <h2>Your Cards</h2>
+            <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
           </div>
-          <button type="button" class="secondary small" id="sampleButton">Load sample</button>
+          <button type="button" class="secondary" id="sampleButton">Load Sample</button>
         </div>
 
         <div class="table-scroll">
-          <table class="debt-table">
+          <table class="card-table">
             <thead>
               <tr>
-                <th>Card</th>
-                <th>Balance</th>
-                <th>APR</th>
-                <th>Minimum</th>
-                <th aria-label="Order controls"></th>
+                <th>Card Name</th>
+                <th>Balance ($)</th>
+                <th>APR (%)</th>
+                <th>Minimum ($)</th>
+                <th aria-label="Remove card"></th>
               </tr>
             </thead>
-            <tbody id="debtRows"></tbody>
+            <tbody id="cardRows"></tbody>
           </table>
         </div>
 
         <div class="button-row">
-          <button type="button" class="secondary" id="addDebtButton">Add card</button>
+          <button type="button" class="secondary" id="addCardButton">Add Card</button>
+          <span id="rowLimitNote" class="hint">Up to 10 cards.</span>
         </div>
 
-        <div class="settings-grid">
-          <fieldset>
-            <legend>Payoff method</legend>
-            <label><input type="radio" name="method" value="avalanche" checked> Avalanche: highest APR first</label>
-            <label><input type="radio" name="method" value="snowball"> Snowball: smallest balance first</label>
-            <label><input type="radio" name="method" value="fixed"> Fixed payment: split extra across cards</label>
-            <label><input type="radio" name="method" value="custom"> Custom order: use the table order</label>
-          </fieldset>
-
+        <div class="settings-grid" aria-label="Payoff settings">
           <div class="field-stack">
-            <label for="extraPayment">Extra monthly payment</label>
-            <input id="extraPayment" type="number" min="0" step="25" value="250">
-            <p class="hint">Added on top of the entered minimum payments.</p>
+            <label for="method">Payoff Method</label>
+            <select id="method">
+              <option value="avalanche">Avalanche: highest APR first</option>
+              <option value="snowball">Snowball: smallest balance first</option>
+              <option value="minimum">Minimum Only</option>
+            </select>
           </div>
 
           <div class="field-stack">
-            <label for="startMonth">Start month</label>
+            <label for="extraPayment">Extra Monthly Payment ($)</label>
+            <input id="extraPayment" type="number" inputmode="decimal" min="0" step="25" value="250">
+            <p class="hint">Applied after all active cards receive their calculated minimum.</p>
+          </div>
+
+          <div class="field-stack">
+            <label for="startMonth">Start Month</label>
             <input id="startMonth" type="month">
           </div>
 
           <div class="field-stack">
-            <label for="targetMonth">Target debt-free month</label>
+            <label for="targetMonth">Target Payoff Date</label>
             <input id="targetMonth" type="month">
-            <p class="hint">Used to estimate the payment needed by that date.</p>
+            <p class="hint">Optional. Shows the monthly payment needed by that month.</p>
           </div>
         </div>
 
-        <div id="formError" class="notice error" role="alert" hidden></div>
+        <div id="formError" class="notice error hidden" role="alert"></div>
       </form>
 
       <aside class="panel results-panel" aria-live="polite">
         <div class="section-head">
           <div>
             <h2>Results</h2>
-            <p id="methodDescription">Avalanche targets the highest APR card after minimums.</p>
+            <p id="methodDescription">Avalanche sends extra payment to the highest APR card first.</p>
           </div>
         </div>
 
-        <div class="metric-grid">
-          <div class="metric"><span>Debt-free in</span><strong id="resultDuration">-</strong></div>
-          <div class="metric"><span>Total interest</span><strong id="resultInterest">-</strong></div>
-          <div class="metric"><span>Monthly payment</span><strong id="resultPayment">-</strong></div>
-          <div class="metric"><span>Payoff month</span><strong id="resultDate">-</strong></div>
-        </div>
+        <div id="emptyResults" class="results-empty hidden">Enter at least one card with a balance, APR, and minimum payment to see live results.</div>
 
-        <div id="targetResult" class="target-card" hidden></div>
-        <div id="warnings" class="notice warning" hidden></div>
-
-        <div class="chart-wrap">
-          <div class="chart-head">
-            <h3>Balance timeline</h3>
-            <span id="chartCaption"></span>
+        <div id="resultsContent">
+          <div class="metric-grid">
+            <div class="metric"><span>Total Balance</span><strong id="totalBalance">$0</strong></div>
+            <div class="metric"><span>Total Minimums</span><strong id="totalMinimums">$0</strong></div>
+            <div class="metric positive"><span>Debt-Free Date</span><strong id="payoffDate">-</strong></div>
+            <div class="metric"><span>Months to Payoff</span><strong id="payoffMonths">-</strong></div>
+            <div class="metric"><span>Total Interest</span><strong id="totalInterest">$0</strong></div>
+            <div class="metric"><span>Monthly Payment</span><strong id="monthlyPayment">$0</strong></div>
           </div>
-          <div id="balanceChart" class="balance-chart" role="img" aria-label="Balance payoff timeline"></div>
-        </div>
 
-        <div class="result-actions">
-          <button type="button" id="copyButton">Copy summary</button>
-          <button type="button" class="secondary" id="csvButton">Download CSV</button>
+          <div id="targetResult" class="target-card hidden"></div>
+          <div id="savingsResult" class="savings-card hidden"></div>
+          <div id="warnings" class="notice warning hidden"></div>
+
+          <div class="summary-line"><span>First payoff target</span><strong id="firstTarget">-</strong></div>
+          <div class="summary-line"><span>Total paid</span><strong id="totalPaid">$0</strong></div>
         </div>
-        <p id="copyStatus" class="hint" aria-live="polite"></p>
       </aside>
     </section>
 
     <section class="panel compare-panel">
       <div class="section-head">
         <div>
-          <h2>Method comparison</h2>
-          <p>Avalanche is usually cheapest. Snowball can pay off the first card sooner. Fixed payment shows a less targeted plan.</p>
+          <h2>Payoff Method Comparison</h2>
+          <p>Compare avalanche, snowball, and minimum-only using the same card inputs.</p>
         </div>
       </div>
       <div class="table-scroll">
@@ -174,9 +732,11 @@
           <thead>
             <tr>
               <th>Method</th>
-              <th>Debt-free in</th>
-              <th>Total interest</th>
-              <th>First card paid off</th>
+              <th>Payoff Date</th>
+              <th>Months</th>
+              <th>Total Interest</th>
+              <th>Monthly Payment</th>
+              <th>First Card Paid</th>
             </tr>
           </thead>
           <tbody id="comparisonRows"></tbody>
@@ -184,35 +744,648 @@
       </div>
     </section>
 
-    <section class="methodology">
-      <div>
-        <h2>Methodology</h2>
-        <p>The calculator applies monthly interest using APR divided by 12, then pays each card's entered minimum before applying the extra monthly payment. Avalanche targets the highest APR balance. Snowball targets the smallest balance. Custom follows the card order shown in the table. Fixed payment keeps the entered minimums and splits extra payments across active cards.</p>
-        <p>Results are estimates. Issuer minimum formulas, fees, penalty APRs, new charges, promotional rates, payment timing, and compounding rules can change actual payoff dates and interest.</p>
+    <section class="panel schedule-panel">
+      <div class="schedule-head">
+        <div>
+          <h2>Month-by-Month Schedule</h2>
+          <p id="scheduleNote">First 24 months shown by default.</p>
+        </div>
+        <button type="button" class="secondary" id="toggleSchedule">Show All</button>
       </div>
-      <div>
+      <div class="table-scroll">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Date</th>
+              <th>Payment</th>
+              <th>Interest</th>
+              <th>Principal</th>
+              <th>Ending Balance</th>
+              <th>Extra Target</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel content-section">
+        <h2>Methodology</h2>
+        <p>Each month, the calculator computes interest for every active card using APR divided by 12. It then uses the greater of the issuer-style minimum estimate, the entered minimum payment, or $25, capped at the amount needed to pay the card off that month.</p>
+        <p>The issuer-style minimum estimate is current balance times 1% plus that month&apos;s interest. The payment first covers interest, then reduces principal. Avalanche applies extra money to the highest APR card until it is paid, then cascades. Snowball applies extra money to the smallest balance until it is paid, then cascades. Minimum only applies no extra payment.</p>
+        <p>The schedule stops when all balances reach $0 or after 600 months. Results are estimates and do not include new charges, fees, promotional APRs, penalty APRs, payment timing differences, or issuer-specific minimum rules beyond the model above.</p>
+      </div>
+
+      <div class="panel content-section">
         <h2>FAQ</h2>
         <details>
-          <summary>Why does the calculator warn about minimum payments?</summary>
-          <p>If a minimum payment barely covers monthly interest, the balance can take decades to fall. Extra principal payments are usually needed to make meaningful progress.</p>
+          <summary>What payment do I need to be debt-free by a target date?</summary>
+          <p>Enter a target payoff month. The calculator uses a binary search over monthly payment amounts and reports the smallest estimated payment that pays all entered cards by that month.</p>
         </details>
         <details>
-          <summary>Should I choose avalanche or snowball?</summary>
-          <p>Choose avalanche to reduce interest. Choose snowball if closing smaller accounts sooner will help you keep going.</p>
+          <summary>What is the debt avalanche method?</summary>
+          <p>Avalanche pays every card&apos;s minimum, then sends extra money to the highest APR card. It is usually the lowest-interest method.</p>
         </details>
         <details>
-          <summary>Does this store my debt information?</summary>
-          <p>No. The current prototype runs calculations in the browser and does not send or store your numbers.</p>
+          <summary>What is the debt snowball method?</summary>
+          <p>Snowball pays every card&apos;s minimum, then sends extra money to the smallest balance. It may cost more interest, but it can produce a faster first payoff.</p>
+        </details>
+        <details>
+          <summary>Why does minimum-only sometimes show a warning?</summary>
+          <p>If a card&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
+        </details>
+        <details>
+          <summary>Can I use this offline?</summary>
+          <p>Yes. This is a single self-contained HTML file with client-side calculations. After the page is loaded or saved, it can run without a network connection.</p>
         </details>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="shell">Educational estimates only. No user data collection is connected.</div>
+    <div class="shell">CardPayoffCalculator.com provides educational estimates only. It is not financial, legal, tax, or credit counseling advice.</div>
   </footer>
 
-  <script src="src/payoff.js"></script>
-  <script src="app.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var MAX_CARDS = 10;
+      var MAX_MONTHS = 600;
+      var EPSILON = 0.005;
+
+      var cardRows = document.getElementById("cardRows");
+      var addCardButton = document.getElementById("addCardButton");
+      var sampleButton = document.getElementById("sampleButton");
+      var formError = document.getElementById("formError");
+      var methodInput = document.getElementById("method");
+      var extraInput = document.getElementById("extraPayment");
+      var startInput = document.getElementById("startMonth");
+      var targetInput = document.getElementById("targetMonth");
+      var emptyResults = document.getElementById("emptyResults");
+      var resultsContent = document.getElementById("resultsContent");
+      var totalBalanceEl = document.getElementById("totalBalance");
+      var totalMinimumsEl = document.getElementById("totalMinimums");
+      var payoffDateEl = document.getElementById("payoffDate");
+      var payoffMonthsEl = document.getElementById("payoffMonths");
+      var totalInterestEl = document.getElementById("totalInterest");
+      var monthlyPaymentEl = document.getElementById("monthlyPayment");
+      var totalPaidEl = document.getElementById("totalPaid");
+      var firstTargetEl = document.getElementById("firstTarget");
+      var targetResult = document.getElementById("targetResult");
+      var savingsResult = document.getElementById("savingsResult");
+      var warningsEl = document.getElementById("warnings");
+      var comparisonRows = document.getElementById("comparisonRows");
+      var scheduleRows = document.getElementById("scheduleRows");
+      var scheduleNote = document.getElementById("scheduleNote");
+      var toggleSchedule = document.getElementById("toggleSchedule");
+      var methodDescription = document.getElementById("methodDescription");
+
+      var nextId = 1;
+      var showAllSchedule = false;
+      var lastResult = null;
+
+      var moneyFormatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      });
+
+      var moneyCentsFormatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      var monthFormatter = new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC"
+      });
+
+      function roundCents(value) {
+        return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+      }
+
+      function money(value) {
+        return moneyFormatter.format(Math.round(Number(value || 0)));
+      }
+
+      function moneyCents(value) {
+        return moneyCentsFormatter.format(roundCents(value));
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+          }[char];
+        });
+      }
+
+      function currentMonthValue() {
+        var now = new Date();
+        return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+      }
+
+      function addMonths(monthValue, offset) {
+        var parts = String(monthValue || currentMonthValue()).split("-").map(Number);
+        var date = new Date(Date.UTC(parts[0], parts[1] - 1 + offset, 1));
+        return monthFormatter.format(date);
+      }
+
+      function monthsBetweenInclusive(startMonth, targetMonth) {
+        if (!startMonth || !targetMonth) return null;
+        var start = startMonth.split("-").map(Number);
+        var target = targetMonth.split("-").map(Number);
+        if (!start[0] || !start[1] || !target[0] || !target[1]) return null;
+        var months = (target[0] - start[0]) * 12 + (target[1] - start[1]) + 1;
+        return months > 0 ? months : null;
+      }
+
+      function duration(months, capped) {
+        if (capped) return "50+ years";
+        if (!months) return "0 months";
+        var years = Math.floor(months / 12);
+        var rest = months % 12;
+        if (!years) return months + " month" + (months === 1 ? "" : "s");
+        if (!rest) return years + " year" + (years === 1 ? "" : "s");
+        return years + " yr " + rest + " mo";
+      }
+
+      function methodLabel(method) {
+        return {
+          avalanche: "Avalanche",
+          snowball: "Snowball",
+          minimum: "Minimum Only"
+        }[method] || "Avalanche";
+      }
+
+      function methodHelp(method) {
+        return {
+          avalanche: "Avalanche sends extra payment to the highest APR card first.",
+          snowball: "Snowball sends extra payment to the smallest balance first.",
+          minimum: "Minimum only uses the calculated minimum payment for each card."
+        }[method] || "Avalanche sends extra payment to the highest APR card first.";
+      }
+
+      function addCardRow(card) {
+        if (cardRows.children.length >= MAX_CARDS) return;
+        var data = card || {};
+        var id = data.id || "card-" + nextId++;
+        var tr = document.createElement("tr");
+        tr.dataset.id = id;
+        tr.innerHTML =
+          '<td class="name-cell"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
+          '<td class="amount-cell"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
+          '<td class="amount-cell"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
+          '<td class="amount-cell"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
+          '<td class="remove-cell"><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
+        cardRows.appendChild(tr);
+        updateAddButton();
+      }
+
+      function updateAddButton() {
+        addCardButton.disabled = cardRows.children.length >= MAX_CARDS;
+      }
+
+      function getField(row, field) {
+        return row.querySelector('[data-field="' + field + '"]').value.trim();
+      }
+
+      function readCards() {
+        return Array.prototype.slice.call(cardRows.querySelectorAll("tr")).map(function (row, index) {
+          return {
+            id: row.dataset.id,
+            name: getField(row, "name") || "Card " + (index + 1),
+            balance: Number(getField(row, "balance")),
+            apr: Number(getField(row, "apr")),
+            minimum: Number(getField(row, "minimum"))
+          };
+        }).filter(function (card) {
+          return card.balance > 0 || card.apr > 0 || card.minimum > 0 || getField(cardRows.querySelector('[data-id="' + card.id + '"]'), "name");
+        });
+      }
+
+      function validateCards(cards) {
+        if (!cards.length) return "Enter at least one credit card.";
+        for (var i = 0; i < cards.length; i += 1) {
+          var card = cards[i];
+          if (!Number.isFinite(card.balance) || card.balance <= 0) return card.name + ": enter a balance above $0.";
+          if (!Number.isFinite(card.apr) || card.apr < 0) return card.name + ": enter an APR of 0% or higher.";
+          if (!Number.isFinite(card.minimum) || card.minimum <= 0) return card.name + ": enter a minimum payment above $0.";
+        }
+        return "";
+      }
+
+      function normalizeCards(cards) {
+        return cards.map(function (card, index) {
+          return {
+            id: card.id || "card-" + index,
+            name: card.name || "Card " + (index + 1),
+            balance: roundCents(Math.max(0, Number(card.balance || 0))),
+            startingBalance: roundCents(Math.max(0, Number(card.balance || 0))),
+            apr: Math.max(0, Number(card.apr || 0)),
+            statedMinimum: roundCents(Math.max(0, Number(card.minimum || 0)))
+          };
+        }).filter(function (card) {
+          return card.balance > EPSILON;
+        });
+      }
+
+      function monthlyInterest(card) {
+        return roundCents(card.balance * (card.apr / 100 / 12));
+      }
+
+      function calculatedMinimum(card, interest) {
+        var raw = Math.max(card.balance * 0.01 + interest, 25, card.statedMinimum);
+        return roundCents(Math.min(card.balance + interest, raw));
+      }
+
+      function activeCards(cards) {
+        return cards.filter(function (card) {
+          return card.balance > EPSILON;
+        });
+      }
+
+      function targetSort(method) {
+        return function (a, b) {
+          if (method === "snowball") {
+            return a.balance - b.balance || b.apr - a.apr || a.name.localeCompare(b.name);
+          }
+          return b.apr - a.apr || b.balance - a.balance || a.name.localeCompare(b.name);
+        };
+      }
+
+      function firstTarget(cards, method) {
+        var active = activeCards(cards).slice().sort(targetSort(method));
+        return active[0] ? active[0].name : "";
+      }
+
+      function startingMinimumTotal(cards) {
+        return roundCents(normalizeCards(cards).reduce(function (sum, card) {
+          return sum + calculatedMinimum(card, monthlyInterest(card));
+        }, 0));
+      }
+
+      function simulate(inputCards, options) {
+        var opts = options || {};
+        var method = opts.method || "avalanche";
+        var cards = normalizeCards(inputCards);
+        var startingBalance = roundCents(cards.reduce(function (sum, card) { return sum + card.startingBalance; }, 0));
+        var extraPayment = method === "minimum" ? 0 : roundCents(Math.max(0, Number(opts.extraPayment || 0)));
+        var timeline = [];
+        var totalInterest = 0;
+        var totalPaid = 0;
+        var warnings = [];
+        var summaries = cards.map(function (card) {
+          return { id: card.id, name: card.name, startingBalance: card.startingBalance, payoffMonth: null, interestPaid: 0 };
+        });
+        var payoffCounter = 0;
+
+        cards.forEach(function (card) {
+          var interest = monthlyInterest(card);
+          var minimum = calculatedMinimum(card, interest);
+          if (card.statedMinimum <= interest + EPSILON) {
+            warnings.push(card.name + "'s entered minimum is less than or equal to the first month's interest. That is a revolving-debt trap unless the issuer requires a higher minimum or you pay extra.");
+          }
+          if (interest >= minimum - EPSILON) {
+            warnings.push(card.name + "'s minimum payment does not cover enough interest to reliably reduce principal.");
+          }
+        });
+
+        for (var month = 1; month <= MAX_MONTHS; month += 1) {
+          if (!activeCards(cards).length) break;
+
+          var payments = cards.map(function () { return 0; });
+          var interests = cards.map(function () { return 0; });
+          var minimums = cards.map(function () { return 0; });
+          var monthInterest = 0;
+          var monthPayment = 0;
+          var targets = [];
+
+          cards.forEach(function (card, index) {
+            if (card.balance <= EPSILON) return;
+            var interest = monthlyInterest(card);
+            interests[index] = interest;
+            minimums[index] = calculatedMinimum(card, interest);
+            card.balance = roundCents(card.balance + interest);
+            monthInterest = roundCents(monthInterest + interest);
+            totalInterest = roundCents(totalInterest + interest);
+            summaries[index].interestPaid = roundCents(summaries[index].interestPaid + interest);
+          });
+
+          cards.forEach(function (card, index) {
+            if (card.balance <= EPSILON) return;
+            var payment = Math.min(card.balance, minimums[index]);
+            card.balance = roundCents(card.balance - payment);
+            payments[index] = roundCents(payments[index] + payment);
+            monthPayment = roundCents(monthPayment + payment);
+          });
+
+          var remainingExtra = extraPayment;
+          while (remainingExtra > EPSILON && activeCards(cards).length) {
+            var target = activeCards(cards).slice().sort(targetSort(method))[0];
+            var extra = Math.min(target.balance, remainingExtra);
+            var targetIndex = cards.indexOf(target);
+            target.balance = roundCents(target.balance - extra);
+            payments[targetIndex] = roundCents(payments[targetIndex] + extra);
+            monthPayment = roundCents(monthPayment + extra);
+            remainingExtra = roundCents(remainingExtra - extra);
+            if (extra > EPSILON && targets.indexOf(target.name) === -1) targets.push(target.name);
+          }
+
+          cards.forEach(function (card, index) {
+            if (card.balance <= EPSILON && summaries[index].payoffMonth === null) {
+              payoffCounter += 1;
+              summaries[index].payoffMonth = month;
+              summaries[index].orderPaidOff = payoffCounter;
+              card.balance = 0;
+            }
+          });
+
+          var endingBalance = roundCents(cards.reduce(function (sum, card) {
+            return sum + Math.max(0, card.balance);
+          }, 0));
+          var principal = roundCents(monthPayment - monthInterest);
+          totalPaid = roundCents(totalPaid + monthPayment);
+
+          timeline.push({
+            month: month,
+            payment: monthPayment,
+            interest: monthInterest,
+            principal: principal,
+            endingBalance: endingBalance,
+            target: targets[0] || firstTarget(cards, method),
+            balances: cards.map(function (card) { return roundCents(Math.max(0, card.balance)); }),
+            payments: payments,
+            interests: interests
+          });
+        }
+
+        var capped = activeCards(cards).length > 0;
+        if (capped) warnings.push("This plan does not pay off all balances within 600 months (50 years).");
+
+        return {
+          method: method,
+          startingBalance: startingBalance,
+          startingMinimumTotal: startingMinimumTotal(inputCards),
+          extraPayment: extraPayment,
+          monthlyPayment: roundCents(startingMinimumTotal(inputCards) + extraPayment),
+          months: timeline.length,
+          capped: capped,
+          totalInterest: roundCents(totalInterest),
+          totalPaid: roundCents(totalPaid),
+          timeline: timeline,
+          summaries: summaries,
+          warnings: warnings
+        };
+      }
+
+      function requiredPaymentForTarget(cards, method, targetMonths) {
+        if (!targetMonths || targetMonths <= 0) return null;
+        var minimum = startingMinimumTotal(cards);
+        var balances = normalizeCards(cards).reduce(function (sum, card) { return sum + card.startingBalance; }, 0);
+        var low = minimum;
+        var high = Math.max(minimum + 100, balances + minimum);
+        var i;
+        for (i = 0; i < 24; i += 1) {
+          var test = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum) });
+          if (!test.capped && test.months <= targetMonths) break;
+          high *= 1.7;
+        }
+        var feasible = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum) });
+        if (feasible.capped || feasible.months > targetMonths) return null;
+
+        for (i = 0; i < 42; i += 1) {
+          var mid = (low + high) / 2;
+          var result = simulate(cards, { method: method, extraPayment: Math.max(0, mid - minimum) });
+          if (!result.capped && result.months <= targetMonths) high = mid;
+          else low = mid;
+        }
+
+        var payment = roundCents(high);
+        var finalResult = simulate(cards, { method: method, extraPayment: Math.max(0, payment - minimum) });
+        return {
+          monthlyPayment: payment,
+          extraPayment: roundCents(Math.max(0, payment - minimum)),
+          months: finalResult.months,
+          totalInterest: finalResult.totalInterest
+        };
+      }
+
+      function renderWarnings(warnings) {
+        if (!warnings.length) {
+          warningsEl.classList.add("hidden");
+          warningsEl.innerHTML = "";
+          return;
+        }
+        warningsEl.classList.remove("hidden");
+        warningsEl.innerHTML = warnings.map(function (warning) {
+          return "<div>" + escapeHtml(warning) + "</div>";
+        }).join("");
+      }
+
+      function renderTarget(cards, method) {
+        var targetMonths = monthsBetweenInclusive(startInput.value, targetInput.value);
+        if (!targetInput.value || !targetMonths) {
+          targetResult.classList.add("hidden");
+          targetResult.innerHTML = "";
+          return;
+        }
+
+        var required = requiredPaymentForTarget(cards, method === "minimum" ? "avalanche" : method, targetMonths);
+        targetResult.classList.remove("hidden");
+        if (!required) {
+          targetResult.textContent = "No feasible target-date payment found inside the 50-year model.";
+          return;
+        }
+
+        targetResult.innerHTML = "To be debt-free by <strong>" + escapeHtml(addMonths(startInput.value, targetMonths - 1)) + "</strong>, estimated payment needed: <strong>" + money(required.monthlyPayment) + "/mo</strong> (" + money(required.extraPayment) + " above starting minimums).";
+      }
+
+      function renderSavings(selected, baseline, extraPayment) {
+        if (!extraPayment || selected.method === "minimum") {
+          savingsResult.classList.add("hidden");
+          savingsResult.innerHTML = "";
+          return;
+        }
+
+        if (baseline.capped) {
+          savingsResult.classList.remove("hidden");
+          savingsResult.innerHTML = "Minimum-only does not clear the modeled debt within 50 years. Adding <strong>" + money(extraPayment) + "/mo</strong> creates a payoff path in this scenario.";
+          return;
+        }
+
+        var interestSaved = roundCents(baseline.totalInterest - selected.totalInterest);
+        var monthsSaved = baseline.months - selected.months;
+        savingsResult.classList.remove("hidden");
+        savingsResult.innerHTML = "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than minimum-only.";
+      }
+
+      function renderComparison(cards, extraPayment) {
+        var methods = ["avalanche", "snowball", "minimum"];
+        var rows = methods.map(function (method) {
+          return simulate(cards, { method: method, extraPayment: method === "minimum" ? 0 : extraPayment });
+        });
+        var finiteRows = rows.filter(function (row) { return !row.capped; });
+        var bestInterest = finiteRows.length ? Math.min.apply(null, finiteRows.map(function (row) { return row.totalInterest; })) : null;
+
+        comparisonRows.innerHTML = rows.map(function (result) {
+          var first = result.summaries.filter(function (summary) {
+            return summary.payoffMonth !== null;
+          }).sort(function (a, b) {
+            return a.payoffMonth - b.payoffMonth;
+          })[0];
+
+          return '<tr class="' + (bestInterest !== null && result.totalInterest === bestInterest ? "best-row" : "") + '">' +
+            "<td>" + methodLabel(result.method) + "</td>" +
+            "<td>" + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</td>" +
+            "<td>" + duration(result.months, result.capped) + "</td>" +
+            "<td>" + money(result.totalInterest) + "</td>" +
+            "<td>" + money(result.monthlyPayment) + "</td>" +
+            "<td>" + (first ? escapeHtml(first.name) + " in " + duration(first.payoffMonth, false) : "-") + "</td>" +
+            "</tr>";
+        }).join("");
+      }
+
+      function renderSchedule(result) {
+        var rows = showAllSchedule ? result.timeline : result.timeline.slice(0, 24);
+        scheduleRows.innerHTML = rows.map(function (row) {
+          return "<tr>" +
+            "<td>" + row.month + "</td>" +
+            "<td>" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
+            "<td>" + moneyCents(row.payment) + "</td>" +
+            "<td>" + moneyCents(row.interest) + "</td>" +
+            "<td>" + moneyCents(row.principal) + "</td>" +
+            "<td>" + moneyCents(row.endingBalance) + "</td>" +
+            "<td>" + escapeHtml(row.target || "-") + "</td>" +
+            "</tr>";
+        }).join("");
+
+        if (result.timeline.length > 24) {
+          toggleSchedule.classList.remove("hidden");
+          toggleSchedule.textContent = showAllSchedule ? "Show First 24" : "Show All";
+          scheduleNote.textContent = showAllSchedule ? "Showing all " + result.timeline.length + " modeled months." : "First 24 of " + result.timeline.length + " modeled months shown.";
+        } else {
+          toggleSchedule.classList.add("hidden");
+          scheduleNote.textContent = "Showing all modeled months.";
+        }
+      }
+
+      function setError(message) {
+        if (!message) {
+          formError.classList.add("hidden");
+          formError.textContent = "";
+          return;
+        }
+        formError.classList.remove("hidden");
+        formError.textContent = message;
+      }
+
+      function update() {
+        var cards = readCards();
+        var error = validateCards(cards);
+        var method = methodInput.value;
+        var extra = Math.max(0, Number(extraInput.value || 0));
+
+        methodDescription.textContent = methodHelp(method);
+
+        if (error) {
+          setError(error);
+          emptyResults.classList.remove("hidden");
+          resultsContent.classList.add("hidden");
+          comparisonRows.innerHTML = "";
+          scheduleRows.innerHTML = "";
+          lastResult = null;
+          return;
+        }
+
+        setError("");
+        emptyResults.classList.add("hidden");
+        resultsContent.classList.remove("hidden");
+
+        if (method === "minimum") extra = 0;
+        var result = simulate(cards, { method: method, extraPayment: extra });
+        var baseline = simulate(cards, { method: "minimum", extraPayment: 0 });
+        lastResult = result;
+
+        totalBalanceEl.textContent = money(result.startingBalance);
+        totalMinimumsEl.textContent = money(result.startingMinimumTotal);
+        payoffDateEl.textContent = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
+        payoffMonthsEl.textContent = duration(result.months, result.capped);
+        totalInterestEl.textContent = money(result.totalInterest);
+        monthlyPaymentEl.textContent = money(result.monthlyPayment);
+        totalPaidEl.textContent = money(result.totalPaid);
+        firstTargetEl.textContent = result.timeline[0] ? (result.timeline[0].target || "-") : "-";
+
+        var warnings = result.warnings.slice();
+        if (method === "minimum" && result.capped) {
+          warnings.unshift("Minimum-only payments do not pay off this debt within the calculator limit. Add extra payment or use avalanche/snowball.");
+        }
+        renderWarnings(warnings);
+        renderTarget(cards, method);
+        renderSavings(result, baseline, Number(extraInput.value || 0));
+        renderComparison(cards, Number(extraInput.value || 0));
+        renderSchedule(result);
+      }
+
+      function loadSample() {
+        cardRows.innerHTML = "";
+        nextId = 1;
+        [
+          { name: "Rewards Visa", balance: 8500, apr: 22.99, minimum: 170 },
+          { name: "Store Card", balance: 1200, apr: 28.99, minimum: 45 },
+          { name: "Travel Mastercard", balance: 3200, apr: 19.99, minimum: 64 }
+        ].forEach(addCardRow);
+        methodInput.value = "avalanche";
+        extraInput.value = "250";
+        targetInput.value = "";
+        updateAddButton();
+        update();
+      }
+
+      cardRows.addEventListener("input", update);
+      cardRows.addEventListener("click", function (event) {
+        var button = event.target.closest("button[data-action='remove']");
+        if (!button) return;
+        var row = button.closest("tr");
+        if (row && cardRows.children.length > 1) {
+          row.remove();
+        } else if (row) {
+          row.querySelectorAll("input").forEach(function (input) { input.value = ""; });
+        }
+        updateAddButton();
+        update();
+      });
+
+      addCardButton.addEventListener("click", function () {
+        addCardRow();
+        update();
+      });
+
+      sampleButton.addEventListener("click", loadSample);
+
+      [methodInput, extraInput, startInput, targetInput].forEach(function (input) {
+        input.addEventListener("input", update);
+        input.addEventListener("change", update);
+      });
+
+      toggleSchedule.addEventListener("click", function () {
+        showAllSchedule = !showAllSchedule;
+        if (lastResult) renderSchedule(lastResult);
+      });
+
+      startInput.value = currentMonthValue();
+      loadSample();
+    })();
+  </script>
 </body>
 </html>
