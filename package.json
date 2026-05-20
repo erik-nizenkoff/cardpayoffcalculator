@@ -1,0 +1,9 @@
+{
+  "name": "cardpayoffcalculator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static single-page credit card payoff calculator.",
+  "scripts": {
+    "test": "node tests/payoff.test.js"
+  }
+}

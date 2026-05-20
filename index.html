@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Credit Card Payoff Calculator | Card Payoff Calculator</title>
+  <meta name="description" content="Free credit card payoff calculator. Compare avalanche, snowball, fixed payment, and custom payoff plans with extra monthly payments, target dates, interest, and payoff timeline.">
+  <link rel="canonical" href="https://cardpayoffcalculator.com/">
+  <meta property="og:title" content="Credit Card Payoff Calculator">
+  <meta property="og:description" content="Compare credit card payoff methods, extra payments, target dates, total interest, and payoff timeline.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cardpayoffcalculator.com/">
+  <meta name="twitter:card" content="summary">
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the debt avalanche method?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The debt avalanche method pays minimums on every card, then sends extra money to the highest APR balance first. It usually minimizes interest."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the debt snowball method?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The debt snowball method pays minimums on every card, then sends extra money to the smallest balance first. It can create faster account payoff wins, but may cost more interest."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does extra monthly payment affect payoff time?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Extra monthly payments reduce principal sooner, which can shorten the payoff timeline and lower total interest. The impact depends on balances, APRs, minimum payments, and payoff method."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is this credit counseling or financial advice?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. This calculator is an educational estimate based on the numbers entered. It is not credit counseling, legal advice, tax advice, or lender approval."
+          }
+        }
+      ]
+    }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-grid">
+      <div>
+        <p class="eyebrow">Card Payoff Calculator</p>
+        <h1>Credit card payoff calculator</h1>
+        <p class="lede">Compare avalanche, snowball, fixed payment, and custom payoff plans using your balances, APRs, minimum payments, extra monthly payment, and target payoff date.</p>
+      </div>
+      <div class="header-panel" aria-label="Privacy note">
+        <strong>No sign-up. No tracking. No saved debt data.</strong>
+        <span>Calculations run locally in your browser.</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="calculator-layout" aria-label="Credit card payoff calculator">
+      <form id="calculatorForm" class="panel input-panel">
+        <div class="section-head">
+          <div>
+            <h2>Your cards</h2>
+            <p>Enter each credit card balance, APR, and statement minimum payment.</p>
+          </div>
+          <button type="button" class="secondary small" id="sampleButton">Load sample</button>
+        </div>
+
+        <div class="table-scroll">
+          <table class="debt-table">
+            <thead>
+              <tr>
+                <th>Card</th>
+                <th>Balance</th>
+                <th>APR</th>
+                <th>Minimum</th>
+                <th aria-label="Order controls"></th>
+              </tr>
+            </thead>
+            <tbody id="debtRows"></tbody>
+          </table>
+        </div>
+
+        <div class="button-row">
+          <button type="button" class="secondary" id="addDebtButton">Add card</button>
+        </div>
+
+        <div class="settings-grid">
+          <fieldset>
+            <legend>Payoff method</legend>
+            <label><input type="radio" name="method" value="avalanche" checked> Avalanche: highest APR first</label>
+            <label><input type="radio" name="method" value="snowball"> Snowball: smallest balance first</label>
+            <label><input type="radio" name="method" value="fixed"> Fixed payment: split extra across cards</label>
+            <label><input type="radio" name="method" value="custom"> Custom order: use the table order</label>
+          </fieldset>
+
+          <div class="field-stack">
+            <label for="extraPayment">Extra monthly payment</label>
+            <input id="extraPayment" type="number" min="0" step="25" value="250">
+            <p class="hint">Added on top of the entered minimum payments.</p>
+          </div>
+
+          <div class="field-stack">
+            <label for="startMonth">Start month</label>
+            <input id="startMonth" type="month">
+          </div>
+
+          <div class="field-stack">
+            <label for="targetMonth">Target debt-free month</label>
+            <input id="targetMonth" type="month">
+            <p class="hint">Used to estimate the payment needed by that date.</p>
+          </div>
+        </div>
+
+        <div id="formError" class="notice error" role="alert" hidden></div>
+      </form>
+
+      <aside class="panel results-panel" aria-live="polite">
+        <div class="section-head">
+          <div>
+            <h2>Results</h2>
+            <p id="methodDescription">Avalanche targets the highest APR card after minimums.</p>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric"><span>Debt-free in</span><strong id="resultDuration">-</strong></div>
+          <div class="metric"><span>Total interest</span><strong id="resultInterest">-</strong></div>
+          <div class="metric"><span>Monthly payment</span><strong id="resultPayment">-</strong></div>
+          <div class="metric"><span>Payoff month</span><strong id="resultDate">-</strong></div>
+        </div>
+
+        <div id="targetResult" class="target-card" hidden></div>
+        <div id="warnings" class="notice warning" hidden></div>
+
+        <div class="chart-wrap">
+          <div class="chart-head">
+            <h3>Balance timeline</h3>
+            <span id="chartCaption"></span>
+          </div>
+          <div id="balanceChart" class="balance-chart" role="img" aria-label="Balance payoff timeline"></div>
+        </div>
+
+        <div class="result-actions">
+          <button type="button" id="copyButton">Copy summary</button>
+          <button type="button" class="secondary" id="csvButton">Download CSV</button>
+        </div>
+        <p id="copyStatus" class="hint" aria-live="polite"></p>
+      </aside>
+    </section>
+
+    <section class="panel compare-panel">
+      <div class="section-head">
+        <div>
+          <h2>Method comparison</h2>
+          <p>Avalanche is usually cheapest. Snowball can pay off the first card sooner. Fixed payment shows a less targeted plan.</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Debt-free in</th>
+              <th>Total interest</th>
+              <th>First card paid off</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="methodology">
+      <div>
+        <h2>Methodology</h2>
+        <p>The calculator applies monthly interest using APR divided by 12, then pays each card's entered minimum before applying the extra monthly payment. Avalanche targets the highest APR balance. Snowball targets the smallest balance. Custom follows the card order shown in the table. Fixed payment keeps the entered minimums and splits extra payments across active cards.</p>
+        <p>Results are estimates. Issuer minimum formulas, fees, penalty APRs, new charges, promotional rates, payment timing, and compounding rules can change actual payoff dates and interest.</p>
+      </div>
+      <div>
+        <h2>FAQ</h2>
+        <details>
+          <summary>Why does the calculator warn about minimum payments?</summary>
+          <p>If a minimum payment barely covers monthly interest, the balance can take decades to fall. Extra principal payments are usually needed to make meaningful progress.</p>
+        </details>
+        <details>
+          <summary>Should I choose avalanche or snowball?</summary>
+          <p>Choose avalanche to reduce interest. Choose snowball if closing smaller accounts sooner will help you keep going.</p>
+        </details>
+        <details>
+          <summary>Does this store my debt information?</summary>
+          <p>No. The current prototype runs calculations in the browser and does not send or store your numbers.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">Educational estimates only. No user data collection is connected.</div>
+  </footer>
+
+  <script src="src/payoff.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
