@@ -133,7 +133,9 @@ Ask Erik before:
 
 When a new feature request or product decision is made in the project channel:
 
-1. Update this spec before or alongside implementation.
+1. Update this spec before implementation begins.
 2. Keep the request phrased as product behavior, not just implementation detail.
 3. Link major implementation decisions back to the relevant spec section in summaries when useful.
 4. If the implemented behavior intentionally differs from this spec, update this spec in the same commit.
+
+Exception: for an urgent production breakage or security issue, fix first, then update this spec in the same follow-up commit before reporting completion.
