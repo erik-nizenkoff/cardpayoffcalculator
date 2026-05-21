@@ -3550,6 +3550,7 @@
         if (!options.skipUrlUpdate) {
           updateSharedUrl(cards, loans, method, extra);
         }
+        renderResultExplainer(cards, loans, result, baseline, extra);
         if (!options.skipTracking) {
           trackCalculation(cards, loans, { method: method, extraPayment: extra, targetDate: targetInput ? targetInput.value : null }, result);
         }
