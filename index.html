@@ -394,6 +394,11 @@
       flex-wrap: wrap;
     }
 
+    .section-head .button-row {
+      justify-content: flex-end;
+      margin-top: 0;
+    }
+
     .hint {
       margin: 5px 0 0;
       color: var(--muted);
@@ -1503,7 +1508,10 @@
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
           </div>
-          <button type="button" class="secondary" id="sampleButton">Load Sample</button>
+          <div class="button-row">
+            <button type="button" class="secondary" id="sampleButton">Load Sample</button>
+            <button type="button" class="secondary" id="clearAllButton">Clear all</button>
+          </div>
         </div>
 
         <div class="table-scroll">
@@ -1893,6 +1901,7 @@
       var addLoanButton = document.getElementById("addLoanButton");
       var loanRows = document.getElementById("loanRows");
       var sampleButton = document.getElementById("sampleButton");
+      var clearAllButton = document.getElementById("clearAllButton");
       var loadExampleButton = document.getElementById("loadExampleButton");
       var formError = document.getElementById("formError");
       var methodInput = document.getElementById("method");
@@ -3448,6 +3457,9 @@
       });
 
       sampleButton.addEventListener("click", loadSample);
+      clearAllButton.addEventListener("click", function () {
+        loadSample();
+      });
       if (calculatorForm) {
         calculatorForm.addEventListener("submit", function (event) {
           event.preventDefault();
