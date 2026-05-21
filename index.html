@@ -147,10 +147,7 @@
     }
 
     .header-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 320px;
-      gap: 24px;
-      align-items: end;
+      max-width: 860px;
     }
 
     .eyebrow {
@@ -197,20 +194,6 @@
       margin-bottom: 0;
       color: #dce8f7;
       font-size: 1.04rem;
-    }
-
-    .privacy-note {
-      border: 1px solid rgba(255,255,255,.22);
-      border-radius: 8px;
-      background: rgba(255,255,255,.07);
-      padding: 16px;
-      color: #dce8f7;
-    }
-
-    .privacy-note strong {
-      display: block;
-      color: #fff;
-      margin-bottom: 5px;
     }
 
     main {
@@ -1526,14 +1509,6 @@
           "@type": "Answer",
           "text": "Credit card minimums can be close to the monthly interest charge. When most of the payment goes to interest instead of principal, the balance may fall slowly or fail to amortize in a reasonable time."
         }
-      },
-      {
-        "@type": "Question",
-        "name": "Does this calculator store my debt numbers?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
-        }
       }
     ]
   }
@@ -1576,10 +1551,6 @@
         <p class="eyebrow">Card Payoff Calculator</p>
         <h1>Credit Card Payoff Calculator</h1>
         <p class="subtitle">Estimate your debt-free date, total interest, target-date payment, and savings from extra monthly payments across up to 20 credit cards and installment loans.</p>
-      </div>
-      <div class="privacy-note" aria-label="Privacy note">
-        <strong>Private by design</strong>
-        Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.
       </div>
     </div>
   </header>
@@ -1721,7 +1692,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice · Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
           <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
@@ -1859,10 +1830,6 @@
           <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
         </details>
         <details>
-          <summary>Does this calculator store my debt numbers?</summary>
-          <p>Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
-        </details>
-        <details>
           <summary>Can I use this offline?</summary>
           <p>Yes. This is a single self-contained HTML file with client-side calculations. After the page is loaded or saved, it can run without a network connection.</p>
         </details>
@@ -1946,7 +1913,7 @@
 
     <section id="about" class="panel content-section about-section">
       <h2>About This Calculator</h2>
-      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies.</p>
       <p>The avalanche and snowball methods are the two most widely recommended debt payoff strategies by consumer finance educators. This tool lets you compare them side by side alongside your current minimum-payment path so you can see the real cost of each choice.</p>
       <p>Built and maintained by the Card Payoff Calculator team. Last updated: May 2026. Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a> — we review all feedback.</p>
       <p class="disclaimer-notice">This calculator is for educational and planning purposes only. Results are estimates based on the inputs you provide and standard amortization math. This is not financial advice. For personalized guidance, consult a certified financial planner or credit counselor.</p>
