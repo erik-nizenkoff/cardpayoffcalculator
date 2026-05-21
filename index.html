@@ -1338,7 +1338,7 @@
                   <th>Balance ($)</th>
                   <th>Interest Rate (%)</th>
                   <th>Fixed Monthly Payment ($)</th>
-                  <th>Remaining Term (months)</th>
+                  <th>Remaining Term (months, optional)</th>
                   <th aria-label="Remove loan"></th>
                 </tr>
               </thead>
@@ -1891,7 +1891,7 @@
           '<td class="amount-cell" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
           '<td class="amount-cell" data-label="Interest Rate (%)"><input data-field="rate" aria-label="Interest rate" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.rate != null ? data.rate : "") + '" placeholder="6.5"></td>' +
           '<td class="amount-cell" data-label="Fixed Monthly Payment ($)"><input data-field="payment" aria-label="Fixed monthly payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.payment != null ? data.payment : "") + '" placeholder="300"></td>' +
-          '<td class="amount-cell" data-label="Remaining Term (months)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48"></td>' +
+          '<td class="amount-cell" data-label="Remaining Term (months, optional)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48 (optional)"></td>' +
           '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove-loan" aria-label="Remove loan" title="Remove loan">×</button></td>';
         loanRows.appendChild(tr);
         if (customOrder.indexOf(id) === -1) customOrder.push(id);
@@ -1903,20 +1903,24 @@
 
       function readLoans() {
         return Array.prototype.slice.call(loanRows.querySelectorAll("tr")).map(function (row, index) {
+          var balanceVal = getLoanField(row, "balance");
+          var rateVal = getLoanField(row, "rate");
+          var paymentVal = getLoanField(row, "payment");
+          var termVal = getLoanField(row, "term");
           var loan = {
             id: row.dataset.id,
             name: getLoanField(row, "name") || "Loan " + (index + 1),
-            balance: Number(getLoanField(row, "balance")),
-            rate: Number(getLoanField(row, "rate")),
-            payment: Number(getLoanField(row, "payment")),
-            term: Number(getLoanField(row, "term"))
+            balance: Number(balanceVal),
+            rate: rateVal === "" ? NaN : Number(rateVal),
+            payment: paymentVal === "" ? NaN : Number(paymentVal),
+            term: termVal === "" ? null : Number(termVal)
           };
-          if (loan.payment > 0 && loan.term > 0 && loan.balance > 0 && loan.payment * loan.term < loan.balance * 0.5) {
+          if (loan.payment > 0 && loan.term != null && !isNaN(loan.term) && loan.term > 0 && loan.balance > 0 && loan.payment * loan.term < loan.balance * 0.5) {
             loan.warning = loan.name + ": fixed payment may be too low to pay off the loan within the remaining term.";
           }
           return loan;
         }).filter(function (loan) {
-          return loan.balance > 0 && loan.payment > 0;
+          return loan.balance > 0 || loan.payment > 0 || !isNaN(loan.rate) || (loan.term != null && !isNaN(loan.term));
         });
       }
 
@@ -1961,6 +1965,16 @@
         return "";
       }
 
+      function validateLoans(loans) {
+        for (var i = 0; i < loans.length; i += 1) {
+          var loan = loans[i];
+          if (isNaN(loan.rate) || loan.rate < 0) return loan.name + ": enter an interest rate (use 0 for a 0% loan)";
+          if (isNaN(loan.payment) || loan.payment <= 0) return loan.name + ": enter a fixed monthly payment above $0";
+          if (isNaN(loan.balance) || loan.balance <= 0) return loan.name + ": enter a balance above $0";
+        }
+        return "";
+      }
+
       function normalizeCards(cards) {
         return cards.map(function (card, index) {
           return {
@@ -1989,7 +2003,7 @@
             apr: Math.max(0, Number(loan.rate || 0)),
             statedMinimum: roundCents(Math.max(0, Number(loan.payment || 0))),
             fixedPayment: roundCents(Math.max(0, Number(loan.payment || 0))),
-            term: Math.max(1, Number(loan.term || 1)),
+            term: loan.term == null || isNaN(loan.term) ? null : Math.max(1, Number(loan.term)),
             warning: loan.warning || "",
             introApr: null,
             introMonths: null,
@@ -2524,14 +2538,14 @@
 
       function drawComboChart(result) {
         if (!comboCanvas || !comboCanvas.getContext) return;
-        var currentMonths = result.timeline.length;
         var currentWidth = comboCanvas.parentElement ? comboCanvas.parentElement.getBoundingClientRect().width : 0;
-        if (comboCanvas._lastMonths === currentMonths && comboCanvas._lastWidth === currentWidth && comboCanvas._lastMethod === result.method) {
+        var firstPoint = result.timeline[0];
+        var lastPoint = result.timeline[result.timeline.length - 1];
+        var sig = result.timeline.length + "|" + result.method + "|" + result.startingBalance + "|" + (firstPoint ? firstPoint.endingBalance : "") + "|" + (lastPoint ? lastPoint.endingBalance : "") + "|" + currentWidth;
+        if (sig === comboCanvas._lastSig) {
           return;
         }
-        comboCanvas._lastMonths = currentMonths;
-        comboCanvas._lastWidth = currentWidth;
-        comboCanvas._lastMethod = result.method;
+        comboCanvas._lastSig = sig;
         setCanvasSize(comboCanvas, 360);
         var dpr = window.devicePixelRatio;
         var ctx = comboCanvas.getContext("2d");
@@ -2800,6 +2814,7 @@
         var cards = readCards();
         var loans = readLoans();
         var error = validateCards(cards, loans);
+        if (!error) error = validateLoans(loans);
         var method = methodInput.value;
         var extra = Math.max(0, Number(extraInput.value || 0));
 
