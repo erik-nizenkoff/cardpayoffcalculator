@@ -399,6 +399,17 @@
       margin-top: 0;
     }
 
+    .result-actions {
+      align-items: center;
+    }
+
+    .copy-status {
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 700;
+      min-height: 1.2em;
+    }
+
     .hint {
       margin: 5px 0 0;
       color: var(--muted);
@@ -1345,6 +1356,8 @@
       .calc-method-link,
       #toggleSchedule,
       #printButton,
+      #copySummaryButton,
+      #copySummaryStatus,
       #scheduleLoading {
         display: none !important;
       }
@@ -1682,7 +1695,11 @@
             <h2>Your Payoff Plan</h2>
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
           </div>
-          <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
+          <div class="button-row result-actions">
+            <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
+            <button type="button" class="secondary" id="copySummaryButton" disabled>Copy results summary</button>
+            <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
+          </div>
         </div>
 
         <div id="emptyResults" class="results-empty hidden">Enter at least one card with a balance, APR, and minimum payment to see live results.</div>
@@ -2011,6 +2028,8 @@
       var customOrderPanel = document.getElementById("customOrderPanel");
       var customOrderList = document.getElementById("customOrderList");
       var printButton = document.getElementById("printButton");
+      var copySummaryButton = document.getElementById("copySummaryButton");
+      var copySummaryStatus = document.getElementById("copySummaryStatus");
       var mobileSummaryBar = document.getElementById("mobileSummaryBar");
       var mobilePayoffDate = document.getElementById("mobilePayoffDate");
       var mobileTotalInterest = document.getElementById("mobileTotalInterest");
@@ -2023,6 +2042,7 @@
       var updateTimer = null;
       var printPreviousShowAll = false;
       var lastResult = null;
+      var copyStatusTimer = null;
       var lastCards = [];
       var lastLoans = [];
       var customOrder = [];
@@ -2294,7 +2314,69 @@
         renderCriticalWarnings([]);
         renderWarnings([]);
         lastResult = null;
+        setCopySummaryAvailable(false);
         hideMobileSummary();
+      }
+
+      function setCopySummaryAvailable(isAvailable) {
+        if (copySummaryButton) copySummaryButton.disabled = !isAvailable;
+        setCopySummaryStatus("");
+      }
+
+      function setCopySummaryStatus(message) {
+        if (!copySummaryStatus) return;
+        copySummaryStatus.textContent = message || "";
+        if (copyStatusTimer) clearTimeout(copyStatusTimer);
+        if (message) {
+          copyStatusTimer = setTimeout(function () {
+            copySummaryStatus.textContent = "";
+            copyStatusTimer = null;
+          }, 2200);
+        }
+      }
+
+      function buildResultsSummary(result) {
+        if (!result) return "";
+        var payoffDate = result.capped ? "50+ years (calculator limit reached)" : addMonths(startInput.value, result.months - 1);
+        return [
+          "Card Payoff Calculator summary",
+          "Debt-free date: " + payoffDate,
+          "Total interest: " + money(result.totalInterest),
+          "Monthly payment: " + money(result.monthlyPayment),
+          "Time to payoff: " + duration(result.months, result.capped)
+        ].join("\n");
+      }
+
+      function fallbackCopyText(text) {
+        var textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          return document.execCommand("copy");
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      }
+
+      function copyResultsSummary() {
+        var summary = buildResultsSummary(lastResult);
+        if (!summary) {
+          setCopySummaryStatus("No results yet");
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(summary).then(function () {
+            setCopySummaryStatus("Copied");
+          }).catch(function () {
+            setCopySummaryStatus(fallbackCopyText(summary) ? "Copied" : "Copy failed");
+          });
+          return;
+        }
+        setCopySummaryStatus(fallbackCopyText(summary) ? "Copied" : "Copy failed");
       }
 
       function validateCards(cards, loans) {
@@ -3430,6 +3512,7 @@
         var result = simulate(cards, { method: method, extraPayment: extra }, loans);
         var baseline = simulate(cards, { method: "minimum", extraPayment: 0 }, loans);
         lastResult = result;
+        setCopySummaryAvailable(true);
 
         totalBalanceEl.textContent = money(result.startingBalance);
         totalMinimumsEl.textContent = money(result.startingMinimumTotal);
@@ -3604,6 +3687,10 @@
       printButton.addEventListener("click", function () {
         window.print();
       });
+
+      if (copySummaryButton) {
+        copySummaryButton.addEventListener("click", copyResultsSummary);
+      }
 
       window.addEventListener("beforeprint", function () {
         printPreviousShowAll = showAllSchedule;
