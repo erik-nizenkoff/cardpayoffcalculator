@@ -134,6 +134,18 @@
       transform: none;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .shell {
       width: min(1180px, calc(100% - 32px));
       margin: 0 auto;
@@ -450,11 +462,24 @@
       min-height: 1.2em;
     }
 
+    .copy-helper {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.4;
+    }
+
     .privacy-note {
       margin: 10px 0 0;
       color: var(--muted);
       font-size: .82rem;
       line-height: 1.45;
+    }
+
+    .privacy-note a,
+    .footer-update a {
+      color: var(--navy);
+      font-weight: 800;
     }
 
     .sample-data-banner {
@@ -483,6 +508,13 @@
       margin: 5px 0 0;
       color: var(--muted);
       font-size: .84rem;
+    }
+
+    .field-helper {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
     }
 
     .settings-grid {
@@ -1023,6 +1055,17 @@
       margin-bottom: 4px;
     }
 
+    .option-disclaimer {
+      margin: 8px 0 12px;
+      border: 1px solid #f6c177;
+      border-radius: 8px;
+      background: #fff8ed;
+      color: #7b341e;
+      padding: 10px 12px;
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
     .option-controls {
       margin: 12px 0;
       border: 1px solid var(--line);
@@ -1088,9 +1131,20 @@
       background: #fff;
     }
 
-    .option-card.best-row {
-      background: #f1fbf5;
-      border-color: #bfe7cf;
+    .option-card.modeled-lowest {
+      border-color: #9fc5ff;
+      background: #f7fbff;
+    }
+
+    .option-badge {
+      display: inline-flex;
+      margin-bottom: 7px;
+      border-radius: 999px;
+      background: #e8f2ff;
+      color: #173d70;
+      padding: 4px 8px;
+      font-size: .72rem;
+      font-weight: 900;
     }
 
     .option-card h4 {
@@ -1111,6 +1165,15 @@
       margin: 8px 0 0;
       color: var(--muted);
       font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .option-risk {
+      margin: 8px 0 0;
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      color: #7b341e;
+      font-size: .78rem;
       line-height: 1.45;
     }
 
@@ -1199,6 +1262,28 @@
       align-items: start;
       gap: 12px;
       margin-bottom: 12px;
+    }
+
+    .schedule-summary {
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 900;
+      list-style-position: inside;
+    }
+
+    .schedule-summary h2 {
+      display: inline;
+      margin-right: 8px;
+    }
+
+    .schedule-summary span {
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    .schedule-body {
+      margin-top: 12px;
     }
 
     .schedule-head p {
@@ -1681,20 +1766,26 @@
       }
 
       .mobile-summary-bar {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         background: var(--navy);
         color: #fff;
-        padding: 10px 16px;
-        min-height: 72px;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
+        padding: 10px 14px;
+        min-height: 92px;
+        gap: 8px;
+        align-items: stretch;
         z-index: 100;
         box-shadow: 0 -4px 12px rgba(0,0,0,0.18);
+      }
+
+      .mobile-summary-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
       }
 
       .mobile-summary-bar a {
@@ -1702,6 +1793,7 @@
         align-items: center;
         justify-content: center;
         min-height: 38px;
+        width: 100%;
         border-radius: 7px;
         background: #4ade80;
         color: #092514;
@@ -1956,7 +2048,7 @@
           <div>
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
-            <p class="privacy-note">No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve the tool.</p>
+            <p class="privacy-note">No card numbers or logins. We may store numeric calculator inputs without names or identifiers to improve the tool. <a href="privacy.html">Privacy details</a>.</p>
           </div>
           <div class="button-row">
             <button type="button" class="secondary" id="sampleButton">Load Sample</button>
@@ -1966,7 +2058,10 @@
 
         <div id="sampleDataBanner" class="sample-data-banner hidden">
           <span><strong>Sample data loaded.</strong> Replace it with your cards to get your real payoff plan.</span>
-          <button type="button" id="sampleEnterCardsButton">Replace sample with my cards</button>
+          <div class="button-row">
+            <button type="button" id="sampleEnterCardsButton">Replace sample with my cards</button>
+            <button type="button" class="secondary" id="keepSampleButton">Use sample for now</button>
+          </div>
         </div>
 
         <div class="table-scroll">
@@ -1983,6 +2078,7 @@
             <tbody id="cardRows"></tbody>
           </table>
         </div>
+        <p class="field-helper">Enter balances and current minimums in dollars. APR and intro APR fields are annual percentages.</p>
 
         <div class="button-row">
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
@@ -2094,16 +2190,17 @@
             <summary>Share, export, or copy results</summary>
             <div class="button-row result-actions">
               <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
-              <button type="button" class="secondary" id="copyLinkButton" disabled>Copy share link</button>
-              <button type="button" class="secondary" id="copySummaryButton" disabled>Copy results summary</button>
+              <button type="button" class="secondary" id="copyLinkButton" disabled aria-describedby="copyActionsHelp">Copy share link</button>
+              <button type="button" class="secondary" id="copySummaryButton" disabled aria-describedby="copyActionsHelp">Copy results summary</button>
               <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
             </div>
+            <p id="copyActionsHelp" class="copy-helper">Share and copy controls activate after valid results are shown.</p>
           </details>
 
           <div class="result-quick-actions" aria-label="Result shortcuts">
-            <a href="#payoffOptions">Compare options</a>
             <a href="#comparisonSection">Compare methods</a>
             <a href="#monthPlan">Month 1 plan</a>
+            <a href="#payoffOptions">Optional options</a>
             <a href="#methodology">Methodology</a>
           </div>
 
@@ -2118,6 +2215,8 @@
               <div class="metric"><span>Estimated Starting Minimums</span><strong id="totalMinimums">$0</strong></div>
               <div class="metric"><span>Months to Payoff</span><strong id="payoffMonths">-</strong></div>
               <div class="metric"><span>Monthly Payment</span><strong id="monthlyPayment">$0</strong></div>
+              <div class="metric"><span>First Payoff Target</span><strong id="firstTarget">-</strong></div>
+              <div class="metric"><span>Total Paid</span><strong id="totalPaid">$0</strong></div>
             </div>
             <p class="minimum-note">Estimated minimums use the greater of your entered minimum, $25, or 1% of balance plus monthly interest.</p>
 
@@ -2130,28 +2229,6 @@
               <div id="decisionRows" class="decision-rows"></div>
             </div>
           </div>
-
-          <div id="payoffOptions" class="payoff-options result-section">
-            <div class="section-head">
-              <div>
-                <h3>Compare Payoff Options</h3>
-                <p>Model a balance transfer or consolidation loan against your current monthly payment.</p>
-              </div>
-            </div>
-            <details id="payoffOptionControls" class="option-controls">
-              <summary>Edit balance transfer / loan assumptions</summary>
-              <div id="optionScenarioList" class="option-settings-grid"></div>
-              <div class="option-actions">
-                <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
-                <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
-              </div>
-            </details>
-            <div id="payoffOptionRows" class="option-card-grid"></div>
-            <p id="payoffOptionNote" class="option-note"></p>
-          </div>
-
-          <div class="summary-line"><span>First payoff target</span><strong id="firstTarget">-</strong></div>
-          <div class="summary-line"><span>Total paid</span><strong id="totalPaid">$0</strong></div>
 
           <div id="monthPlan" class="month-plan hidden">
             <h3>Month 1 Payment Breakdown</h3>
@@ -2171,6 +2248,26 @@
             </div>
             <p class="scroll-hint">Scroll sideways to compare the full month-one table.</p>
           </div>
+
+          <div id="payoffOptions" class="payoff-options result-section">
+            <div class="section-head">
+              <div>
+                <h3>Optional Payoff Scenarios</h3>
+                <p>Model a balance transfer or consolidation loan after reviewing your current payoff plan.</p>
+              </div>
+            </div>
+            <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
+            <details id="payoffOptionControls" class="option-controls">
+              <summary>Edit balance transfer / loan assumptions</summary>
+              <div id="optionScenarioList" class="option-settings-grid"></div>
+              <div class="option-actions">
+                <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
+                <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
+              </div>
+            </details>
+            <div id="payoffOptionRows" class="option-card-grid"></div>
+            <p id="payoffOptionNote" class="option-note"></p>
+          </div>
         </div>
         <div class="assumptions-note">Estimates assume fixed APR, no new charges, and payments made on the same day each month. Actual payoff may vary based on issuer minimum rules, fees, and payment timing.</div>
       </aside>
@@ -2184,7 +2281,8 @@
         </div>
       </div>
       <div class="chart-box" style="position:relative">
-        <canvas id="comboChart" class="chart-canvas" style="height:360px" aria-label="Combined chart: stacked bars per debt and total balance line over time"></canvas>
+        <canvas id="comboChart" class="chart-canvas" style="height:360px" aria-label="Combined chart: stacked bars per debt and total balance line over time" aria-describedby="comboChartDescription"></canvas>
+        <p id="comboChartDescription" class="sr-only">The chart visualizes each debt balance over time as stacked bars and overlays the total remaining balance as a line. The detailed payoff schedule below provides the same information in table form.</p>
         <div id="comboTooltip" class="chart-tooltip hidden"></div>
       </div>
       <div id="chartLegend" class="chart-legend" style="margin-top:10px"></div>
@@ -2218,11 +2316,12 @@
       </details>
     </section>
 
-    <section class="panel schedule-panel">
+    <details class="panel schedule-panel" id="schedulePanel">
+      <summary class="schedule-summary"><h2>Month-by-Month Schedule</h2><span id="scheduleNote">First 24 months shown by default.</span></summary>
+      <div class="schedule-body">
       <div class="schedule-head">
         <div>
-          <h2>Month-by-Month Schedule</h2>
-          <p id="scheduleNote">First 24 months shown by default.</p>
+          <p>Detailed payment, interest, principal, and ending balance by month.</p>
         </div>
         <button type="button" class="secondary" id="toggleSchedule">Show All</button>
       </div>
@@ -2244,7 +2343,8 @@
       </div>
       <p class="scroll-hint">Scroll sideways to view the full schedule.</p>
       <p id="scheduleLoading" class="hint hidden" aria-live="polite">Loading...</p>
-    </section>
+      </div>
+    </details>
 
     <section class="content-grid">
       <div class="panel content-section">
@@ -2366,7 +2466,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve this tool. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve this tool. · Not financial advice</div>
     </div>
   </footer>
 
@@ -2378,7 +2478,7 @@
         <span id="mobileMonthlyPayment">$0/mo</span>
       </div>
     </div>
-    <a href="#resultsPanel">View full payoff plan ↓</a>
+    <a id="mobileSummaryLink" href="#resultsPanel">View full payoff plan ↓</a>
   </div>
 
   <script>
@@ -2410,6 +2510,7 @@
       var extraInput = document.getElementById("extraPayment");
       var startInput = document.getElementById("startMonth");
       var targetInput = document.getElementById("targetMonth");
+      var resultsPanel = document.getElementById("resultsPanel");
       var emptyResults = document.getElementById("emptyResults");
       var resultsContent = document.getElementById("resultsContent");
       var totalBalanceEl = document.getElementById("totalBalance");
@@ -2445,6 +2546,7 @@
       var sampleDataBanner = document.getElementById("sampleDataBanner");
       var enterCardsButton = document.getElementById("enterCardsButton");
       var sampleEnterCardsButton = document.getElementById("sampleEnterCardsButton");
+      var keepSampleButton = document.getElementById("keepSampleButton");
       var dismissHint = document.getElementById("dismissHint");
       var methodDescription = document.getElementById("methodDescription");
       var customOrderPanel = document.getElementById("customOrderPanel");
@@ -2453,23 +2555,25 @@
       var copyLinkButton = document.getElementById("copyLinkButton");
       var copySummaryButton = document.getElementById("copySummaryButton");
       var copySummaryStatus = document.getElementById("copySummaryStatus");
+      var copyActionsHelp = document.getElementById("copyActionsHelp");
       var mobileSummaryBar = document.getElementById("mobileSummaryBar");
       var mobilePayoffDate = document.getElementById("mobilePayoffDate");
       var mobileTotalInterest = document.getElementById("mobileTotalInterest");
       var mobileMonthlyPayment = document.getElementById("mobileMonthlyPayment");
+      var mobileSummaryLink = document.getElementById("mobileSummaryLink");
 
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
         clearAllButton, loadExampleButton, formError, methodInput, extraInput, startInput,
-        targetInput, emptyResults, resultsContent, totalBalanceEl, totalMinimumsEl,
+        targetInput, resultsPanel, emptyResults, resultsContent, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
-        scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, sampleEnterCardsButton, dismissHint, methodDescription, customOrderPanel,
-        customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus,
-        mobileSummaryBar, mobilePayoffDate, mobileTotalInterest, mobileMonthlyPayment
+        scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
+        customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
+        mobileSummaryBar, mobilePayoffDate, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink
       ];
 
       if (requiredElements.some(function (element) { return !element; })) {
@@ -2636,7 +2740,7 @@
           '<td class="card-summary-cell" colspan="5"><button type="button" class="card-summary-line" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false"><span class="card-summary-text"></span><span class="row-expand-hint">Tap to edit</span><span class="row-chevron">›</span></button></td>' +
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">+ Intro APR</button>' +
+          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">Promo APR</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
           '<td class="amount-cell minimum-cell card-row-detail" data-label="Current Minimum Payment ($)"><input data-field="minimum" aria-label="Current minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
@@ -2647,7 +2751,7 @@
           var introBtn = tr.querySelector("[data-action='toggle-intro']");
           if (introDiv && introBtn) {
             introDiv.classList.remove("hidden");
-            introBtn.textContent = "- Intro APR";
+            introBtn.textContent = "Hide promo APR";
             introBtn.setAttribute("aria-expanded", "true");
           }
         }
@@ -2808,6 +2912,12 @@
       function setCopySummaryAvailable(isAvailable) {
         if (copyLinkButton) copyLinkButton.disabled = !isAvailable;
         if (copySummaryButton) copySummaryButton.disabled = !isAvailable;
+        var helper = isAvailable
+          ? "Share links include the current numeric inputs; copy actions are ready."
+          : "Share and copy controls activate after valid results are shown.";
+        if (copyActionsHelp) copyActionsHelp.textContent = helper;
+        if (copyLinkButton) copyLinkButton.title = isAvailable ? "Copy a link to these calculator inputs" : "Enter valid debt inputs to enable share links";
+        if (copySummaryButton) copySummaryButton.title = isAvailable ? "Copy a plain-English summary of these results" : "Enter valid debt inputs to enable summary copy";
         setCopySummaryStatus("");
       }
 
@@ -3583,7 +3693,17 @@
         }
         var result = row.result;
         var savings = roundCents(row.currentCost - row.totalCost);
-        return '<div class="option-card ' + (row.totalCost === bestCost ? "best-row" : "") + '">' +
+        var isLowest = row.totalCost === bestCost;
+        var risk = "";
+        if (row.type === "balance-transfer") {
+          risk = "Approval and transfer limit are not guaranteed. Fees, lower approved limits, post-promo APR, missed payments, or new purchases can erase savings.";
+        } else if (row.type === "consolidation-loan") {
+          risk = "Approval, APR, amount, fees, and term are not guaranteed. A longer term can reduce monthly pressure while keeping debt around longer.";
+        } else {
+          risk = "Current-plan baseline assumes no new credit product and no new charges.";
+        }
+        return '<div class="option-card ' + (isLowest ? "modeled-lowest" : "") + '">' +
+          (isLowest ? '<span class="option-badge">Lowest modeled cost</span>' : "") +
           "<h4>" + escapeHtml(row.name) + "</h4>" +
           (row.amount != null ? '<div class="summary-line"><span>Amount moved</span><strong>' + money(row.amount) + "</strong></div>" : "") +
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
@@ -3591,6 +3711,7 @@
           '<div class="summary-line"><span>Interest + fees</span><strong>' + money(row.totalCost) + "</strong></div>" +
           '<div class="summary-line"><span>Savings vs current</span><strong>' + (savings >= 0 ? money(savings) : "-" + money(Math.abs(savings))) + "</strong></div>" +
           '<p class="option-watchout">' + escapeHtml(row.watchout || "") + "</p>" +
+          '<p class="option-risk">' + escapeHtml(risk) + "</p>" +
           "</div>";
       }
 
@@ -3611,6 +3732,7 @@
 
         var rows = [
           {
+            type: "current",
             name: "Current plan",
             result: currentResult,
             totalCost: currentCost,
@@ -3643,6 +3765,7 @@
             }];
             var btResult = simulateWithMonthlyBudget(refinanced.remainingCards.concat(btCards), loans, currentMonthlyBudget);
             rows.push({
+              type: scenario.type,
               name: scenario.name,
               amount: refinanced.amount,
               result: btResult,
@@ -3668,6 +3791,7 @@
           }]);
           var consolidationResult = simulateWithMonthlyBudget(refinanced.remainingCards, consolidationLoans, currentMonthlyBudget);
           rows.push({
+            type: scenario.type,
             name: scenario.name,
             amount: refinanced.amount,
             result: consolidationResult,
@@ -3685,7 +3809,7 @@
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
         payoffOptionNote.textContent = scenarios.length
-          ? "Default amounts use the full current credit card balance. Partial amounts apply to highest-APR card balances first. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
+          ? "Default amounts use the full current credit card balance. Partial amounts apply to highest-APR card balances first. Existing installment loans stay in the plan. Fees are counted in Interest + Fees. Treat the lowest modeled cost as a planning comparison, not a product recommendation."
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
@@ -4026,7 +4150,9 @@
 
       window.addEventListener("resize", function () {
         if (lastResult) drawCharts(lastResult);
+        updateMobileSummaryContext();
       });
+      window.addEventListener("scroll", updateMobileSummaryContext, { passive: true });
 
       // ── Main update ───────────────────────────────────────────────────────
       function setError(message) {
@@ -4043,6 +4169,25 @@
         mobileSummaryBar.classList.add("hidden");
       }
 
+      function updateMobileSummaryContext() {
+        if (!mobileSummaryBar || !mobileSummaryLink || mobileSummaryBar.classList.contains("hidden")) return;
+        if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
+        var resultsRect = resultsPanel ? resultsPanel.getBoundingClientRect() : null;
+        var optionsRect = payoffOptions ? payoffOptions.getBoundingClientRect() : null;
+        if (optionsRect && optionsRect.top < window.innerHeight * 0.72 && optionsRect.bottom > 90) {
+          mobileSummaryLink.textContent = "Edit options ↓";
+          mobileSummaryLink.setAttribute("href", "#payoffOptions");
+          return;
+        }
+        if (resultsRect && resultsRect.top < 80 && resultsRect.bottom > 140) {
+          mobileSummaryLink.textContent = "Edit cards ↑";
+          mobileSummaryLink.setAttribute("href", "#calculatorForm");
+          return;
+        }
+        mobileSummaryLink.textContent = "View full payoff plan ↓";
+        mobileSummaryLink.setAttribute("href", "#resultsPanel");
+      }
+
       function updateMobileSummary(result) {
         if (!result) {
           hideMobileSummary();
@@ -4052,6 +4197,7 @@
         mobileTotalInterest.textContent = money(result.totalInterest) + " interest";
         mobileMonthlyPayment.textContent = "Payment " + money(result.monthlyPayment) + "/mo";
         mobileSummaryBar.classList.remove("hidden");
+        updateMobileSummaryContext();
       }
 
       function scheduleUpdate() {
@@ -4631,7 +4777,7 @@
           var expanded = toggleBtn.getAttribute("aria-expanded") === "true";
           if (introDiv) introDiv.classList.toggle("hidden", expanded);
           toggleBtn.setAttribute("aria-expanded", String(!expanded));
-          toggleBtn.textContent = expanded ? "+ Intro APR" : "- Intro APR";
+          toggleBtn.textContent = expanded ? "Promo APR" : "Hide promo APR";
         }
       });
 
@@ -4687,6 +4833,7 @@
 
       bind(enterCardsButton, "click", replaceSampleWithCards);
       bind(sampleEnterCardsButton, "click", replaceSampleWithCards);
+      bind(keepSampleButton, "click", dismissFirstRunHint);
 
       document.addEventListener("focusin", function (event) {
         if (event.target && event.target.closest && event.target.closest("#calculatorForm")) {

@@ -18,6 +18,8 @@ Product decisions and requested features are maintained in [SPEC.md](SPEC.md). U
 
 Static HTML + CSS + vanilla JS. Core calculations run client-side. No accounts or backend dependency for calculations; current usage/data disclosure is maintained in the page footer and product spec.
 
+Privacy details live in [privacy.html](privacy.html).
+
 ## Development
 
 Open `index.html` in a browser — no build step required.

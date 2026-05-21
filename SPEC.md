@@ -101,6 +101,14 @@ Recent UX QA fixes should remain part of the product baseline:
 - The primary result-side action should be visually obvious on desktop as well as mobile.
 - Sample-data messaging should be consolidated near the card-entry panel so the first screen has one clear sample-state instruction.
 - Mobile result bars should label compact monetary metrics clearly.
+- Mobile result bars should be context-aware: before results they can link to the payoff plan; inside results they should point back to editing or relevant comparison controls.
+- Results hierarchy should keep payoff date, interest, total paid, first target, minimums, months, and monthly payment together before optional deeper sections.
+- Balance transfer and consolidation loan comparisons must be framed as optional scenarios, not recommendations, and must always show cautions about approval, transfer/loan limits, fees, post-promo APR risk, and new debt behavior.
+- The project should maintain a dedicated privacy page before acquisition, affiliate testing, or broader traffic work.
+- Desktop card inputs should include compact helper text for dollar and percentage fields.
+- Long schedules should be collapsed by default behind a clear "View schedule" affordance.
+- Copy/share controls should explain when they are disabled and confirm when a copy action succeeds.
+- Chart content should include screen-reader-accessible summary text in addition to canvas visuals.
 
 ## Intro APR UX
 
@@ -108,13 +116,13 @@ Intro APR controls must not be hidden behind a horizontal scrollbar. The intro-r
 
 ## Data Disclosure And Privacy Placement
 
-Do not repeat the Supabase/data disclosure throughout the page. The current UX decision is footer-only disclosure, kept low-emphasis.
+Do not repeat the Supabase/data disclosure throughout the page. Keep collection-point copy concise and low-emphasis, keep footer copy short, and link to a dedicated privacy page for details.
 
 The results area should use concise estimate language only:
 
 - Estimates only - Not financial advice
 
-The footer should contain the data disclosure. If the project later adds accounts, saved plans, email capture, user profiles, payments, or personally identifying data collection, revisit this decision and add a proper privacy page and collection-point notice.
+The footer should contain the short data disclosure plus a privacy-page link. If the project later adds accounts, saved plans, email capture, user profiles, payments, personally identifying data collection, affiliate links, or ad/marketing pixels, revisit this decision before launch.
 
 Preferred direction: reduce collection to aggregate/non-identifying metrics where practical rather than adding more prominent repeated disclosure.
 
