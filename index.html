@@ -1645,7 +1645,7 @@
 
           <div class="field-stack">
             <label for="extraPayment">Extra Monthly Payment ($)</label>
-            <input id="extraPayment" type="number" inputmode="decimal" min="0" step="25" value="250">
+            <input id="extraPayment" aria-label="Extra monthly payment" type="number" inputmode="decimal" min="0" step="25" value="250">
             <p class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
@@ -1656,12 +1656,12 @@
           <div class="settings-grid">
             <div class="field-stack">
               <label for="startMonth">Start Month</label>
-              <input id="startMonth" type="month">
+              <input id="startMonth" aria-label="Start month" type="month">
             </div>
 
             <div class="field-stack">
               <label for="targetMonth">Target Payoff Date</label>
-              <input id="targetMonth" type="month">
+              <input id="targetMonth" aria-label="Target payoff date" type="month">
               <p class="hint">Optional. Shows the monthly payment needed by that month.</p>
             </div>
           </div>
@@ -2163,8 +2163,8 @@
           '<td class="amount-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Minimum ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
           '<td class="intro-cell card-row-detail" data-label="Promo"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
-          '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
-          '<label>Months<input data-field="introMonths" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
+          '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
+          '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
           '<td class="remove-cell card-row-detail" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
