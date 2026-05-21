@@ -76,6 +76,7 @@
       padding: 9px 14px;
       box-shadow: 0 2px 8px rgba(39,103,73,0.3);
       transition: all 0.15s ease;
+      white-space: nowrap;
     }
 
     button:hover,
@@ -250,6 +251,12 @@
     .table-scroll {
       width: 100%;
       overflow-x: auto;
+    }
+
+    .table-scroll:focus-visible {
+      outline: 3px solid rgba(59,130,246,0.35);
+      outline-offset: 2px;
+      border-radius: 6px;
     }
 
     table {
@@ -2098,7 +2105,7 @@
           <div>
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
-            <p class="privacy-note">No card numbers or logins. We may store numeric calculator inputs without names or identifiers to improve the tool. <a href="privacy.html">Privacy details</a>.</p>
+            <p class="privacy-note">No card numbers or logins. We may store numeric calculator inputs without names or identifiers to improve the tool. <a href="privacy.html">Privacy details</a></p>
           </div>
           <div class="button-row">
             <button type="button" class="secondary" id="sampleButton">Load Sample</button>
@@ -2122,7 +2129,7 @@
                 <th>Balance ($)</th>
                 <th>APR (%)</th>
                 <th>Current Minimum Payment ($)</th>
-                <th aria-label="Remove card"></th>
+                <th><span class="sr-only">Remove card</span></th>
               </tr>
             </thead>
             <tbody id="cardRows"></tbody>
@@ -2154,7 +2161,7 @@
                   <th>Interest Rate (%)</th>
                   <th>Fixed Monthly Payment ($)</th>
                   <th>Remaining Term (months, optional)</th>
-                  <th aria-label="Remove loan"></th>
+                  <th><span class="sr-only">Remove loan</span></th>
                 </tr>
               </thead>
               <tbody id="loanRows"></tbody>
@@ -2206,7 +2213,7 @@
         <div id="formError" class="notice error hidden" role="alert"></div>
       </form>
 
-      <aside id="resultsPanel" class="panel results-panel">
+      <section id="resultsPanel" class="panel results-panel" aria-label="Payoff results">
         <div class="section-head">
           <div>
             <h2>Your Payoff Plan</h2>
@@ -2324,7 +2331,7 @@
           </div>
         </div>
         <div class="assumptions-note">Estimates assume fixed APR, no new charges, and payments made on the same day each month. Actual payoff may vary based on issuer minimum rules, fees, and payment timing.</div>
-      </aside>
+      </section>
     </section>
 
     <section class="panel visual-panel" aria-label="Debt payoff visualizations">
@@ -2715,6 +2722,13 @@
       function bind(element, type, handler, options) {
         if (element) element.addEventListener(type, handler, options);
       }
+
+      document.querySelectorAll(".table-scroll").forEach(function (region, index) {
+        region.setAttribute("tabindex", "0");
+        if (!region.hasAttribute("aria-label")) {
+          region.setAttribute("aria-label", "Scrollable table " + (index + 1));
+        }
+      });
 
       function addMonths(monthValue, offset) {
         var parts = String(monthValue || currentMonthValue()).split("-").map(Number);
@@ -3615,6 +3629,16 @@
         }, 0) / total;
       }
 
+      function formatPercent(value) {
+        var number = Number(value);
+        if (!Number.isFinite(number)) number = 0;
+        return String(roundCents(number)).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+      }
+
+      function currentAverageCardApr() {
+        return formatPercent(weightedCardApr(readCards()));
+      }
+
       function loanPaymentForTerm(balance, apr, months) {
         if (!months || months <= 0) return 0;
         var monthlyRate = Math.max(0, apr) / 100 / 12;
@@ -3710,7 +3734,7 @@
             optionScenarioInputHtml("Transfer Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "") +
             optionScenarioInputHtml("Intro APR (%)", "introApr", values.introApr != null ? values.introApr : 0, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
             optionScenarioInputHtml("Promo Months", "introMonths", values.introMonths != null ? values.introMonths : 18, 'type="number" min="1" max="120" step="1" inputmode="numeric"', "") +
-            optionScenarioInputHtml("Post-Promo APR (%)", "postApr", values.postApr != null ? values.postApr : "", 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "Current avg");
+            optionScenarioInputHtml("Post-Promo APR (%)", "postApr", values.postApr != null ? formatPercent(values.postApr) : currentAverageCardApr(), 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "");
         } else {
           inputs = optionScenarioInputHtml("Loan Amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
             optionScenarioInputHtml("Loan APR (%)", "apr", values.apr != null ? values.apr : 12.99, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
@@ -3789,7 +3813,7 @@
           risk = "Current-plan baseline assumes no new credit product and no new charges.";
         }
         return '<div class="option-card ' + (isLowest ? "modeled-lowest" : "") + '">' +
-          (isLowest ? '<span class="option-badge">Lowest modeled cost</span>' : "") +
+          (isLowest ? '<span class="option-badge">Lowest modeled estimate under these assumptions</span>' : "") +
           "<h4>" + escapeHtml(row.name) + "</h4>" +
           (assumptions ? '<p class="option-assumptions">' + escapeHtml(assumptions) + "</p>" : "") +
           (row.amount != null ? '<div class="summary-line"><span>Amount moved</span><strong>' + money(row.amount) + "</strong></div>" : "") +
@@ -3864,7 +3888,7 @@
               result: btResult,
               totalCost: roundCents(btResult.totalInterest + btFee),
               currentCost: currentCost,
-              assumptions: "Assumes " + money(refinanced.amount) + " transferred, " + scenario.feeRate + "% fee, " + scenario.introApr + "% intro APR for " + scenario.introMonths + " months, then " + scenario.postApr + "% APR.",
+              assumptions: "Assumes " + money(refinanced.amount) + " transferred, " + formatPercent(scenario.feeRate) + "% fee, " + formatPercent(scenario.introApr) + "% intro APR for " + scenario.introMonths + " months, then " + formatPercent(scenario.postApr) + "% APR.",
               watchout: btResult.months > scenario.introMonths
                 ? "Promo expires before payoff; post-promo APR applies."
                 : "Paid before promo expires in this model."
@@ -3891,7 +3915,7 @@
             result: consolidationResult,
             totalCost: roundCents(consolidationResult.totalInterest + loanFee),
             currentCost: currentCost,
-            assumptions: "Assumes " + money(refinanced.amount) + " loan amount, " + scenario.apr + "% APR, " + scenario.term + " months, and " + scenario.feeRate + "% origination fee.",
+            assumptions: "Assumes " + money(refinanced.amount) + " loan amount, " + formatPercent(scenario.apr) + "% APR, " + scenario.term + " months, and " + formatPercent(scenario.feeRate) + "% origination fee.",
             watchout: consolidationResult.monthlyPayment > currentMonthlyBudget + EPSILON
               ? "Required payment is higher than current plan."
               : "Fixed term; compare fees and APR before applying."
@@ -4948,14 +4972,14 @@
       bind(keepSampleButton, "click", confirmSampleData);
 
       document.addEventListener("focusin", function (event) {
-        if (event.target && event.target.closest && event.target.closest("#calculatorForm")) {
+        if (event.target && event.target.matches && event.target.matches("input, select, textarea")) {
           document.body.classList.add("input-focused");
         }
       });
       document.addEventListener("focusout", function () {
         setTimeout(function () {
           var active = document.activeElement;
-          if (!active || !active.closest || !active.closest("#calculatorForm")) {
+          if (!active || !active.matches || !active.matches("input, select, textarea")) {
             document.body.classList.remove("input-focused");
           }
         }, 0);

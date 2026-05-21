@@ -118,6 +118,13 @@ Recent UX QA fixes should remain part of the product baseline:
 - Privacy page processor language should name the current hosting, analytics, database, and font providers when they are used.
 - Shared links should restore generic card labels like Card 1, Card 2, and Card 3 while still stripping user-entered card names.
 - Result shortcut labels should use clear language such as Scenarios, not awkward internal wording like Optional options.
+- Balance-transfer post-promo APR defaults must be visible and rounded in the input, not hidden behind a blank “current average” placeholder.
+- Scenario result labels should avoid advice-like phrasing; use “Lowest modeled estimate under these assumptions” when highlighting a modeled low-cost scenario.
+- Mobile sticky summaries must hide while any calculator or scenario input is focused and must leave enough bottom padding for lower controls.
+- Horizontally scrollable table regions should be keyboard focusable and labeled.
+- Result panels should avoid unnecessary complementary landmarks, and remove-action table headers should have accessible names.
+- Privacy/support copy can use GitHub Issues during Vercel soft launch, but it should make clear a better support path is needed before custom-domain launch.
+- Privacy/support copy must be user-facing and should not expose internal implementation status such as “until email is configured.”
 
 ## Intro APR UX
 
