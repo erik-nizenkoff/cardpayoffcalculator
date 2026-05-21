@@ -2253,7 +2253,7 @@
           <div class="result-quick-actions" aria-label="Result shortcuts">
             <a href="#comparisonSection">Compare methods</a>
             <a href="#monthPlan">Month 1 plan</a>
-            <a href="#payoffOptions">Optional options</a>
+            <a href="#payoffOptions">Scenarios</a>
             <a href="#methodology">Methodology</a>
           </div>
           <p class="minimum-note">Balance-transfer and loan scenarios are optional planning estimates, not offers or recommendations. Add one only if you want to compare the assumptions.</p>
@@ -3004,7 +3004,7 @@
 
       function confirmSampleData() {
         dismissFirstRunHint();
-        setSampleMode(false);
+        setSampleMode(true);
       }
 
       function setCopySummaryStatus(message) {
@@ -3789,7 +3789,7 @@
           risk = "Current-plan baseline assumes no new credit product and no new charges.";
         }
         return '<div class="option-card ' + (isLowest ? "modeled-lowest" : "") + '">' +
-          (isLowest ? '<span class="option-badge">Lowest in this model</span>' : "") +
+          (isLowest ? '<span class="option-badge">Lowest modeled cost</span>' : "") +
           "<h4>" + escapeHtml(row.name) + "</h4>" +
           (assumptions ? '<p class="option-assumptions">' + escapeHtml(assumptions) + "</p>" : "") +
           (row.amount != null ? '<div class="summary-line"><span>Amount moved</span><strong>' + money(row.amount) + "</strong></div>" : "") +
@@ -4488,6 +4488,7 @@
 
         var cards = Array.isArray(state.cards) ? state.cards.slice(0, MAX_CARDS).map(function (card, index) {
           var item = sharedCard(card || {}, index);
+          item.name = "Card " + (index + 1);
           if (!item.balance || item.apr === null || !item.minimum) return null;
           if (item.introApr === null || !Number.isInteger(item.introMonths) || item.introMonths < MIN_INTRO_MONTHS || item.introMonths > MAX_INTRO_MONTHS) {
             delete item.introApr;
@@ -4497,6 +4498,7 @@
         }).filter(Boolean) : [];
         var loans = Array.isArray(state.loans) ? state.loans.map(function (loan, index) {
           var item = sharedLoan(loan || {}, index);
+          item.name = "Loan " + (index + 1);
           if (!item.balance || item.rate === null || !item.payment) return null;
           if (item.term != null && (!Number.isFinite(item.term) || item.term < 1)) item.term = null;
           return item;

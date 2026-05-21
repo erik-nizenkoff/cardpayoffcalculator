@@ -113,6 +113,11 @@ Recent UX QA fixes should remain part of the product baseline:
 - Optional balance-transfer and consolidation-loan scenarios should default to zero scenarios. When the user adds one, defaults can be prefilled from debt, but the app must not show product-like savings before opt-in.
 - Optional scenario cards must show their key assumptions next to results, not only inside edit controls.
 - Production metadata and contact links must match the actually live deployment. Use the Vercel canonical/contact path until the custom domain and email are configured.
+- If a user chooses to keep using the sample, sample-mode labels must remain active; only replacing or editing the sample should turn sample mode off.
+- Public soft-launch SEO basics should include robots.txt and sitemap.xml for the current live Vercel URL.
+- Privacy page processor language should name the current hosting, analytics, database, and font providers when they are used.
+- Shared links should restore generic card labels like Card 1, Card 2, and Card 3 while still stripping user-entered card names.
+- Result shortcut labels should use clear language such as Scenarios, not awkward internal wording like Optional options.
 
 ## Intro APR UX
 
@@ -135,7 +140,7 @@ Telemetry details for current launch state:
 - Plausible may record basic page-view usage when the page loads.
 - Supabase calculation telemetry should not be sent for the default sample load.
 - Supabase calculation telemetry may be sent after a user edits valid numeric calculator inputs or scenarios.
-- Privacy page copy should state retention and deletion limits plainly and identify Supabase/Plausible as service providers/processors.
+- Privacy page copy should state retention and deletion limits plainly and identify Vercel, Supabase, Plausible, and Google Fonts as service providers/processors where applicable.
 
 ## Calculation Data Payload
 

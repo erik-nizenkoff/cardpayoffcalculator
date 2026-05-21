@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cardpayoffcalculator.vercel.app/sitemap.xml
