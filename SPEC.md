@@ -69,6 +69,16 @@ Assumptions:
 
 Share links must save and restore the payoff option scenario list, including zero scenarios, multiple balance transfer scenarios, and multiple consolidation loan scenarios. A copied link should recreate the same option inputs before recalculating results.
 
+## UX QA Requirements
+
+Recent UX QA fixes should remain part of the product baseline:
+
+- Supabase/data disclosure stays footer-only; results, FAQ copy, and schema should not repeat the full disclosure.
+- Mobile users should have an obvious way to open the full payoff plan from the sticky summary.
+- The result panel should be grouped into clear sections instead of one dense stack.
+- Compare Payoff Options should have a visible shortcut near the top of the results.
+- Collapsed mobile card rows should clearly signal that tapping opens editing.
+
 ## Intro APR UX
 
 Intro APR controls must not be hidden behind a horizontal scrollbar. The intro-rate affordance should be visible near the primary APR field in the normal card-entry flow.

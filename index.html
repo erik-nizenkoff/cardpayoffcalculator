@@ -338,6 +338,10 @@
     .apr-cell .inline-link {
       display: inline-flex;
       margin-top: 7px;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 800;
+      text-decoration: none;
     }
 
     .inline-link:hover,
@@ -619,6 +623,55 @@
 
     .calc-method-link a:hover {
       color: var(--navy);
+    }
+
+    .result-quick-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+
+    .result-quick-actions a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--navy);
+      padding: 7px 8px;
+      text-align: center;
+      font-size: .78rem;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .result-quick-actions a:first-child {
+      border-color: #bfe7cf;
+      background: #f1fbf5;
+      color: var(--green-dark);
+    }
+
+    .result-quick-actions a:hover,
+    .result-quick-actions a:focus-visible {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(32,141,84,0.1);
+    }
+
+    .result-section {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .result-section-title {
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-size: .95rem;
     }
 
     .results-disclaimer {
@@ -1209,7 +1262,7 @@
 
       main {
         padding-top: 14px;
-        padding-bottom: 80px;
+        padding-bottom: 144px;
         overflow-x: hidden;
       }
 
@@ -1244,7 +1297,8 @@
       .settings-grid,
       .metric-grid,
       .example-results,
-      .option-settings-grid {
+      .option-settings-grid,
+      .result-quick-actions {
         grid-template-columns: 1fr;
       }
 
@@ -1336,10 +1390,10 @@
       .card-summary-line {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         width: 100%;
         max-width: 100%;
-        min-height: 38px;
+        min-height: 44px;
         color: var(--ink);
         font-weight: 800;
         box-sizing: border-box;
@@ -1352,10 +1406,11 @@
       }
 
       .card-summary-text {
+        flex: 1 1 auto;
         min-width: 0;
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        line-height: 1.25;
+        white-space: normal;
       }
 
       .card-row-toggle {
@@ -1373,10 +1428,16 @@
 
       .row-expand-hint {
         display: inline-flex;
-        font-size: .7rem;
-        color: var(--muted);
+        align-items: center;
+        border-radius: 999px;
+        background: #f1fbf5;
+        color: var(--green-dark);
+        padding: 3px 7px;
+        font-size: .68rem;
+        font-weight: 900;
         margin-left: auto;
         flex-shrink: 0;
+        white-space: nowrap;
       }
 
       .row-chevron {
@@ -1445,11 +1506,27 @@
         background: var(--navy);
         color: #fff;
         padding: 10px 16px;
+        min-height: 72px;
         gap: 12px;
         align-items: center;
         justify-content: space-between;
         z-index: 100;
         box-shadow: 0 -4px 12px rgba(0,0,0,0.18);
+      }
+
+      .mobile-summary-bar a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        border-radius: 7px;
+        background: #4ade80;
+        color: #092514;
+        padding: 8px 10px;
+        font-size: .82rem;
+        font-weight: 900;
+        text-decoration: none;
+        white-space: nowrap;
       }
     }
 
@@ -1672,7 +1749,7 @@
       {
         "@type": "HowToStep",
         "name": "Review the payoff schedule",
-        "text": "Use the results and monthly schedule to see payoff timing, total interest, and savings. Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
+        "text": "Use the results and monthly schedule to see payoff timing, total interest, and savings."
       }
     ]
   }
@@ -1825,22 +1902,32 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice · Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice</p>
 
-          <div id="methodRecommendation" class="method-recommendation hidden"></div>
-          <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
-          <div id="resultExplainer" class="result-explainer hidden"></div>
-
-          <div class="metric-grid supporting-metrics">
-            <div class="metric"><span>Total Balance</span><strong id="totalBalance">$0</strong></div>
-            <div class="metric"><span>Total Minimums</span><strong id="totalMinimums">$0</strong></div>
-            <div class="metric"><span>Months to Payoff</span><strong id="payoffMonths">-</strong></div>
-            <div class="metric"><span>Monthly Payment</span><strong id="monthlyPayment">$0</strong></div>
+          <div class="result-quick-actions" aria-label="Result shortcuts">
+            <a href="#payoffOptions">Compare options</a>
+            <a href="#monthPlan">Month 1 plan</a>
+            <a href="#methodology">Methodology</a>
           </div>
 
-          <div id="targetResult" class="target-card hidden"></div>
-          <div id="savingsResult" class="savings-card hidden"></div>
-          <div id="payoffOptions" class="payoff-options">
+          <div class="result-section">
+            <h3 class="result-section-title">Plan Details</h3>
+            <div id="methodRecommendation" class="method-recommendation hidden"></div>
+            <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
+            <div id="resultExplainer" class="result-explainer hidden"></div>
+
+            <div class="metric-grid supporting-metrics">
+              <div class="metric"><span>Total Balance</span><strong id="totalBalance">$0</strong></div>
+              <div class="metric"><span>Total Minimums</span><strong id="totalMinimums">$0</strong></div>
+              <div class="metric"><span>Months to Payoff</span><strong id="payoffMonths">-</strong></div>
+              <div class="metric"><span>Monthly Payment</span><strong id="monthlyPayment">$0</strong></div>
+            </div>
+
+            <div id="targetResult" class="target-card hidden"></div>
+            <div id="savingsResult" class="savings-card hidden"></div>
+          </div>
+
+          <div id="payoffOptions" class="payoff-options result-section">
             <div class="section-head">
               <div>
                 <h3>Compare Payoff Options</h3>
@@ -1979,7 +2066,7 @@
         </details>
         <details>
           <summary>Can I use this offline?</summary>
-          <p>Yes. This is a single self-contained HTML file with client-side calculations. After the page is loaded or saved, it can run without a network connection. Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+          <p>Yes. This is a single self-contained HTML file with client-side calculations. After the page is loaded or saved, it can run without a network connection.</p>
         </details>
       </div>
     </section>
@@ -2082,7 +2169,7 @@
         <span id="mobileMonthlyPayment">$0/mo</span>
       </div>
     </div>
-    <a href="#resultsPanel">See full plan ↓</a>
+    <a href="#resultsPanel">Open full plan ↓</a>
   </div>
 
   <script>
@@ -2331,10 +2418,10 @@
         if (settings.expandOnMobile) tr.classList.add("expanded");
         tr.dataset.id = id;
         tr.innerHTML =
-          '<td class="card-summary-cell" colspan="5"><div class="card-summary-line"><span class="card-summary-text"></span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button><span class="row-chevron">›</span></div></td>' +
+          '<td class="card-summary-cell" colspan="5"><div class="card-summary-line"><span class="card-summary-text"></span><span class="row-expand-hint">Tap to edit</span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button><span class="row-chevron">›</span></div></td>' +
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
+          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">+ Intro APR</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
           '<td class="amount-cell minimum-cell card-row-detail" data-label="Minimum ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
@@ -2345,7 +2432,7 @@
           var introBtn = tr.querySelector("[data-action='toggle-intro']");
           if (introDiv && introBtn) {
             introDiv.classList.remove("hidden");
-            introBtn.textContent = "− Intro Rate";
+            introBtn.textContent = "- Intro APR";
             introBtn.setAttribute("aria-expanded", "true");
           }
         }
@@ -4269,7 +4356,7 @@
           var expanded = toggleBtn.getAttribute("aria-expanded") === "true";
           if (introDiv) introDiv.classList.toggle("hidden", expanded);
           toggleBtn.setAttribute("aria-expanded", String(!expanded));
-          toggleBtn.textContent = expanded ? "\uff0b Intro Rate" : "\u2212 Intro Rate";
+          toggleBtn.textContent = expanded ? "+ Intro APR" : "- Intro APR";
         }
       });
 
