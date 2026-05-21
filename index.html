@@ -28,6 +28,7 @@
       --navy-2: #18385f;
       --green: #276749;
       --green-dark: #1e5438;
+      --blue: #3b82f6;
       --orange: #c05621;
       --red: #c53030;
       --ink: #172033;
@@ -39,7 +40,11 @@
       --shadow: 0 18px 45px rgba(15, 36, 68, 0.10);
     }
 
-    * { box-sizing: border-box; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
 
     html { scroll-behavior: smooth; }
 
@@ -218,12 +223,17 @@
     }
 
     .panel {
-      border: 1px solid var(--line);
+      border: 1px solid #e8eef5;
       border-top: 3px solid transparent;
       border-radius: 8px;
       background: var(--panel);
       box-shadow: var(--shadow);
       padding: 22px;
+    }
+
+    .input-panel {
+      border: none;
+      box-shadow: 0 2px 12px rgba(15,36,68,0.07);
     }
 
     .section-head {
@@ -267,21 +277,37 @@
       letter-spacing: .04em;
     }
 
-    td input {
+    .card-table th {
+      border: none;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .card-table td {
+      border: none;
+      border-bottom: 1px solid #f0f4fa;
+    }
+
+    input[type="text"],
+    input:not([type]),
+    input[type="number"],
+    select {
       width: 100%;
       min-height: 38px;
-      border: 1px solid #c4cfdf;
+      border: 1.5px solid #d1dbe8;
       border-radius: 6px;
       padding: 7px 8px;
       color: var(--ink);
       background: #fff;
+      transition: border-color 0.15s;
     }
 
-    td input:focus,
-    .field-stack input:focus,
-    .field-stack select:focus {
-      outline: 3px solid rgba(56, 161, 105, .18);
-      border-color: var(--green);
+    input[type="text"]:focus,
+    input:not([type]):focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--blue);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
     }
 
     .name-cell { min-width: 150px; }
@@ -443,11 +469,12 @@
     .field-stack select {
       width: 100%;
       min-height: 42px;
-      border: 1px solid #c4cfdf;
-      border-radius: 7px;
+      border: 1.5px solid #d1dbe8;
+      border-radius: 6px;
       background: #fff;
       color: var(--ink);
       padding: 8px 10px;
+      transition: border-color 0.15s;
     }
 
     .notice {
@@ -951,7 +978,9 @@
     }
 
     .card-summary-cell,
-    .card-row-toggle {
+    .card-row-toggle,
+    .row-expand-hint,
+    .row-chevron {
       display: none;
     }
 
@@ -1005,6 +1034,7 @@
     @media (max-width: 640px) {
       body {
         font-size: 15px;
+        overflow-x: hidden;
       }
 
       .shell {
@@ -1018,10 +1048,13 @@
       main {
         padding-top: 14px;
         padding-bottom: 80px;
+        overflow-x: hidden;
       }
 
       .panel {
         padding: 16px;
+        max-width: 100%;
+        overflow-x: hidden;
       }
 
       .hero-date {
@@ -1052,13 +1085,20 @@
         grid-template-columns: 1fr;
       }
 
+      .table-scroll {
+        overflow-x: hidden;
+        width: 100%;
+      }
+
       table {
-        min-width: 650px;
+        min-width: 0;
       }
 
       .card-table,
       .loan-table {
         min-width: 0;
+        table-layout: fixed;
+        width: 100%;
       }
 
       .card-table thead,
@@ -1069,22 +1109,56 @@
       .card-table tr,
       .loan-table tr {
         display: block;
+        width: 100%;
+        max-width: 100%;
         margin-bottom: 12px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #fff;
         padding: 10px;
+        overflow: hidden;
+      }
+
+      .card-table tr:not(.expanded) {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
       .card-table td,
       .loan-table td {
         display: block;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         border-bottom: 0;
         padding: 7px 0;
+        word-break: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .card-table th,
+      .card-table td,
+      .loan-table th,
+      .loan-table td,
+      .name-cell,
+      .amount-cell,
+      .intro-cell,
+      .remove-cell {
+        width: auto;
+        min-width: 0;
+        word-break: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .card-table td.card-summary-cell {
-        display: block;
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         padding: 0;
       }
 
@@ -1095,21 +1169,30 @@
       .card-summary-line {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 10px;
+        width: 100%;
+        max-width: 100%;
         min-height: 38px;
         color: var(--ink);
         font-weight: 800;
+        box-sizing: border-box;
+      }
+
+      .card-summary-line:hover,
+      .card-summary-line:active {
+        background: rgba(59,130,246,0.06);
+        cursor: pointer;
       }
 
       .card-summary-text {
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
       .card-row-toggle {
-        display: inline-flex;
+        display: none;
         align-items: center;
         justify-content: center;
         width: 34px;
@@ -1121,12 +1204,36 @@
         flex: 0 0 auto;
       }
 
+      .row-expand-hint {
+        display: inline-flex;
+        font-size: .7rem;
+        color: var(--muted);
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      .row-chevron {
+        display: inline-flex;
+        font-size: 1.2rem;
+        color: var(--muted);
+        margin-left: auto;
+        flex-shrink: 0;
+        transition: transform 0.2s;
+      }
+
+      tr.expanded .row-chevron {
+        transform: rotate(90deg);
+      }
+
       .card-table tr:not(.expanded) td.card-row-detail {
         display: none;
       }
 
       .card-table tr.expanded td.card-row-detail {
         display: block;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
       .card-table td::before,
@@ -1156,6 +1263,10 @@
       .intro-fields {
         display: grid;
         grid-template-columns: 1fr;
+      }
+
+      .intro-fields label {
+        min-width: 0;
       }
 
       .mobile-summary-bar {
@@ -1910,7 +2021,7 @@
         if (settings.expandOnMobile) tr.classList.add("expanded");
         tr.dataset.id = id;
         tr.innerHTML =
-          '<td class="card-summary-cell" colspan="6"><div class="card-summary-line"><span class="card-summary-text"></span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button></div></td>' +
+          '<td class="card-summary-cell" colspan="6"><div class="card-summary-line"><span class="card-summary-text"></span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button><span class="row-chevron">›</span></div></td>' +
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
           '<td class="amount-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
