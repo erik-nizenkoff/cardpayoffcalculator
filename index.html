@@ -1357,6 +1357,7 @@
       #toggleSchedule,
       #printButton,
       #copySummaryButton,
+      #copyLinkButton,
       #copySummaryStatus,
       #scheduleLoading {
         display: none !important;
@@ -1697,6 +1698,7 @@
           </div>
           <div class="button-row result-actions">
             <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
+            <button type="button" class="secondary" id="copyLinkButton" disabled>Copy share link</button>
             <button type="button" class="secondary" id="copySummaryButton" disabled>Copy results summary</button>
             <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
           </div>
@@ -2028,6 +2030,7 @@
       var customOrderPanel = document.getElementById("customOrderPanel");
       var customOrderList = document.getElementById("customOrderList");
       var printButton = document.getElementById("printButton");
+      var copyLinkButton = document.getElementById("copyLinkButton");
       var copySummaryButton = document.getElementById("copySummaryButton");
       var copySummaryStatus = document.getElementById("copySummaryStatus");
       var mobileSummaryBar = document.getElementById("mobileSummaryBar");
@@ -2339,6 +2342,7 @@
       }
 
       function setCopySummaryAvailable(isAvailable) {
+        if (copyLinkButton) copyLinkButton.disabled = !isAvailable;
         if (copySummaryButton) copySummaryButton.disabled = !isAvailable;
         setCopySummaryStatus("");
       }
@@ -2397,6 +2401,26 @@
           return;
         }
         setCopySummaryStatus(fallbackCopyText(summary) ? "Copied" : "Copy failed");
+      }
+
+      function copyShareLink() {
+        if (!lastResult) {
+          setCopySummaryStatus("No results yet");
+          return;
+        }
+        var method = methodInput.value;
+        var extra = method === "minimum" ? 0 : Math.max(0, Number(extraInput.value || 0));
+        updateSharedUrl(readCards(), readLoans(), method, extra);
+        var shareUrl = window.location.href;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareUrl).then(function () {
+            setCopySummaryStatus("Link copied");
+          }).catch(function () {
+            setCopySummaryStatus(fallbackCopyText(shareUrl) ? "Link copied" : "Copy failed");
+          });
+          return;
+        }
+        setCopySummaryStatus(fallbackCopyText(shareUrl) ? "Link copied" : "Copy failed");
       }
 
       function validateCards(cards, loans) {
@@ -3714,6 +3738,7 @@
         window.print();
       });
 
+      bind(copyLinkButton, "click", copyShareLink);
       bind(copySummaryButton, "click", copyResultsSummary);
 
       window.addEventListener("beforeprint", function () {
