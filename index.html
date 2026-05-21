@@ -512,6 +512,68 @@
       font-weight: 800;
     }
 
+    .result-explainer {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      background: #f7fbff;
+      border: 1px solid #bdd7ff;
+      color: #173d70;
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+
+    .first-run-hint {
+      border: 1px solid #bdd7ff;
+      background: #f0f7ff;
+      color: #173d70;
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: .85rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .first-run-hint button {
+      flex: 0 0 auto;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .loan-section,
+    .advanced-options,
+    .comparison-section {
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      margin-top: 24px;
+    }
+
+    .loan-section summary,
+    .advanced-options summary,
+    .comparison-section summary {
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .loan-section summary {
+      font-size: 1.05rem;
+    }
+
+    .advanced-options .settings-grid {
+      margin-top: 12px;
+    }
+
     .supporting-metrics {
       margin-top: 10px;
     }
@@ -1258,29 +1320,32 @@
           <span id="rowLimitNote" class="hint">Up to 20 cards. Cards with $0 balance are ignored.</span>
         </div>
 
-        <div class="subsection-head">
-          <div>
-            <h2>Installment Loans (optional)</h2>
-            <p>Add fixed-payment debts such as personal, auto, or student loans.</p>
+        <details id="loanSection" class="loan-section">
+          <summary>Installment Loans (optional) — auto, personal, student loans</summary>
+          <div class="subsection-head">
+            <div>
+              <h2>Installment Loans (optional)</h2>
+              <p>Add fixed-payment debts such as personal, auto, or student loans.</p>
+            </div>
+            <button type="button" class="secondary" id="addLoanButton">Add Loan</button>
           </div>
-          <button type="button" class="secondary" id="addLoanButton">Add Loan</button>
-        </div>
 
-        <div class="table-scroll">
-          <table class="loan-table">
-            <thead>
-              <tr>
-                <th>Loan Name</th>
-                <th>Balance ($)</th>
-                <th>Interest Rate (%)</th>
-                <th>Fixed Monthly Payment ($)</th>
-                <th>Remaining Term (months)</th>
-                <th aria-label="Remove loan"></th>
-              </tr>
-            </thead>
-            <tbody id="loanRows"></tbody>
-          </table>
-        </div>
+          <div class="table-scroll">
+            <table class="loan-table">
+              <thead>
+                <tr>
+                  <th>Loan Name</th>
+                  <th>Balance ($)</th>
+                  <th>Interest Rate (%)</th>
+                  <th>Fixed Monthly Payment ($)</th>
+                  <th>Remaining Term (months)</th>
+                  <th aria-label="Remove loan"></th>
+                </tr>
+              </thead>
+              <tbody id="loanRows"></tbody>
+            </table>
+          </div>
+        </details>
 
         <div class="settings-grid" aria-label="Payoff settings">
           <div class="field-stack">
@@ -1299,17 +1364,23 @@
             <p class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
-          <div class="field-stack">
-            <label for="startMonth">Start Month</label>
-            <input id="startMonth" type="month">
-          </div>
-
-          <div class="field-stack">
-            <label for="targetMonth">Target Payoff Date</label>
-            <input id="targetMonth" type="month">
-            <p class="hint">Optional. Shows the monthly payment needed by that month.</p>
-          </div>
         </div>
+
+        <details id="advancedOptions" class="advanced-options">
+          <summary>Advanced options ▼</summary>
+          <div class="settings-grid">
+            <div class="field-stack">
+              <label for="startMonth">Start Month</label>
+              <input id="startMonth" type="month">
+            </div>
+
+            <div class="field-stack">
+              <label for="targetMonth">Target Payoff Date</label>
+              <input id="targetMonth" type="month">
+              <p class="hint">Optional. Shows the monthly payment needed by that month.</p>
+            </div>
+          </div>
+        </details>
 
         <div id="customOrderPanel" class="custom-order-panel hidden">
           <h3>Custom Payoff Order</h3>
@@ -1332,6 +1403,11 @@
         <div id="emptyResults" class="results-empty hidden">Enter at least one card with a balance, APR, and minimum payment to see live results.</div>
 
         <div id="resultsContent">
+          <div id="firstRunHint" class="first-run-hint hidden">
+            <span>👋 This is sample data — replace it with your own cards to see your real payoff plan.</span>
+            <button type="button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
+          </div>
+
           <div class="result-hero">
             <span class="hero-label">Debt-Free Date</span>
             <strong id="payoffDate" class="hero-date">-</strong>
@@ -1343,6 +1419,7 @@
           </div>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
+          <div id="resultExplainer" class="result-explainer hidden"></div>
 
           <div class="metric-grid supporting-metrics">
             <div class="metric"><span>Total Balance</span><strong id="totalBalance">$0</strong></div>
@@ -1385,38 +1462,41 @@
       <div class="section-head">
         <div>
           <h2>Balance Over Time</h2>
-          <p>Stacked area shows each debt's remaining balance; the dark line shows total balance.</p>
+          <p>Stacked bars show each debt's remaining balance; the dark line shows total balance.</p>
         </div>
       </div>
       <div class="chart-box" style="position:relative">
-        <canvas id="comboChart" class="chart-canvas" style="height:360px" aria-label="Combined chart: stacked area per debt and total balance line over time"></canvas>
+        <canvas id="comboChart" class="chart-canvas" style="height:360px" aria-label="Combined chart: stacked bars per debt and total balance line over time"></canvas>
         <div id="comboTooltip" class="chart-tooltip hidden"></div>
       </div>
       <div id="chartLegend" class="chart-legend" style="margin-top:10px"></div>
     </section>
 
     <section class="panel compare-panel">
-      <div class="section-head">
-        <div>
-          <h2>Payoff Method Comparison</h2>
-          <p>Compare avalanche, snowball, and minimum-only using the same card inputs.</p>
+      <details id="comparisonSection" class="comparison-section">
+        <summary>Compare all payoff methods</summary>
+        <div class="section-head">
+          <div>
+            <h2>Payoff Method Comparison</h2>
+            <p>Compare avalanche, snowball, and minimum-only using the same card inputs.</p>
+          </div>
         </div>
-      </div>
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Payoff Date</th>
-              <th>Months</th>
-              <th>Total Interest</th>
-              <th>Monthly Payment</th>
-              <th>First Card Paid</th>
-            </tr>
-          </thead>
-          <tbody id="comparisonRows"></tbody>
-        </table>
-      </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Payoff Date</th>
+                <th>Months</th>
+                <th>Total Interest</th>
+                <th>Monthly Payment</th>
+                <th>First Card Paid</th>
+              </tr>
+            </thead>
+            <tbody id="comparisonRows"></tbody>
+          </table>
+        </div>
+      </details>
     </section>
 
     <section class="panel schedule-panel">
@@ -1617,15 +1697,19 @@
       var targetResult = document.getElementById("targetResult");
       var savingsResult = document.getElementById("savingsResult");
       var methodRecommendation = document.getElementById("methodRecommendation");
+      var resultExplainer = document.getElementById("resultExplainer");
       var criticalWarningsEl = document.getElementById("criticalWarnings");
       var warningsEl = document.getElementById("warnings");
       var monthPlan = document.getElementById("monthPlan");
       var monthPlanRows = document.getElementById("monthPlanRows");
       var comparisonRows = document.getElementById("comparisonRows");
+      var comparisonSection = document.getElementById("comparisonSection");
       var scheduleRows = document.getElementById("scheduleRows");
       var scheduleNote = document.getElementById("scheduleNote");
       var toggleSchedule = document.getElementById("toggleSchedule");
       var scheduleLoading = document.getElementById("scheduleLoading");
+      var firstRunHint = document.getElementById("firstRunHint");
+      var dismissHint = document.getElementById("dismissHint");
       var methodDescription = document.getElementById("methodDescription");
       var customOrderPanel = document.getElementById("customOrderPanel");
       var customOrderList = document.getElementById("customOrderList");
@@ -1639,6 +1723,7 @@
       var loanNextId = 1;
       var showAllSchedule = false;
       var scheduleRenderGeneration = 0;
+      var updateTimer = null;
       var printPreviousShowAll = false;
       var lastResult = null;
       var lastCards = [];
@@ -2496,7 +2581,7 @@
         ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + innerH); ctx.lineTo(W - pad.right, pad.top + innerH);
         ctx.stroke();
 
-        // Stacked area (bottom up: debt 0 at bottom, last at top)
+        // Stacked bars (bottom up: debt 0 at bottom, last at top)
         // Compute cumulative stacks per point
         var stacks = [];
         for (var i = 0; i < totalPoints; i++) {
@@ -2507,31 +2592,20 @@
           stacks.push(cumul);
         }
 
-        // Draw each debt band
-        for (var di = numDebts - 1; di >= 0; di--) {
-          var color = CHART_COLORS[di % CHART_COLORS.length];
-          ctx.beginPath();
-          // Top edge of this band (cumul[di+1])
-          ctx.moveTo(xPos(0), yPos(stacks[0][di + 1]));
-          for (var i = 1; i < totalPoints; i++) {
-            ctx.lineTo(xPos(i), yPos(stacks[i][di + 1]));
+        var pointGap = innerW / Math.max(1, totalPoints - 1);
+        var barWidth = Math.max(1, Math.min(18, pointGap * 0.72));
+
+        for (var i = 0; i < totalPoints; i++) {
+          var xp = xPos(i);
+          var barX = Math.max(pad.left, Math.min(W - pad.right - barWidth, xp - barWidth / 2));
+          for (var di = 0; di < numDebts; di++) {
+            var segment = series[di][i] || 0;
+            if (segment <= 0) continue;
+            var topY = yPos(stacks[i][di + 1]);
+            var bottomY = yPos(stacks[i][di]);
+            ctx.fillStyle = CHART_COLORS[di % CHART_COLORS.length];
+            ctx.fillRect(barX, topY, barWidth, Math.max(1, bottomY - topY));
           }
-          // Bottom edge of this band (cumul[di]), reversed
-          for (var i = totalPoints - 1; i >= 0; i--) {
-            ctx.lineTo(xPos(i), yPos(stacks[i][di]));
-          }
-          ctx.closePath();
-          ctx.fillStyle = color + "cc"; // slight transparency
-          ctx.fill();
-          // Top border line
-          ctx.beginPath();
-          ctx.moveTo(xPos(0), yPos(stacks[0][di + 1]));
-          for (var i = 1; i < totalPoints; i++) {
-            ctx.lineTo(xPos(i), yPos(stacks[i][di + 1]));
-          }
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 1;
-          ctx.stroke();
         }
 
         // Total balance line overlay (dark)
@@ -2589,8 +2663,9 @@
         comboTooltip.style.top = "8px";
         var lines = ["Month " + row.month + ": " + money(row.endingBalance) + " total"];
         if (row.balances) {
-          row.balances.forEach(function (bal, di) {
-            if (bal > 0.5) lines.push((data.result.debtNames[di] || "Debt " + (di+1)) + ": " + money(bal));
+          data.result.debtNames.forEach(function (name, di) {
+            var bal = row.balances[di] != null ? row.balances[di] : 0;
+            lines.push((name || "Debt " + (di+1)) + ": " + money(bal));
           });
         }
         comboTooltip.innerHTML = lines.map(function (l, i) { return (i === 0 ? "<strong>" + escapeHtml(l) + "</strong>" : escapeHtml(l)); }).join("<br>");
@@ -2636,6 +2711,67 @@
         mobileTotalInterest.textContent = money(result.totalInterest) + " interest";
         mobileMonthlyPayment.textContent = money(result.monthlyPayment) + "/mo";
         mobileSummaryBar.classList.remove("hidden");
+      }
+
+      function scheduleUpdate() {
+        if (updateTimer) clearTimeout(updateTimer);
+        updateTimer = setTimeout(update, 80);
+      }
+
+      function renderResultExplainer(cards, loans, result, baseline, extraPayment) {
+        var insights = [];
+        var avalanche = simulate(cards, { method: "avalanche", extraPayment: extraPayment }, loans);
+        var snowball = simulate(cards, { method: "snowball", extraPayment: extraPayment }, loans);
+        var allRates = cards.map(function (card) { return Number(card.apr || 0); })
+          .concat(loans.map(function (loan) { return Number(loan.rate || 0); }));
+        var highestApr = allRates.length ? Math.max.apply(null, allRates) : 0;
+        var hasPromo = cards.some(function (card) {
+          return card.introApr !== null && card.introMonths !== null && card.introMonths > 0;
+        });
+
+        if (hasPromo) {
+          insights.push("One or more cards have a promo rate — after the promo expires, interest will accelerate.");
+        }
+
+        if (highestApr > 25) {
+          insights.push("Your highest APR is " + highestApr.toFixed(2).replace(/\.00$/, "") + "% — avalanche targets this first to minimize interest.");
+        }
+
+        if (!avalanche.capped && !snowball.capped) {
+          var avalancheSavings = roundCents(snowball.totalInterest - avalanche.totalInterest);
+          if (avalancheSavings > 200) {
+            insights.push("Avalanche saves " + money(avalancheSavings) + " over snowball for this debt mix.");
+          } else if (Math.abs(avalancheSavings) <= 50) {
+            insights.push("Avalanche and snowball produce similar results here — consider snowball for faster early wins.");
+          }
+        }
+
+        if (!baseline.capped && !result.capped && baseline.months - result.months > 60) {
+          insights.push("Minimum-only payments would take " + (baseline.months - result.months) + " more months — extra payment makes a big difference.");
+        }
+
+        if (!insights.length) {
+          resultExplainer.classList.add("hidden");
+          resultExplainer.textContent = "";
+          return;
+        }
+
+        resultExplainer.textContent = insights.slice(0, 2).join(" ");
+        resultExplainer.classList.remove("hidden");
+      }
+
+      function showFirstRunHint() {
+        try {
+          if (sessionStorage.getItem("hintDismissed") === "1") return;
+        } catch (error) {}
+        firstRunHint.classList.remove("hidden");
+      }
+
+      function dismissFirstRunHint() {
+        firstRunHint.classList.add("hidden");
+        try {
+          sessionStorage.setItem("hintDismissed", "1");
+        } catch (error) {}
       }
 
       function update() {
