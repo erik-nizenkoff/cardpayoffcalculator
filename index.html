@@ -1643,6 +1643,14 @@
           "@type": "Answer",
           "text": "Credit card minimums can be close to the monthly interest charge. When most of the payment goes to interest instead of principal, the balance may fall slowly or fail to amortize in a reasonable time."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "Does this calculator store my debt numbers?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
+        }
       }
     ]
   }
@@ -1825,7 +1833,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice · Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
           <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
@@ -1992,6 +2000,10 @@
           <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
         </details>
         <details>
+          <summary>Does this calculator store my debt numbers?</summary>
+          <p>Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+        </details>
+        <details>
           <summary>Can I use this offline?</summary>
           <p>Yes. This is a single self-contained HTML file with client-side calculations. After the page is loaded or saved, it can run without a network connection.</p>
         </details>
@@ -2143,12 +2155,10 @@
       var savingsResult = document.getElementById("savingsResult");
       var methodRecommendation = document.getElementById("methodRecommendation");
       var resultExplainer = document.getElementById("resultExplainer");
+      var payoffOptions = document.getElementById("payoffOptions");
+      var optionScenarioList = document.getElementById("optionScenarioList");
       var payoffOptionRows = document.getElementById("payoffOptionRows");
       var payoffOptionNote = document.getElementById("payoffOptionNote");
-      var payoffOptionInputs = [
-        "btFee", "btIntroApr", "btIntroMonths", "btPostApr",
-        "consolidationApr", "consolidationTerm", "consolidationFee"
-      ].map(function (id) { return document.getElementById(id); }).filter(Boolean);
       var criticalWarningsEl = document.getElementById("criticalWarnings");
       var warningsEl = document.getElementById("warnings");
       var monthPlan = document.getElementById("monthPlan");
@@ -2179,7 +2189,8 @@
         targetInput, emptyResults, resultsContent, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
-        resultExplainer, criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
+        resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows,
+        payoffOptionNote, criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, scheduleRows, scheduleNote, toggleSchedule,
         scheduleLoading, firstRunHint, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus,
@@ -2192,6 +2203,7 @@
 
       var nextId = 1;
       var loanNextId = 1;
+      var optionScenarioNextId = 1;
       var showAllSchedule = false;
       var scheduleRenderGeneration = 0;
       var updateTimer = null;
