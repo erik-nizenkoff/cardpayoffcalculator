@@ -1279,7 +1279,7 @@
       <div>
         <p class="eyebrow">Card Payoff Calculator</p>
         <h1>Credit Card Payoff Calculator</h1>
-        <p class="subtitle">Estimate your debt-free date, total interest, target-date payment, and savings from extra monthly payments across up to 20 credit cards.</p>
+        <p class="subtitle">Estimate your debt-free date, total interest, target-date payment, and savings from extra monthly payments across up to 20 credit cards and installment loans.</p>
       </div>
       <div class="privacy-note" aria-label="Privacy note">
         <strong>Private by design</strong>
@@ -1529,8 +1529,8 @@
     <section class="content-grid">
       <div class="panel content-section">
         <h2>Methodology</h2>
-        <p>Each month, the calculator computes interest for every active card using APR divided by 12. It then uses the greater of the issuer-style minimum estimate, the entered minimum payment, or $25, capped at the amount needed to pay the card off that month.</p>
-        <p>The issuer-style minimum estimate is current balance times 1% plus that month&apos;s interest. The payment first covers interest, then reduces principal. Avalanche applies extra money to the highest APR card until it is paid, then cascades. Snowball applies extra money to the smallest balance until it is paid, then cascades. Minimum only applies no extra payment.</p>
+        <p>Each month, the calculator computes interest for every active debt using APR divided by 12. It then uses the greater of the issuer-style minimum estimate, the entered minimum payment, or $25, capped at the amount needed to pay the debt off that month.</p>
+        <p>The issuer-style minimum estimate is current balance times 1% plus that month&apos;s interest. The payment first covers interest, then reduces principal. Avalanche applies extra money to the highest APR debt until it is paid, then cascades. Snowball applies extra money to the smallest balance until it is paid, then cascades. Minimum only applies no extra payment.</p>
         <p>The schedule stops when all balances reach $0 or after 600 months. Results are estimates and do not include new charges, fees, promotional APRs, penalty APRs, payment timing differences, or issuer-specific minimum rules beyond the model above.</p>
       </div>
 
@@ -1538,23 +1538,23 @@
         <h2>FAQ</h2>
         <details>
           <summary>What payment do I need to be debt-free by a target date?</summary>
-          <p>Enter a target payoff month. The calculator uses a binary search over monthly payment amounts and reports the smallest estimated payment that pays all entered cards by that month.</p>
+          <p>Enter a target payoff month. The calculator uses a binary search over monthly payment amounts and reports the smallest estimated payment that pays all entered debts by that month.</p>
         </details>
         <details>
           <summary>What is the debt avalanche method?</summary>
-          <p>Avalanche pays every card&apos;s minimum, then sends extra money to the highest APR card. It is usually the lowest-interest method.</p>
+          <p>Avalanche pays every debt&apos;s minimum, then sends extra money to the highest APR debt. It is usually the lowest-interest method.</p>
         </details>
         <details>
           <summary>What is the debt snowball method?</summary>
-          <p>Snowball pays every card&apos;s minimum, then sends extra money to the smallest balance. It may cost more interest, but it can produce a faster first payoff.</p>
+          <p>Snowball pays every debt&apos;s minimum, then sends extra money to the smallest balance. It may cost more interest, but it can produce a faster first payoff.</p>
         </details>
         <details>
           <summary>Why does minimum-only sometimes show a warning?</summary>
-          <p>If a card&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
+          <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
         </details>
         <details>
           <summary>Does this calculator store my debt numbers?</summary>
-          <p>No. All calculations run in your browser. Nothing you enter is submitted to a server or stored. This site uses Plausible Analytics, a privacy-friendly tool that counts page visits without cookies or personal data.</p>
+          <p>No. All card and loan calculations run in your browser. Nothing you enter is submitted to a server or stored. This site uses Plausible Analytics, a privacy-friendly tool that counts page visits without cookies or personal data.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
@@ -1599,10 +1599,11 @@
         </table>
       </div>
       <div class="example-results">
-        <div class="example-result"><strong>Avalanche with $250 extra</strong>Paid off in ~28 months, ~$3,400 total interest.</div>
-        <div class="example-result"><strong>Snowball with $250 extra</strong>Paid off in ~29 months, ~$3,650 total interest.</div>
-        <div class="example-result"><strong>Minimum only</strong>Paid off in ~89 months, ~$8,200 total interest.</div>
+        <div class="example-result"><strong>Avalanche with $250 extra</strong>Paid off in 36 months, $4,191 total interest.</div>
+        <div class="example-result"><strong>Snowball with $250 extra</strong>Paid off in 36 months, $4,427 total interest.</div>
+        <div class="example-result"><strong>Minimum only</strong>Paid off in 92 months, $12,011 total interest.</div>
       </div>
+      <p>For this sample, avalanche saves about $7,820 in interest and 56 months compared with minimum-only payments. Snowball finishes in the same 36 months but costs $236 more interest than avalanche.</p>
       <p>Try it yourself — the sample data above is pre-loaded in the calculator.</p>
       <button type="button" id="loadExampleButton">Load this example →</button>
     </section>
@@ -1610,7 +1611,7 @@
     <section class="intent-grid" aria-label="Debt payoff method guides">
       <div id="avalanche-method" class="panel content-section">
         <h3>Debt Avalanche Method</h3>
-        <p>The debt avalanche method pays every minimum first, then sends all extra money to the highest-APR balance. Once that card is paid off, the freed-up payment rolls to the next-highest APR.</p>
+        <p>The debt avalanche method pays every minimum first, then sends all extra money to the highest-APR balance. Once that debt is paid off, the freed-up payment rolls to the next-highest APR.</p>
         <p>Use avalanche when your main goal is paying the least possible interest and you can stay consistent even if the first payoff takes longer.</p>
         <a class="calculator-link" href="#calculatorForm">Try it in the calculator →</a>
       </div>
@@ -1639,7 +1640,7 @@
 
     <section id="about" class="panel content-section about-section">
       <h2>About This Calculator</h2>
-      <p>This calculator was built to give people a clear, honest picture of their credit card debt. It runs entirely in your browser — your numbers are never sent to a server.</p>
+      <p>This calculator was built to give people a clear, honest picture of their debt. It runs entirely in your browser — your numbers are never sent to a server.</p>
       <p>The math follows standard amortization: each month, interest accrues on the remaining balance at APR ÷ 12. Payments cover interest first, then reduce principal. The avalanche and snowball methods apply any extra payment to the target debt after all minimums are met. Results are estimates; your actual payoff may vary based on issuer rules, fees, and payment timing.</p>
       <p>Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a>. We review all feedback.</p>
     </section>
@@ -2539,9 +2540,13 @@
       function drawComboChart(result) {
         if (!comboCanvas || !comboCanvas.getContext) return;
         var currentWidth = comboCanvas.parentElement ? comboCanvas.parentElement.getBoundingClientRect().width : 0;
-        var firstPoint = result.timeline[0];
-        var lastPoint = result.timeline[result.timeline.length - 1];
-        var sig = result.timeline.length + "|" + result.method + "|" + result.startingBalance + "|" + (firstPoint ? firstPoint.endingBalance : "") + "|" + (lastPoint ? lastPoint.endingBalance : "") + "|" + currentWidth;
+        var midIdx = Math.floor(result.timeline.length / 2);
+        var midBal = result.timeline[midIdx] ? result.timeline[midIdx].endingBalance : 0;
+        var sig = result.timeline.length + "|" + result.method + "|" + result.startingBalance + "|" +
+          (result.timeline[0] ? result.timeline[0].endingBalance : "") + "|" +
+          midBal + "|" +
+          (result.timeline[result.timeline.length - 1] ? result.timeline[result.timeline.length - 1].endingBalance : "") + "|" +
+          currentWidth;
         if (sig === comboCanvas._lastSig) {
           return;
         }
