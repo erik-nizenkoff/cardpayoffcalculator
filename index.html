@@ -421,6 +421,8 @@
 
     .result-actions {
       align-items: center;
+      justify-content: flex-start;
+      margin: 10px 0 12px;
     }
 
     .copy-status {
@@ -627,7 +629,7 @@
 
     .result-quick-actions {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
       margin: 0 0 12px;
     }
@@ -894,6 +896,20 @@
 
     .payoff-options h3 {
       margin-bottom: 4px;
+    }
+
+    .option-controls {
+      margin: 12px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      padding: 10px 12px;
+    }
+
+    .option-controls summary {
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 900;
     }
 
     .option-settings-grid {
@@ -1262,7 +1278,7 @@
 
       main {
         padding-top: 14px;
-        padding-bottom: 144px;
+        padding-bottom: 180px;
         overflow-x: hidden;
       }
 
@@ -1389,26 +1405,35 @@
 
       .card-summary-line {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 8px;
         width: 100%;
         max-width: 100%;
         min-height: 44px;
+        border: 0;
+        background: transparent;
         color: var(--ink);
+        padding: 0;
+        text-align: left;
+        font: inherit;
         font-weight: 800;
         box-sizing: border-box;
       }
 
       .card-summary-line:hover,
-      .card-summary-line:active {
+      .card-summary-line:active,
+      .card-summary-line:focus-visible {
         background: rgba(59,130,246,0.06);
         cursor: pointer;
+        outline: 2px solid rgba(59,130,246,0.45);
+        outline-offset: 3px;
       }
 
       .card-summary-text {
         flex: 1 1 auto;
         min-width: 0;
         overflow: hidden;
+        font-size: .9rem;
         line-height: 1.25;
         white-space: normal;
       }
@@ -1877,12 +1902,6 @@
             <h2>Your Payoff Plan</h2>
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
           </div>
-          <div class="button-row result-actions">
-            <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
-            <button type="button" class="secondary" id="copyLinkButton" disabled>Copy share link</button>
-            <button type="button" class="secondary" id="copySummaryButton" disabled>Copy results summary</button>
-            <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
-          </div>
         </div>
 
         <div id="emptyResults" class="results-empty hidden">Enter at least one card with a balance, APR, and minimum payment to see live results.</div>
@@ -1904,8 +1923,16 @@
           </div>
           <p class="results-disclaimer">Estimates only · Not financial advice</p>
 
+          <div class="button-row result-actions">
+            <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
+            <button type="button" class="secondary" id="copyLinkButton" disabled>Copy share link</button>
+            <button type="button" class="secondary" id="copySummaryButton" disabled>Copy results summary</button>
+            <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
+          </div>
+
           <div class="result-quick-actions" aria-label="Result shortcuts">
             <a href="#payoffOptions">Compare options</a>
+            <a href="#comparisonSection">Compare methods</a>
             <a href="#monthPlan">Month 1 plan</a>
             <a href="#methodology">Methodology</a>
           </div>
@@ -1934,11 +1961,14 @@
                 <p>Model a balance transfer or consolidation loan against your current monthly payment.</p>
               </div>
             </div>
-            <div id="optionScenarioList" class="option-settings-grid"></div>
-            <div class="option-actions">
-              <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
-              <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
-            </div>
+            <details id="payoffOptionControls" class="option-controls">
+              <summary>Edit balance transfer / loan assumptions</summary>
+              <div id="optionScenarioList" class="option-settings-grid"></div>
+              <div class="option-actions">
+                <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
+                <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
+              </div>
+            </details>
             <div id="payoffOptionRows" class="option-card-grid"></div>
             <p id="payoffOptionNote" class="option-note"></p>
           </div>
@@ -2157,7 +2187,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Calculations run in your browser. We also send non-identifying calculation inputs to Supabase to improve this tool. Each visitor gets a random browser ID stored locally; no name, email, card names, or loan names are sent. · Not financial advice</div>
     </div>
   </footer>
 
@@ -2389,12 +2419,11 @@
         var balance = Number(getField(row, "balance"));
         var apr = Number(getField(row, "apr"));
         var summary = row.querySelector(".card-summary-text");
-        var toggle = row.querySelector(".card-row-toggle");
+        var toggle = row.querySelector(".card-summary-line");
         if (summary) {
           summary.textContent = name + " · " + money(balance) + " · " + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + "%";
         }
         if (toggle) {
-          toggle.textContent = row.classList.contains("expanded") ? "▲" : "▼";
           toggle.setAttribute("aria-expanded", String(row.classList.contains("expanded")));
           toggle.setAttribute("aria-label", row.classList.contains("expanded") ? "Collapse card details" : "Expand card details");
         }
@@ -2418,7 +2447,7 @@
         if (settings.expandOnMobile) tr.classList.add("expanded");
         tr.dataset.id = id;
         tr.innerHTML =
-          '<td class="card-summary-cell" colspan="5"><div class="card-summary-line"><span class="card-summary-text"></span><span class="row-expand-hint">Tap to edit</span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button><span class="row-chevron">›</span></div></td>' +
+          '<td class="card-summary-cell" colspan="5"><button type="button" class="card-summary-line" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false"><span class="card-summary-text"></span><span class="row-expand-hint">Tap to edit</span><span class="row-chevron">›</span></button></td>' +
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
           '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">+ Intro APR</button>' +
@@ -4437,6 +4466,11 @@
 
       bind(copyLinkButton, "click", copyShareLink);
       bind(copySummaryButton, "click", copyResultsSummary);
+      document.querySelectorAll('a[href="#comparisonSection"]').forEach(function (link) {
+        bind(link, "click", function () {
+          if (comparisonSection) comparisonSection.open = true;
+        });
+      });
 
       window.addEventListener("beforeprint", function () {
         printPreviousShowAll = showAllSchedule;

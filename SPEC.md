@@ -78,6 +78,11 @@ Recent UX QA fixes should remain part of the product baseline:
 - The result panel should be grouped into clear sections instead of one dense stack.
 - Compare Payoff Options should have a visible shortcut near the top of the results.
 - Collapsed mobile card rows should clearly signal that tapping opens editing.
+- On mobile, export/share actions should appear after the hero payoff result, not above it.
+- Payoff option assumptions should be compact on mobile so results are visible before dense inputs.
+- Mobile card summary rows should be keyboard/focus accessible, not only mouse/touch clickable.
+- Compare payoff methods should be reachable from the results shortcut area.
+- Footer privacy copy should clearly say calculations run in the browser while non-identifying calculation inputs are also sent to Supabase for product improvement.
 
 ## Intro APR UX
 
