@@ -3134,27 +3134,32 @@
         ctx.restore();
 
         // Legend
-        chartLegend.innerHTML =
-          '<span class="legend-item"><span class="legend-swatch" style="background:#0f2444;height:3px;border-radius:2px"></span>Total Balance</span>' +
-          debtNames.map(function (name, di) {
-            return '<span class="legend-item"><span class="legend-swatch" style="background:' + CHART_COLORS[di % CHART_COLORS.length] + '"></span>' + escapeHtml(name) + '</span>';
-          }).join("");
+        if (chartLegend) {
+          chartLegend.innerHTML =
+            '<span class="legend-item"><span class="legend-swatch" style="background:#0f2444;height:3px;border-radius:2px"></span>Total Balance</span>' +
+            debtNames.map(function (name, di) {
+              return '<span class="legend-item"><span class="legend-swatch" style="background:' + CHART_COLORS[di % CHART_COLORS.length] + '"></span>' + escapeHtml(name) + '</span>';
+            }).join("");
+        }
 
         // Store for tooltip
         comboCanvas._chartData = { result: result, pad: pad, W: W, H: H, totalPoints: totalPoints, xPos: xPos, yPos: yPos, stacks: stacks };
       }
 
       // Combo chart tooltip
-      comboCanvas.addEventListener("mousemove", function (e) {
-        showComboTooltip(e.clientX);
-      });
+      if (comboCanvas) {
+        comboCanvas.addEventListener("mousemove", function (e) {
+          showComboTooltip(e.clientX);
+        });
 
-      comboCanvas.addEventListener("touchmove", function (e) {
-        if (!e.touches || !e.touches.length) return;
-        showComboTooltip(e.touches[0].clientX);
-      }, { passive: true });
+        comboCanvas.addEventListener("touchmove", function (e) {
+          if (!e.touches || !e.touches.length) return;
+          showComboTooltip(e.touches[0].clientX);
+        }, { passive: true });
+      }
 
       function showComboTooltip(clientX) {
+        if (!comboCanvas || !comboTooltip) return;
         var data = comboCanvas._chartData;
         if (!data) { comboTooltip.classList.add("hidden"); return; }
         var rect = comboCanvas.getBoundingClientRect();
@@ -3182,13 +3187,15 @@
         comboTooltip.innerHTML = lines.map(function (l, i) { return (i === 0 ? "<strong>" + escapeHtml(l) + "</strong>" : escapeHtml(l)); }).join("<br>");
       }
 
-      comboCanvas.addEventListener("mouseleave", function () {
-        comboTooltip.classList.add("hidden");
-      });
+      if (comboCanvas && comboTooltip) {
+        comboCanvas.addEventListener("mouseleave", function () {
+          comboTooltip.classList.add("hidden");
+        });
 
-      comboCanvas.addEventListener("touchend", function () {
-        comboTooltip.classList.add("hidden");
-      });
+        comboCanvas.addEventListener("touchend", function () {
+          comboTooltip.classList.add("hidden");
+        });
+      }
 
       function drawCharts(result) {
         drawComboChart(result);
