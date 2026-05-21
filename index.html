@@ -2158,6 +2158,11 @@
         }[method] || "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.";
       }
 
+      function setFieldLabel(row, field, label) {
+        var input = row.querySelector('[data-field="' + field + '"]');
+        if (input) input.setAttribute("aria-label", label);
+      }
+
       function updateCardSummary(row) {
         var name = getField(row, "name") || "Card";
         var balance = Number(getField(row, "balance"));
@@ -2172,6 +2177,12 @@
           toggle.setAttribute("aria-expanded", String(row.classList.contains("expanded")));
           toggle.setAttribute("aria-label", row.classList.contains("expanded") ? "Collapse card details" : "Expand card details");
         }
+        setFieldLabel(row, "name", name + " card name");
+        setFieldLabel(row, "balance", name + " balance");
+        setFieldLabel(row, "apr", name + " APR");
+        setFieldLabel(row, "minimum", name + " minimum payment");
+        setFieldLabel(row, "introApr", name + " intro APR");
+        setFieldLabel(row, "introMonths", name + " intro promotional months");
       }
 
       function addCardRow(card, options) {
@@ -2219,6 +2230,15 @@
       }
 
       // ── Installment Loans ─────────────────────────────────────────────────────
+      function updateLoanLabels(row) {
+        var name = getLoanField(row, "name") || "Loan";
+        setFieldLabel(row, "name", name + " loan name");
+        setFieldLabel(row, "balance", name + " balance");
+        setFieldLabel(row, "rate", name + " interest rate");
+        setFieldLabel(row, "payment", name + " fixed monthly payment");
+        setFieldLabel(row, "term", name + " remaining term in months");
+      }
+
       function addLoanRow(loan) {
         var data = loan || {};
         var id = data.id || "loan-" + loanNextId++;
@@ -2235,6 +2255,10 @@
           '<td class="amount-cell" data-label="Remaining Term (months, optional)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48 (optional)"></td>' +
           '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove-loan" aria-label="Remove loan" title="Remove loan">×</button></td>';
         loanRows.appendChild(tr);
+        tr.addEventListener("input", function () {
+          updateLoanLabels(tr);
+        });
+        updateLoanLabels(tr);
         if (customOrder.indexOf(id) === -1) customOrder.push(id);
       }
 
