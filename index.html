@@ -23,8 +23,8 @@
     :root {
       --navy: #0f2444;
       --navy-2: #18385f;
-      --green: #38a169;
-      --green-dark: #26744c;
+      --green: #276749;
+      --green-dark: #1e5438;
       --orange: #c05621;
       --red: #c53030;
       --ink: #172033;
@@ -1851,7 +1851,7 @@
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
           '<td class="amount-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
-          '<td class="amount-cell card-row-detail" data-label="Min Payment ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
+          '<td class="amount-cell card-row-detail" data-label="Minimum ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
           '<td class="intro-cell card-row-detail" data-label="Promo"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
@@ -1889,9 +1889,9 @@
         tr.innerHTML =
           '<td class="name-cell" data-label="Loan Name"><input data-field="name" aria-label="Loan name" value="' + escapeHtml(data.name || "") + '" placeholder="Auto Loan"></td>' +
           '<td class="amount-cell" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell" data-label="Rate (%)"><input data-field="rate" aria-label="Interest rate" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.rate != null ? data.rate : "") + '" placeholder="6.5"></td>' +
-          '<td class="amount-cell" data-label="Monthly Payment ($)"><input data-field="payment" aria-label="Fixed monthly payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.payment != null ? data.payment : "") + '" placeholder="300"></td>' +
-          '<td class="amount-cell" data-label="Term (months)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48"></td>' +
+          '<td class="amount-cell" data-label="Interest Rate (%)"><input data-field="rate" aria-label="Interest rate" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.rate != null ? data.rate : "") + '" placeholder="6.5"></td>' +
+          '<td class="amount-cell" data-label="Fixed Monthly Payment ($)"><input data-field="payment" aria-label="Fixed monthly payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.payment != null ? data.payment : "") + '" placeholder="300"></td>' +
+          '<td class="amount-cell" data-label="Remaining Term (months)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48"></td>' +
           '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove-loan" aria-label="Remove loan" title="Remove loan">×</button></td>';
         loanRows.appendChild(tr);
         if (customOrder.indexOf(id) === -1) customOrder.push(id);
@@ -1927,28 +1927,35 @@
 
       function readCards() {
         return Array.prototype.slice.call(cardRows.querySelectorAll("tr")).map(function (row, index) {
+          var aprVal = getField(row, "apr");
           var introAprVal = getField(row, "introApr");
           var introMonthsVal = getField(row, "introMonths");
+          var introApr = introAprVal !== "" ? Number(introAprVal) : null;
+          var introMonths = introMonthsVal !== "" ? parseInt(introMonthsVal, 10) : null;
+          if (introMonths !== null && introMonths <= 0) {
+            introApr = null;
+            introMonths = null;
+          }
           return {
             id: row.dataset.id,
             name: getField(row, "name") || "Card " + (index + 1),
             balance: Number(getField(row, "balance")),
-            apr: Number(getField(row, "apr")),
+            apr: aprVal === "" ? NaN : Number(aprVal),
             minimum: Number(getField(row, "minimum")),
-            introApr: introAprVal !== "" ? Number(introAprVal) : null,
-            introMonths: introMonthsVal !== "" ? Math.max(1, parseInt(introMonthsVal, 10)) : null
+            introApr: introApr,
+            introMonths: introMonths
           };
         }).filter(function (card) {
           return card.balance > 0;
         });
       }
 
-      function validateCards(cards) {
-        if (!cards.length) return "Enter at least one credit card.";
+      function validateCards(cards, loans) {
+        if (!cards.length && !(loans || []).length) return "Enter at least one credit card or loan.";
         for (var i = 0; i < cards.length; i += 1) {
           var card = cards[i];
           if (!Number.isFinite(card.balance) || card.balance <= 0) return card.name + ": enter a balance above $0.";
-          if (!Number.isFinite(card.apr) || card.apr < 0) return card.name + ": enter an APR of 0% or higher.";
+          if (isNaN(card.apr) || card.apr < 0) return card.name + ": enter an APR (use 0 for a 0% card)";
           if (!Number.isFinite(card.minimum) || card.minimum <= 0) return card.name + ": enter a minimum payment above $0.";
         }
         return "";
@@ -2322,6 +2329,12 @@
           return;
         }
 
+        if (targetMonths === 1) {
+          targetResult.classList.remove("hidden");
+          targetResult.textContent = "Target date must be at least one month in the future.";
+          return;
+        }
+
         var required = requiredPaymentForTarget(cards, loans, method === "minimum" ? "avalanche" : method, targetMonths);
         targetResult.classList.remove("hidden");
         if (!required) {
@@ -2377,6 +2390,7 @@
 
       function renderComparison(cards, loans, extraPayment) {
         var methods = ["avalanche", "snowball", "minimum"];
+        // Note: these simulate() calls are intentional for comparison — 3 methods x full simulation.
         var rows = methods.map(function (method) {
           return simulate(cards, { method: method, extraPayment: method === "minimum" ? 0 : extraPayment }, loans);
         });
@@ -2510,6 +2524,14 @@
 
       function drawComboChart(result) {
         if (!comboCanvas || !comboCanvas.getContext) return;
+        var currentMonths = result.timeline.length;
+        var currentWidth = comboCanvas.parentElement ? comboCanvas.parentElement.getBoundingClientRect().width : 0;
+        if (comboCanvas._lastMonths === currentMonths && comboCanvas._lastWidth === currentWidth && comboCanvas._lastMethod === result.method) {
+          return;
+        }
+        comboCanvas._lastMonths = currentMonths;
+        comboCanvas._lastWidth = currentWidth;
+        comboCanvas._lastMethod = result.method;
         setCanvasSize(comboCanvas, 360);
         var dpr = window.devicePixelRatio;
         var ctx = comboCanvas.getContext("2d");
@@ -2777,7 +2799,7 @@
       function update() {
         var cards = readCards();
         var loans = readLoans();
-        var error = validateCards(cards);
+        var error = validateCards(cards, loans);
         var method = methodInput.value;
         var extra = Math.max(0, Number(extraInput.value || 0));
 
@@ -2856,10 +2878,11 @@
         extraInput.value = "250";
         targetInput.value = "";
         updateAddButton();
+        showFirstRunHint();
         update();
       }
 
-      cardRows.addEventListener("input", update);
+      cardRows.addEventListener("input", scheduleUpdate);
       cardRows.addEventListener("click", function (event) {
         var rowToggle = event.target.closest("button[data-action='toggle-card-row'], .card-summary-line");
         if (rowToggle) {
@@ -2897,7 +2920,7 @@
         }
       });
 
-      loanRows.addEventListener("input", update);
+      loanRows.addEventListener("input", scheduleUpdate);
       loanRows.addEventListener("click", function (event) {
         var button = event.target.closest("button[data-action='remove-loan']");
         if (!button) return;
@@ -2944,9 +2967,13 @@
       }
 
       [methodInput, extraInput, startInput, targetInput].forEach(function (input) {
-        input.addEventListener("input", update);
+        input.addEventListener("input", scheduleUpdate);
         input.addEventListener("change", update);
       });
+
+      if (dismissHint) {
+        dismissHint.addEventListener("click", dismissFirstRunHint);
+      }
 
       toggleSchedule.addEventListener("click", function () {
         showAllSchedule = !showAllSchedule;
