@@ -2038,6 +2038,23 @@
       var mobileTotalInterest = document.getElementById("mobileTotalInterest");
       var mobileMonthlyPayment = document.getElementById("mobileMonthlyPayment");
 
+      var requiredElements = [
+        cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
+        clearAllButton, loadExampleButton, formError, methodInput, extraInput, startInput,
+        targetInput, emptyResults, resultsContent, totalBalanceEl, totalMinimumsEl,
+        payoffDateEl, payoffSuggestion, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
+        totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
+        resultExplainer, criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
+        comparisonRows, comparisonSection, scheduleRows, scheduleNote, toggleSchedule,
+        scheduleLoading, firstRunHint, dismissHint, methodDescription, customOrderPanel,
+        customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus,
+        mobileSummaryBar, mobilePayoffDate, mobileTotalInterest, mobileMonthlyPayment
+      ];
+
+      if (requiredElements.some(function (element) { return !element; })) {
+        return;
+      }
+
       var nextId = 1;
       var loanNextId = 1;
       var showAllSchedule = false;
