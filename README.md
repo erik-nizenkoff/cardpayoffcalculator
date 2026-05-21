@@ -2,6 +2,10 @@
 
 A single-page credit card debt payoff calculator.
 
+## Specification
+
+Product decisions and requested features are maintained in [SPEC.md](SPEC.md). Update it when new feature requests or UX decisions come from the project channel.
+
 ## What it does
 
 - How long until your credit card debt is paid off?
@@ -12,7 +16,7 @@ A single-page credit card debt payoff calculator.
 
 ## Stack
 
-Static HTML + CSS + vanilla JS. No backend, no accounts, no data collection.
+Static HTML + CSS + vanilla JS. Core calculations run client-side. No accounts or backend dependency for calculations; current usage/data disclosure is maintained in the page footer and product spec.
 
 ## Development
 

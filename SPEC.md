@@ -1,0 +1,137 @@
+# Card Payoff Calculator Specification
+
+This is the living product specification for cardpayoffcalculator.com. Update this file whenever a feature, UX rule, disclosure decision, monetization constraint, or QA standard is requested in the project channel.
+
+## Product Scope
+
+Card Payoff Calculator is a focused single-page calculator for people trying to understand and compare credit card debt payoff paths. The first priority is one excellent calculator page, not a broad personal finance site.
+
+The calculator should answer:
+
+- How long until my credit card debt is paid off?
+- How much interest will I pay?
+- What payment do I need to be debt-free by a target date?
+- Which payoff method should I use: avalanche, snowball, fixed payment, minimum-only, or custom order?
+- What happens if I add an extra monthly payment?
+- Could a balance transfer or debt consolidation loan improve the payoff path?
+
+## Current Page Requirements
+
+- Single static HTML/CSS/JS page.
+- No accounts, persistence, forms, payments, or backend dependency for core calculations.
+- Inputs for credit cards: name, balance, APR, minimum payment, optional intro APR, intro months.
+- Inputs for installment loans: name, balance, interest rate, fixed payment, optional remaining term.
+- Payoff methods: avalanche, snowball, minimum-only, fixed payment behavior where supported, and custom order.
+- Result summary: debt-free date, total interest, total balance, starting minimums, months to payoff, monthly payment, first payoff target, total paid.
+- Warnings for minimum-payment traps and 50-year capped payoff paths.
+- Target-date payment estimate.
+- First-month payment breakdown.
+- Payoff method comparison table.
+- Payoff schedule with a manageable default view and expandable full view.
+- Balance chart and payoff visualization where supported.
+- Copy/share-friendly results and printable/PDF-friendly output.
+
+## Payoff Options
+
+After the main results, show a neutral Compare Payoff Options panel.
+
+The panel must always include the current plan as the baseline. Users can add or remove zero or more scenarios:
+
+- Balance transfer scenarios:
+  - transfer fee percent
+  - intro APR
+  - promo months
+  - post-promo APR, defaulting to the current weighted average card APR when blank
+- Debt consolidation loan scenarios:
+  - loan APR
+  - term months
+  - origination fee percent
+
+For each scenario, show:
+
+- payoff date
+- monthly payment
+- interest plus fees
+- savings versus the current plan
+- watchout text, such as promo expiration before payoff or qualification/fee cautions
+
+Assumptions:
+
+- Balance transfer and consolidation loan scenarios model payoff of credit card balances only.
+- Existing installment loans remain in the plan.
+- Fees are counted in Interest + fees.
+- This is neutral modeling first. Do not add affiliate links until there is traffic and the affiliate/disclosure approach is explicitly approved.
+
+## Intro APR UX
+
+Intro APR controls must not be hidden behind a horizontal scrollbar. The intro-rate affordance should be visible near the primary APR field in the normal card-entry flow.
+
+## Data Disclosure And Privacy Placement
+
+Do not repeat the Supabase/data disclosure throughout the page. The current UX decision is footer-only disclosure, kept low-emphasis.
+
+The results area should use concise estimate language only:
+
+- Estimates only - Not financial advice
+
+The footer should contain the data disclosure. If the project later adds accounts, saved plans, email capture, user profiles, payments, or personally identifying data collection, revisit this decision and add a proper privacy page and collection-point notice.
+
+Preferred direction: reduce collection to aggregate/non-identifying metrics where practical rather than adding more prominent repeated disclosure.
+
+## Monetization Direction
+
+Balance transfer cards and debt consolidation loans are a likely affiliate opportunity after traffic is established.
+
+Rules before affiliate links:
+
+- Keep the calculator neutral and math-first.
+- Do not steer users into new debt products by default.
+- Add clear affiliate disclosure before or near affiliate placements.
+- Add warnings for credit checks, transfer limits, post-promo APR, origination fees, qualification uncertainty, and risk of adding new debt.
+- Only introduce affiliate links after explicit approval.
+
+## QA Summary Standard
+
+Each implementation summary should include a QA critic 1-10 ranking with:
+
+- score
+- short reason
+- top improvement needed to raise the score
+
+Example:
+
+QA critic: 9/10. Matches the requested behavior and passes tests; next improvement is saving option scenarios into share links.
+
+## Verification Standards
+
+For code changes, run the smallest meaningful verification set before reporting completion:
+
+- inline JavaScript parse check for index.html changes
+- npm test
+- targeted browser render check with headless Chrome when UI changes
+- live Vercel HTML or DOM check after deploy
+
+For feature changes that affect interaction, verify the interaction directly where practical. Example: add/remove payoff option scenarios and confirm the calculated results update.
+
+## Deployment And Decision Gates
+
+Local prototype work, commits, and pushes are okay.
+
+Ask Erik before:
+
+- buying or registering cardpayoffcalculator.com
+- changing DNS
+- adding or changing analytics/forms/payments
+- adding affiliate links
+- collecting new categories of user data
+- spending money
+- creating external accounts
+
+## Maintenance Process
+
+When a new feature request or product decision is made in the project channel:
+
+1. Update this spec before or alongside implementation.
+2. Keep the request phrased as product behavior, not just implementation detail.
+3. Link major implementation decisions back to the relevant spec section in summaries when useful.
+4. If the implemented behavior intentionally differs from this spec, update this spec in the same commit.
