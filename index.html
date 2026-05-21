@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Credit Card Payoff Calculator — How Long to Pay Off Your Debt?</title>
   <meta name="description" content="Use this free credit card payoff calculator to estimate your payoff date, total interest, required payment by a target date, and savings from extra monthly payments.">
-  <link rel="canonical" href="https://cardpayoffcalculator.com/">
+  <link rel="canonical" href="https://cardpayoffcalculator.vercel.app/">
   <meta property="og:title" content="Credit Card Payoff Calculator">
   <meta property="og:description" content="Estimate when your credit card debt will be paid off, how much interest you will pay, and whether avalanche or snowball saves more.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://cardpayoffcalculator.com/">
+  <meta property="og:url" content="https://cardpayoffcalculator.vercel.app/">
   <meta property="og:site_name" content="Card Payoff Calculator">
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#0f2444">
@@ -504,6 +504,18 @@
       flex: 0 0 auto;
     }
 
+    .sample-data-banner .button-row {
+      margin: 0;
+      justify-content: flex-end;
+    }
+
+    .sample-data-banner .secondary {
+      min-height: 36px;
+      padding: 7px 10px;
+      font-size: .82rem;
+      color: #49627f;
+    }
+
     .hint {
       margin: 5px 0 0;
       color: var(--muted);
@@ -643,6 +655,33 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 32px rgba(15,36,68,0.3);
       padding: 20px;
       margin: 0 0 16px;
+    }
+
+    .sample-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid #bdd7ff;
+      background: #f0f7ff;
+      color: #173d70;
+      padding: 5px 9px;
+      font-size: .75rem;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .result-hero .sample-badge {
+      margin-bottom: 10px;
+      border-color: rgba(255,255,255,.28);
+      background: rgba(255,255,255,.12);
+      color: #dbeafe;
+    }
+
+    .sample-inline-note {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 800;
     }
 
     .hero-label {
@@ -1153,6 +1192,17 @@
       font-size: .96rem;
     }
 
+    .option-assumptions {
+      margin: 8px 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--soft);
+      padding: 8px;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
     .option-card .summary-line {
       padding: 7px 0;
     }
@@ -1492,7 +1542,7 @@
 
       main {
         padding-top: 14px;
-        padding-bottom: 180px;
+        padding-bottom: 220px;
         overflow-x: hidden;
       }
 
@@ -1700,8 +1750,8 @@
         border-radius: 999px;
         background: #f1fbf5;
         color: var(--green-dark);
-        padding: 3px 7px;
-        font-size: .72rem;
+        padding: 5px 9px;
+        font-size: .76rem;
         font-weight: 900;
         margin-left: auto;
         flex-shrink: 0;
@@ -2078,7 +2128,7 @@
             <tbody id="cardRows"></tbody>
           </table>
         </div>
-        <p class="field-helper">Enter balances and current minimums in dollars. APR and intro APR fields are annual percentages.</p>
+        <p class="field-helper">Use nicknames only - account names are not needed. Enter balances and current minimums in dollars. APR and promo APR fields are annual percentages.</p>
 
         <div class="button-row">
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
@@ -2161,6 +2211,7 @@
           <div>
             <h2>Your Payoff Plan</h2>
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
+            <p id="sampleResultBadge" class="sample-inline-note hidden">Sample plan shown - replace the sample cards for your real payoff plan.</p>
           </div>
         </div>
 
@@ -2176,6 +2227,7 @@
           </div>
 
           <div class="result-hero">
+            <span id="sampleHeroBadge" class="sample-badge hidden">Sample data</span>
             <span class="hero-label">Debt-Free Date</span>
             <strong id="payoffDate" class="hero-date">-</strong>
             <p id="payoffSuggestion" class="payoff-suggestion hidden">Increase your extra payment to find a payoff path.</p>
@@ -2195,6 +2247,7 @@
               <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
             </div>
             <p id="copyActionsHelp" class="copy-helper">Share and copy controls activate after valid results are shown.</p>
+            <p id="sampleShareNote" class="copy-helper hidden">Sample results are shown. Replace sample cards before sharing a real payoff plan.</p>
           </details>
 
           <div class="result-quick-actions" aria-label="Result shortcuts">
@@ -2203,6 +2256,7 @@
             <a href="#payoffOptions">Optional options</a>
             <a href="#methodology">Methodology</a>
           </div>
+          <p class="minimum-note">Balance-transfer and loan scenarios are optional planning estimates, not offers or recommendations. Add one only if you want to compare the assumptions.</p>
 
           <div class="result-section">
             <h3 class="result-section-title">Plan Details</h3>
@@ -2258,7 +2312,7 @@
             </div>
             <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
             <details id="payoffOptionControls" class="option-controls">
-              <summary>Edit balance transfer / loan assumptions</summary>
+              <summary>Add or edit balance transfer / loan assumptions</summary>
               <div id="optionScenarioList" class="option-settings-grid"></div>
               <div class="option-actions">
                 <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
@@ -2278,6 +2332,7 @@
         <div>
           <h2>Balance Over Time</h2>
           <p>Stacked bars show each debt's remaining balance; the dark line shows total balance.</p>
+          <p id="sampleChartBadge" class="sample-inline-note hidden">Sample chart shown - replace sample cards for your own balance timeline.</p>
         </div>
       </div>
       <div class="chart-box" style="position:relative">
@@ -2459,19 +2514,20 @@
       <h2>About This Calculator</h2>
       <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies.</p>
       <p>The avalanche and snowball methods are the two most widely recommended debt payoff strategies by consumer finance educators. This tool lets you compare them side by side alongside your current minimum-payment path so you can see the real cost of each choice.</p>
-      <p>Built and maintained by the Card Payoff Calculator team. Last updated: May 2026. Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a> — we review all feedback.</p>
+      <p>Built and maintained by the Card Payoff Calculator team. Last updated: May 2026. Found a bug or have a suggestion? <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Open an issue</a> — we review all feedback.</p>
       <p class="disclaimer-notice">This calculator is for educational and planning purposes only. Results are estimates based on the inputs you provide and standard amortization math. This is not financial advice. For personalized guidance, consult a certified financial planner or credit counselor.</p>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve this tool. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve this tool. · Not financial advice</div>
     </div>
   </footer>
 
   <div id="mobileSummaryBar" class="mobile-summary-bar hidden">
     <div class="mobile-summary-main">
+      <span id="mobileSampleBadge" class="sample-badge hidden">Sample plan</span>
       <span id="mobilePayoffDate">-</span>
       <div class="mobile-summary-meta">
         <span id="mobileTotalInterest">$0</span>
@@ -2513,6 +2569,10 @@
       var resultsPanel = document.getElementById("resultsPanel");
       var emptyResults = document.getElementById("emptyResults");
       var resultsContent = document.getElementById("resultsContent");
+      var sampleResultBadge = document.getElementById("sampleResultBadge");
+      var sampleHeroBadge = document.getElementById("sampleHeroBadge");
+      var sampleShareNote = document.getElementById("sampleShareNote");
+      var sampleChartBadge = document.getElementById("sampleChartBadge");
       var totalBalanceEl = document.getElementById("totalBalance");
       var totalMinimumsEl = document.getElementById("totalMinimums");
       var payoffDateEl = document.getElementById("payoffDate");
@@ -2558,6 +2618,7 @@
       var copyActionsHelp = document.getElementById("copyActionsHelp");
       var mobileSummaryBar = document.getElementById("mobileSummaryBar");
       var mobilePayoffDate = document.getElementById("mobilePayoffDate");
+      var mobileSampleBadge = document.getElementById("mobileSampleBadge");
       var mobileTotalInterest = document.getElementById("mobileTotalInterest");
       var mobileMonthlyPayment = document.getElementById("mobileMonthlyPayment");
       var mobileSummaryLink = document.getElementById("mobileSummaryLink");
@@ -2565,7 +2626,7 @@
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
         clearAllButton, loadExampleButton, formError, methodInput, extraInput, startInput,
-        targetInput, resultsPanel, emptyResults, resultsContent, totalBalanceEl, totalMinimumsEl,
+        targetInput, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
@@ -2573,7 +2634,7 @@
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
-        mobileSummaryBar, mobilePayoffDate, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink
+        mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink
       ];
 
       if (requiredElements.some(function (element) { return !element; })) {
@@ -2584,6 +2645,7 @@
       var loanNextId = 1;
       var optionScenarioNextId = 1;
       var showAllSchedule = false;
+      var isSampleMode = false;
       var scheduleRenderGeneration = 0;
       var updateTimer = null;
       var printPreviousShowAll = false;
@@ -2709,13 +2771,16 @@
         var minimum = Number(getField(row, "minimum"));
         var summary = row.querySelector(".card-summary-text");
         var toggle = row.querySelector(".card-summary-line");
+        var hint = row.querySelector(".row-expand-hint");
+        var expanded = row.classList.contains("expanded");
         if (summary) {
           summary.innerHTML = '<span class="card-summary-title">' + escapeHtml(name) + '</span>' +
             '<span class="card-summary-meta">Balance ' + money(balance) + ' · APR ' + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + '% · Minimum ' + money(minimum) + '</span>';
         }
+        if (hint) hint.textContent = expanded ? "Done" : "Tap to edit";
         if (toggle) {
-          toggle.setAttribute("aria-expanded", String(row.classList.contains("expanded")));
-          toggle.setAttribute("aria-label", row.classList.contains("expanded") ? "Collapse card details" : "Expand card details");
+          toggle.setAttribute("aria-expanded", String(expanded));
+          toggle.setAttribute("aria-label", expanded ? "Collapse card details" : "Expand card details");
         }
         setFieldLabel(row, "name", name + " card name");
         setFieldLabel(row, "balance", name + " balance");
@@ -2921,6 +2986,27 @@
         setCopySummaryStatus("");
       }
 
+      function setSampleMode(enabled) {
+        isSampleMode = Boolean(enabled);
+        [sampleResultBadge, sampleHeroBadge, sampleShareNote, sampleChartBadge, mobileSampleBadge].forEach(function (element) {
+          if (!element) return;
+          element.classList.toggle("hidden", !isSampleMode);
+        });
+        if (copyActionsHelp && isSampleMode) {
+          copyActionsHelp.textContent = "Sample results are active. Replace sample cards before sharing a real payoff plan.";
+        }
+        if (isSampleMode) {
+          hideMobileSummary();
+        } else if (lastResult) {
+          updateMobileSummary(lastResult);
+        }
+      }
+
+      function confirmSampleData() {
+        dismissFirstRunHint();
+        setSampleMode(false);
+      }
+
       function setCopySummaryStatus(message) {
         if (!copySummaryStatus) return;
         copySummaryStatus.textContent = message || "";
@@ -2941,6 +3027,7 @@
         var extraPayment = methodInput.value === "minimum" ? 0 : Math.max(0, Number(extraInput.value || 0));
         return [
           "Card Payoff Calculator summary",
+          isSampleMode ? "Sample data: replace sample cards before treating this as your own plan." : null,
           "Payoff method: " + methodLabel,
           "Starting balance: " + money(result.startingBalance),
           "Extra monthly payment: " + money(extraPayment),
@@ -2948,7 +3035,7 @@
           "Total interest: " + money(result.totalInterest),
           "Monthly payment: " + money(result.monthlyPayment),
           "Time to payoff: " + duration(result.months, result.capped)
-        ].join("\n");
+        ].filter(Boolean).join("\n");
       }
 
       function fallbackCopyText(text) {
@@ -3641,8 +3728,6 @@
         if (!optionScenarioList) return;
         optionScenarioList.innerHTML = "";
         optionScenarioNextId = 1;
-        addOptionScenario("balance-transfer");
-        addOptionScenario("consolidation-loan");
       }
 
       function getOptionField(scenario, field) {
@@ -3695,6 +3780,7 @@
         var savings = roundCents(row.currentCost - row.totalCost);
         var isLowest = row.totalCost === bestCost;
         var risk = "";
+        var assumptions = row.assumptions || "";
         if (row.type === "balance-transfer") {
           risk = "Approval and transfer limit are not guaranteed. Fees, lower approved limits, post-promo APR, missed payments, or new purchases can erase savings.";
         } else if (row.type === "consolidation-loan") {
@@ -3703,8 +3789,9 @@
           risk = "Current-plan baseline assumes no new credit product and no new charges.";
         }
         return '<div class="option-card ' + (isLowest ? "modeled-lowest" : "") + '">' +
-          (isLowest ? '<span class="option-badge">Lowest modeled cost</span>' : "") +
+          (isLowest ? '<span class="option-badge">Lowest in this model</span>' : "") +
           "<h4>" + escapeHtml(row.name) + "</h4>" +
+          (assumptions ? '<p class="option-assumptions">' + escapeHtml(assumptions) + "</p>" : "") +
           (row.amount != null ? '<div class="summary-line"><span>Amount moved</span><strong>' + money(row.amount) + "</strong></div>" : "") +
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
           '<div class="summary-line"><span>Monthly payment</span><strong>' + money(result.monthlyPayment) + "</strong></div>" +
@@ -3729,6 +3816,11 @@
         var averageApr = weightedCardApr(cards);
         syncDefaultOptionAmountFields(cardTotal);
         var scenarios = readPayoffOptionScenarios(averageApr, cardTotal);
+        if (!scenarios.length) {
+          payoffOptionRows.innerHTML = '<div class="option-card"><h4>No optional scenarios added</h4><p class="option-watchout">Add a balance transfer or consolidation loan only if you want to model a new-credit scenario against the current plan.</p></div>';
+          payoffOptionNote.textContent = "Scenario amount defaults will use your current credit card balance when you add an option.";
+          return;
+        }
 
         var rows = [
           {
@@ -3737,7 +3829,8 @@
             result: currentResult,
             totalCost: currentCost,
             currentCost: currentCost,
-            watchout: "No new credit product."
+            watchout: "No new credit product.",
+            assumptions: "Uses your entered cards, loans, APRs, minimums, method, and extra monthly payment."
           }
         ];
 
@@ -3771,6 +3864,7 @@
               result: btResult,
               totalCost: roundCents(btResult.totalInterest + btFee),
               currentCost: currentCost,
+              assumptions: "Assumes " + money(refinanced.amount) + " transferred, " + scenario.feeRate + "% fee, " + scenario.introApr + "% intro APR for " + scenario.introMonths + " months, then " + scenario.postApr + "% APR.",
               watchout: btResult.months > scenario.introMonths
                 ? "Promo expires before payoff; post-promo APR applies."
                 : "Paid before promo expires in this model."
@@ -3797,6 +3891,7 @@
             result: consolidationResult,
             totalCost: roundCents(consolidationResult.totalInterest + loanFee),
             currentCost: currentCost,
+            assumptions: "Assumes " + money(refinanced.amount) + " loan amount, " + scenario.apr + "% APR, " + scenario.term + " months, and " + scenario.feeRate + "% origination fee.",
             watchout: consolidationResult.monthlyPayment > currentMonthlyBudget + EPSILON
               ? "Required payment is higher than current plan."
               : "Fixed term; compare fees and APR before applying."
@@ -4189,7 +4284,7 @@
       }
 
       function updateMobileSummary(result) {
-        if (!result) {
+        if (!result || isSampleMode) {
           hideMobileSummary();
           return;
         }
@@ -4442,9 +4537,9 @@
         customOrder = [];
         cards.forEach(addCardRow);
         loans.forEach(addLoanRow);
+        optionScenarioList.innerHTML = "";
+        optionScenarioNextId = 1;
         if (optionScenarios) {
-          optionScenarioList.innerHTML = "";
-          optionScenarioNextId = 1;
           optionScenarios.forEach(function (scenario) {
             addOptionScenario(scenario.type, scenario);
           });
@@ -4458,6 +4553,7 @@
             return typeof id === "string";
           }).slice(0, 60);
         }
+        setSampleMode(false);
         updateAddButton();
         update({ skipTracking: true, skipUrlUpdate: true });
         return true;
@@ -4652,13 +4748,14 @@
           updateSharedUrl(cards, loans, method, extra);
         }
         renderResultExplainer(cards, loans, result, baseline, extra);
-        if (!options.skipTracking) {
+        if (!options.skipTracking && !isSampleMode) {
           trackCalculation(cards, loans, { method: method, extraPayment: extra, targetDate: targetInput ? targetInput.value : null }, result);
         }
       }
 
       function loadSample(options) {
         var settings = options || {};
+        setSampleMode(true);
         cardRows.innerHTML = "";
         loanRows.innerHTML = "";
         nextId = 1;
@@ -4678,6 +4775,7 @@
         updateAddButton();
         showFirstRunHint();
         update({ skipTracking: true, skipUrlUpdate: Boolean(settings.skipUrlUpdate) });
+        setSampleMode(true);
       }
 
       function focusFirstCardField(field) {
@@ -4693,6 +4791,7 @@
 
       function loadBlankEntry(options) {
         var settings = options || {};
+        setSampleMode(false);
         cardRows.innerHTML = "";
         loanRows.innerHTML = "";
         nextId = 1;
@@ -4716,10 +4815,12 @@
       }
 
       bind(cardRows, "input", function () {
+        if (isSampleMode) setSampleMode(false);
         if (!sampleDataBanner.classList.contains("hidden")) sampleDataBanner.classList.add("hidden");
         scheduleUpdate();
       });
       bind(optionScenarioList, "input", function (event) {
+        if (isSampleMode) setSampleMode(false);
         if (event.target && event.target.dataset && event.target.dataset.optionField === "amount") {
           event.target.dataset.optionAutoDefault = "false";
         }
@@ -4729,11 +4830,13 @@
         var button = event.target.closest("button[data-action]");
         if (!button) return;
         if (button.dataset.action === "add-balance-transfer") {
+          if (isSampleMode) setSampleMode(false);
           addOptionScenario("balance-transfer");
           update();
           return;
         }
         if (button.dataset.action === "add-consolidation-loan") {
+          if (isSampleMode) setSampleMode(false);
           addOptionScenario("consolidation-loan");
           update();
           return;
@@ -4757,6 +4860,7 @@
 
         var button = event.target.closest("button[data-action='remove']");
         if (button) {
+          if (isSampleMode) setSampleMode(false);
           var row = button.closest("tr");
           if (row && cardRows.children.length > 1) {
             customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
@@ -4781,10 +4885,14 @@
         }
       });
 
-      bind(loanRows, "input", scheduleUpdate);
+      bind(loanRows, "input", function () {
+        if (isSampleMode) setSampleMode(false);
+        scheduleUpdate();
+      });
       bind(loanRows, "click", function (event) {
         var button = event.target.closest("button[data-action='remove-loan']");
         if (!button) return;
+        if (isSampleMode) setSampleMode(false);
         var row = button.closest("tr");
         if (row) {
           customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
@@ -4810,11 +4918,13 @@
       });
 
       bind(addCardButton, "click", function () {
+        if (isSampleMode) setSampleMode(false);
         addCardRow(null, { expandOnMobile: true });
         update();
       });
 
       bind(addLoanButton, "click", function () {
+        if (isSampleMode) setSampleMode(false);
         addLoanRow();
         update();
       });
@@ -4833,7 +4943,7 @@
 
       bind(enterCardsButton, "click", replaceSampleWithCards);
       bind(sampleEnterCardsButton, "click", replaceSampleWithCards);
-      bind(keepSampleButton, "click", dismissFirstRunHint);
+      bind(keepSampleButton, "click", confirmSampleData);
 
       document.addEventListener("focusin", function (event) {
         if (event.target && event.target.closest && event.target.closest("#calculatorForm")) {
@@ -4864,7 +4974,10 @@
       });
 
       [methodInput, extraInput, startInput, targetInput].forEach(function (input) {
-        bind(input, "input", scheduleUpdate);
+        bind(input, "input", function () {
+          if (isSampleMode) setSampleMode(false);
+          scheduleUpdate();
+        });
         bind(input, "change", update);
       });
 

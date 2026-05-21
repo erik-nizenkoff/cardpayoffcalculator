@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy - Card Payoff Calculator</title>
   <meta name="description" content="Privacy details for Card Payoff Calculator, including what calculator data is and is not collected.">
-  <link rel="canonical" href="https://cardpayoffcalculator.com/privacy.html">
+  <link rel="canonical" href="https://cardpayoffcalculator.vercel.app/privacy.html">
   <meta name="robots" content="index,follow">
   <style>
     :root {
@@ -122,7 +122,8 @@
       <p>The payoff calculation runs in your browser. You can use the calculator without creating an account.</p>
 
       <h2>What May Be Sent</h2>
-      <p>To improve the calculator, numeric calculator inputs and result metrics may be sent to Supabase. This can include balances, APRs, minimum payments, payoff method, extra payment amount, target date, loan inputs, balance-transfer assumptions, consolidation-loan assumptions, payoff months, and total interest.</p>
+      <p>Plausible may receive basic page-view analytics when the page loads. After you edit calculator inputs or optional scenarios and the calculator has valid results, numeric calculator inputs and result metrics may be sent to Supabase. The default sample calculation is not sent to Supabase on page load.</p>
+      <p>Numeric telemetry can include balances, APRs, minimum payments, payoff method, extra payment amount, target date, loan inputs, balance-transfer assumptions, consolidation-loan assumptions, payoff months, and total interest.</p>
       <p>The app also stores a random anonymous browser ID in local storage so repeated calculations from the same browser can be grouped without asking who you are.</p>
 
       <h2>What Is Not Sent</h2>
@@ -134,13 +135,14 @@
       </ul>
 
       <h2>Analytics</h2>
-      <p>The site uses Plausible for basic usage analytics. Plausible is used to understand visits and page behavior, not to collect the sensitive account details listed above.</p>
+      <p>The site uses Plausible for basic usage analytics. Plausible is used to understand visits and page behavior, not to collect the sensitive account details listed above. Supabase and Plausible act as service providers for hosting telemetry and analytics.</p>
 
       <h2>Retention And Changes</h2>
-      <p>Calculator telemetry is used for product improvement and debugging. If this project later adds accounts, saved plans, email capture, affiliate links, ads, or personally identifying data collection, this page should be updated before those features go live.</p>
+      <p>Calculator telemetry is used for product improvement and debugging. No fixed deletion schedule has been implemented yet; current intent is to retain non-identifying calculation telemetry only as long as it is useful for improving the calculator. Because the telemetry is not tied to an email address or account, deletion requests may be limited if we cannot identify which anonymous rows belong to a specific visitor.</p>
+      <p>If this project later adds accounts, saved plans, email capture, affiliate links, ads, or personally identifying data collection, this page should be updated before those features go live.</p>
 
       <h2>Contact</h2>
-      <p>Questions or deletion requests can be sent to <a href="mailto:hello@cardpayoffcalculator.com">hello@cardpayoffcalculator.com</a>.</p>
+      <p>Until the custom domain email is configured, questions or deletion requests can be opened through <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">GitHub Issues</a>. Do not post card numbers, account numbers, or other sensitive details.</p>
     </article>
   </main>
 

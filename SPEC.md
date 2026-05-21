@@ -109,6 +109,10 @@ Recent UX QA fixes should remain part of the product baseline:
 - Long schedules should be collapsed by default behind a clear "View schedule" affordance.
 - Copy/share controls should explain when they are disabled and confirm when a copy action succeeds.
 - Chart content should include screen-reader-accessible summary text in addition to canvas visuals.
+- While the default sample is active, every result surface must clearly show sample state, and mobile sticky results should be hidden or downgraded until the user edits inputs or explicitly chooses to use the sample.
+- Optional balance-transfer and consolidation-loan scenarios should default to zero scenarios. When the user adds one, defaults can be prefilled from debt, but the app must not show product-like savings before opt-in.
+- Optional scenario cards must show their key assumptions next to results, not only inside edit controls.
+- Production metadata and contact links must match the actually live deployment. Use the Vercel canonical/contact path until the custom domain and email are configured.
 
 ## Intro APR UX
 
@@ -125,6 +129,13 @@ The results area should use concise estimate language only:
 The footer should contain the short data disclosure plus a privacy-page link. If the project later adds accounts, saved plans, email capture, user profiles, payments, personally identifying data collection, affiliate links, or ad/marketing pixels, revisit this decision before launch.
 
 Preferred direction: reduce collection to aggregate/non-identifying metrics where practical rather than adding more prominent repeated disclosure.
+
+Telemetry details for current launch state:
+
+- Plausible may record basic page-view usage when the page loads.
+- Supabase calculation telemetry should not be sent for the default sample load.
+- Supabase calculation telemetry may be sent after a user edits valid numeric calculator inputs or scenarios.
+- Privacy page copy should state retention and deletion limits plainly and identify Supabase/Plausible as service providers/processors.
 
 ## Calculation Data Payload
 
