@@ -38,11 +38,13 @@ After the main results, show a neutral Compare Payoff Options panel.
 The panel must always include the current plan as the baseline. Users can add or remove zero or more scenarios:
 
 - Balance transfer scenarios:
+  - transfer amount in dollars, defaulting to the full current credit card balance when blank
   - transfer fee percent
   - intro APR
   - promo months
   - post-promo APR, defaulting to the current weighted average card APR when blank
 - Debt consolidation loan scenarios:
+  - loan amount in dollars, defaulting to the full current credit card balance when blank
   - loan APR
   - term months
   - origination fee percent
@@ -58,6 +60,8 @@ For each scenario, show:
 Assumptions:
 
 - Balance transfer and consolidation loan scenarios model payoff of credit card balances only.
+- If a scenario amount is less than the total credit card balance, the model applies the amount to the highest-APR card balances first and leaves the remaining card balances in the payoff plan.
+- If a scenario amount exceeds the total credit card balance, cap it at the current total credit card balance.
 - Existing installment loans remain in the plan.
 - Fees are counted in Interest + fees.
 - This is neutral modeling first. Do not add affiliate links until there is traffic and the affiliate/disclosure approach is explicitly approved.

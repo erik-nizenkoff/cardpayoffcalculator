@@ -3111,6 +3111,46 @@
         return simulate(cards, { method: "avalanche", extraPayment: extra }, loans);
       }
 
+      function cloneCardWithBalance(card, balance) {
+        return {
+          id: card.id,
+          name: card.name,
+          balance: roundCents(balance),
+          apr: card.apr,
+          minimum: card.minimum,
+          introApr: card.introApr,
+          introMonths: card.introMonths
+        };
+      }
+
+      function refinanceCardsByAmount(cards, amount) {
+        var cappedAmount = Math.min(roundCents(sumCardBalances(cards)), Math.max(0, roundCents(amount)));
+        var remaining = cards.map(function (card, index) {
+          return {
+            card: card,
+            index: index,
+            balance: roundCents(Math.max(0, Number(card.balance || 0)))
+          };
+        });
+        var amountLeft = cappedAmount;
+        remaining.slice().sort(function (a, b) {
+          return b.card.apr - a.card.apr || b.balance - a.balance || a.index - b.index;
+        }).forEach(function (item) {
+          if (amountLeft <= EPSILON) return;
+          var applied = Math.min(item.balance, amountLeft);
+          item.balance = roundCents(item.balance - applied);
+          amountLeft = roundCents(amountLeft - applied);
+        });
+        return {
+          amount: cappedAmount,
+          remainingCards: remaining.filter(function (item) {
+            return item.balance > EPSILON;
+          }).map(function (item) {
+            return cloneCardWithBalance(item.card, item.balance);
+          })
+        };
+      }
+
       function optionScenarioTitle(type) {
         return type === "balance-transfer" ? "Balance Transfer" : "Consolidation Loan";
       }
@@ -3132,12 +3172,14 @@
 
         var inputs = "";
         if (type === "balance-transfer") {
-          inputs = optionScenarioInputHtml("Transfer Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "") +
+          inputs = optionScenarioInputHtml("Transfer Amount ($)", "amount", values.amount != null ? values.amount : "", 'type="number" min="0" step="1" inputmode="decimal"', "Full balance") +
+            optionScenarioInputHtml("Transfer Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "") +
             optionScenarioInputHtml("Intro APR (%)", "introApr", values.introApr != null ? values.introApr : 0, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
             optionScenarioInputHtml("Promo Months", "introMonths", values.introMonths != null ? values.introMonths : 18, 'type="number" min="1" max="120" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Post-Promo APR (%)", "postApr", values.postApr != null ? values.postApr : "", 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "Current avg");
         } else {
-          inputs = optionScenarioInputHtml("Loan APR (%)", "apr", values.apr != null ? values.apr : 12.99, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
+          inputs = optionScenarioInputHtml("Loan Amount ($)", "amount", values.amount != null ? values.amount : "", 'type="number" min="0" step="1" inputmode="decimal"', "Full balance") +
+            optionScenarioInputHtml("Loan APR (%)", "apr", values.apr != null ? values.apr : 12.99, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
             optionScenarioInputHtml("Term Months", "term", values.term != null ? values.term : 36, 'type="number" min="1" max="360" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Origination Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "");
         }
@@ -3169,7 +3211,7 @@
         return number;
       }
 
-      function readPayoffOptionScenarios(averageApr) {
+      function readPayoffOptionScenarios(averageApr, cardTotal) {
         if (!optionScenarioList) return [];
         var counts = { "balance-transfer": 0, "consolidation-loan": 0 };
         return Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset")).map(function (scenario) {
@@ -3180,6 +3222,7 @@
             return {
               type: type,
               name: "Balance transfer" + suffix,
+              amount: optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal),
               feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
               introApr: optionNumberValue(getOptionField(scenario, "introApr"), 0, 0, MAX_APR),
               introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
@@ -3189,6 +3232,7 @@
           return {
             type: "consolidation-loan",
             name: "Consolidation loan" + suffix,
+            amount: optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal),
             apr: optionNumberValue(getOptionField(scenario, "apr"), 12.99, 0, MAX_APR),
             term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
             feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20)
@@ -3204,6 +3248,7 @@
         var savings = roundCents(row.currentCost - row.totalCost);
         return '<div class="option-card ' + (row.totalCost === bestCost ? "best-row" : "") + '">' +
           "<h4>" + escapeHtml(row.name) + "</h4>" +
+          (row.amount != null ? '<div class="summary-line"><span>Amount moved</span><strong>' + money(row.amount) + "</strong></div>" : "") +
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
           '<div class="summary-line"><span>Monthly payment</span><strong>' + money(result.monthlyPayment) + "</strong></div>" +
           '<div class="summary-line"><span>Interest + fees</span><strong>' + money(row.totalCost) + "</strong></div>" +
@@ -3224,7 +3269,7 @@
         var currentMonthlyBudget = currentResult.monthlyPayment;
         var currentCost = currentResult.totalInterest;
         var averageApr = weightedCardApr(cards);
-        var scenarios = readPayoffOptionScenarios(averageApr);
+        var scenarios = readPayoffOptionScenarios(averageApr, cardTotal);
 
         var rows = [
           {
@@ -3237,20 +3282,31 @@
         ];
 
         scenarios.forEach(function (scenario, index) {
+          var refinanced = refinanceCardsByAmount(cards, scenario.amount);
+          if (refinanced.amount <= EPSILON) {
+            rows.push({
+              name: scenario.name,
+              unavailable: true,
+              reason: "Enter an amount above $0 to model this option."
+            });
+            return;
+          }
+
           if (scenario.type === "balance-transfer") {
-            var btFee = roundCents(cardTotal * scenario.feeRate / 100);
+            var btFee = roundCents(refinanced.amount * scenario.feeRate / 100);
             var btCards = [{
               id: "option-balance-transfer-" + index,
               name: scenario.name + " card",
-              balance: roundCents(cardTotal + btFee),
+              balance: roundCents(refinanced.amount + btFee),
               apr: scenario.postApr,
               minimum: 25,
               introApr: scenario.introApr,
               introMonths: scenario.introMonths
             }];
-            var btResult = simulateWithMonthlyBudget(btCards, loans, currentMonthlyBudget);
+            var btResult = simulateWithMonthlyBudget(refinanced.remainingCards.concat(btCards), loans, currentMonthlyBudget);
             rows.push({
               name: scenario.name,
+              amount: refinanced.amount,
               result: btResult,
               totalCost: roundCents(btResult.totalInterest + btFee),
               currentCost: currentCost,
@@ -3261,8 +3317,8 @@
             return;
           }
 
-          var loanFee = roundCents(cardTotal * scenario.feeRate / 100);
-          var loanBalance = roundCents(cardTotal + loanFee);
+          var loanFee = roundCents(refinanced.amount * scenario.feeRate / 100);
+          var loanBalance = roundCents(refinanced.amount + loanFee);
           var consolidationPayment = loanPaymentForTerm(loanBalance, scenario.apr, scenario.term);
           var consolidationLoans = (loans || []).concat([{
             id: "option-consolidation-loan-" + index,
@@ -3272,9 +3328,10 @@
             payment: consolidationPayment,
             term: scenario.term
           }]);
-          var consolidationResult = simulateWithMonthlyBudget([], consolidationLoans, currentMonthlyBudget);
+          var consolidationResult = simulateWithMonthlyBudget(refinanced.remainingCards, consolidationLoans, currentMonthlyBudget);
           rows.push({
             name: scenario.name,
+            amount: refinanced.amount,
             result: consolidationResult,
             totalCost: roundCents(consolidationResult.totalInterest + loanFee),
             currentCost: currentCost,
@@ -3290,7 +3347,7 @@
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
         payoffOptionNote.textContent = scenarios.length
-          ? "Assumes each transfer or loan pays off credit card balances only. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
+          ? "Blank amounts use the full current credit card balance. Partial amounts apply to highest-APR card balances first. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
@@ -3771,10 +3828,12 @@
 
       function sharedOptionScenario(scenario) {
         var type = scenario.dataset.optionType;
+        var amount = getOptionField(scenario, "amount");
         if (type === "balance-transfer") {
           var postApr = getOptionField(scenario, "postApr");
           return {
             type: type,
+            amount: amount === "" ? null : cleanSharedNumber(optionNumberValue(amount, 0, 0, Number.MAX_SAFE_INTEGER), 0, Number.MAX_SAFE_INTEGER),
             fee: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20), 0, 20),
             introApr: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "introApr"), 0, 0, MAX_APR), 0, MAX_APR),
             introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
@@ -3784,6 +3843,7 @@
         if (type === "consolidation-loan") {
           return {
             type: type,
+            amount: amount === "" ? null : cleanSharedNumber(optionNumberValue(amount, 0, 0, Number.MAX_SAFE_INTEGER), 0, Number.MAX_SAFE_INTEGER),
             apr: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "apr"), 12.99, 0, MAX_APR), 0, MAX_APR),
             term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
             fee: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20), 0, 20)
@@ -3865,6 +3925,7 @@
           if (scenario.type === "balance-transfer") {
             return {
               type: "balance-transfer",
+              amount: scenario.amount == null ? null : optionNumberValue(scenario.amount, 0, 0, Number.MAX_SAFE_INTEGER),
               fee: optionNumberValue(scenario.fee, 3, 0, 20),
               introApr: optionNumberValue(scenario.introApr, 0, 0, MAX_APR),
               introMonths: Math.round(optionNumberValue(scenario.introMonths, 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
@@ -3874,6 +3935,7 @@
           if (scenario.type === "consolidation-loan") {
             return {
               type: "consolidation-loan",
+              amount: scenario.amount == null ? null : optionNumberValue(scenario.amount, 0, 0, Number.MAX_SAFE_INTEGER),
               apr: optionNumberValue(scenario.apr, 12.99, 0, MAX_APR),
               term: Math.round(optionNumberValue(scenario.term, 36, 1, 360)),
               fee: optionNumberValue(scenario.fee, 3, 0, 20)
