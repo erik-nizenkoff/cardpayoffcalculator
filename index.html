@@ -2400,8 +2400,14 @@
       function buildResultsSummary(result) {
         if (!result) return "";
         var payoffDate = result.capped ? "50+ years (calculator limit reached)" : addMonths(startInput.value, result.months - 1);
+        var selectedMethod = methodInput.options[methodInput.selectedIndex];
+        var methodLabel = selectedMethod ? selectedMethod.textContent : methodInput.value;
+        var extraPayment = methodInput.value === "minimum" ? 0 : Math.max(0, Number(extraInput.value || 0));
         return [
           "Card Payoff Calculator summary",
+          "Payoff method: " + methodLabel,
+          "Starting balance: " + money(result.startingBalance),
+          "Extra monthly payment: " + money(extraPayment),
           "Debt-free date: " + payoffDate,
           "Total interest: " + money(result.totalInterest),
           "Monthly payment: " + money(result.monthlyPayment),
