@@ -1963,6 +1963,8 @@
       var EPSILON = 0.005;
       var SUPABASE_URL = 'https://ofhgwcbcljlmvuqvwoax.supabase.co';
       var SUPABASE_ANON_KEY = 'sb_publishable_TshGB0Mpxe2zjVOc9zeW_w_LzEi5j_S';
+      var DEFAULT_EMPTY_MESSAGE = "Enter at least one card with a balance, APR, and minimum payment to see live results.";
+      var ZERO_BALANCE_MESSAGE = "All entered balances are $0. You do not have any active debt to model.";
 
       var cardRows = document.getElementById("cardRows");
       // ── DOM refs ──────────────────────────────────────────────────────────
@@ -2257,6 +2259,42 @@
         }).filter(function (card) {
           return card.balance > 0;
         });
+      }
+
+      function rowHasEnteredValue(row) {
+        return Array.prototype.slice.call(row.querySelectorAll("input")).some(function (input) {
+          return input.value.trim() !== "";
+        });
+      }
+
+      function rowHasZeroBalance(row) {
+        var balance = row.querySelector('[data-field="balance"]');
+        if (!balance || balance.value.trim() === "") return false;
+        var value = Number(balance.value);
+        return Number.isFinite(value) && Math.abs(value) <= EPSILON;
+      }
+
+      function hasOnlyZeroBalanceEntries() {
+        var rows = Array.prototype.slice.call(cardRows.querySelectorAll("tr"))
+          .concat(Array.prototype.slice.call(loanRows.querySelectorAll("tr")));
+        var enteredRows = rows.filter(rowHasEnteredValue);
+        return enteredRows.length > 0 && enteredRows.every(rowHasZeroBalance);
+      }
+
+      function hideCalculatedResults(message) {
+        emptyResults.textContent = message || DEFAULT_EMPTY_MESSAGE;
+        emptyResults.classList.remove("hidden");
+        resultsContent.classList.add("hidden");
+        scheduleRenderGeneration += 1;
+        comparisonRows.innerHTML = "";
+        scheduleRows.innerHTML = "";
+        scheduleLoading.classList.add("hidden");
+        methodRecommendation.classList.add("hidden");
+        methodRecommendation.textContent = "";
+        renderCriticalWarnings([]);
+        renderWarnings([]);
+        lastResult = null;
+        hideMobileSummary();
       }
 
       function validateCards(cards, loans) {
@@ -3357,11 +3395,12 @@
         options = options || {};
         var cards = readCards();
         var loans = readLoans();
-        var error = validateCards(cards, loans);
-        if (!error) error = validateLoans(loans);
+        var onlyZeroBalances = !cards.length && !loans.length && hasOnlyZeroBalanceEntries();
+        var error = onlyZeroBalances ? "" : validateCards(cards, loans);
+        if (!error && !onlyZeroBalances) error = validateLoans(loans);
         var method = methodInput.value;
         var extraValue = Number(extraInput.value || 0);
-        if (!error && (!Number.isFinite(extraValue) || extraValue < 0)) error = "Enter an extra payment of $0 or more.";
+        if (!error && !onlyZeroBalances && (!Number.isFinite(extraValue) || extraValue < 0)) error = "Enter an extra payment of $0 or more.";
         var extra = Math.max(0, extraValue);
 
         methodDescription.textContent = methodHelp(method);
@@ -3369,22 +3408,21 @@
 
         if (error) {
           setError(error);
-          emptyResults.classList.remove("hidden");
-          resultsContent.classList.add("hidden");
-          scheduleRenderGeneration += 1;
-          comparisonRows.innerHTML = "";
-          scheduleRows.innerHTML = "";
-          scheduleLoading.classList.add("hidden");
-          methodRecommendation.classList.add("hidden");
-          methodRecommendation.textContent = "";
-          renderCriticalWarnings([]);
-          renderWarnings([]);
-          lastResult = null;
-          hideMobileSummary();
+          hideCalculatedResults(DEFAULT_EMPTY_MESSAGE);
+          return;
+        }
+
+        if (onlyZeroBalances) {
+          setError("");
+          hideCalculatedResults(ZERO_BALANCE_MESSAGE);
+          if (!options.skipUrlUpdate) {
+            clearSharedUrlParam();
+          }
           return;
         }
 
         setError("");
+        emptyResults.textContent = DEFAULT_EMPTY_MESSAGE;
         emptyResults.classList.add("hidden");
         resultsContent.classList.remove("hidden");
 
