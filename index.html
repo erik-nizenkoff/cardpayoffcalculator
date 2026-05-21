@@ -3453,6 +3453,12 @@
           event.preventDefault();
           update();
         });
+        calculatorForm.addEventListener("keydown", function (event) {
+          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            update();
+          }
+        });
       }
       if (loadExampleButton) {
         loadExampleButton.addEventListener("click", function () {
