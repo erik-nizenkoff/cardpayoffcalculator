@@ -1509,6 +1509,14 @@
           "@type": "Answer",
           "text": "Credit card minimums can be close to the monthly interest charge. When most of the payment goes to interest instead of principal, the balance may fall slowly or fail to amortize in a reasonable time."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "Does this calculator store my debt numbers?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
+        }
       }
     ]
   }
@@ -1692,7 +1700,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice · Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
           <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
@@ -1828,6 +1836,10 @@
         <details>
           <summary>Why does minimum-only sometimes show a warning?</summary>
           <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
+        </details>
+        <details>
+          <summary>Does this calculator store my debt numbers?</summary>
+          <p>Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
