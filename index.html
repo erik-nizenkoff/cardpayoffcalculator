@@ -746,6 +746,11 @@
       box-shadow: none;
     }
 
+    .about-section {
+      border-top-color: var(--green);
+      margin-top: 20px;
+    }
+
     .content-section p,
     .content-section li {
       color: #4a5568;
@@ -834,6 +839,11 @@
     }
 
     .mobile-summary-bar {
+      display: none;
+    }
+
+    .card-summary-cell,
+    .card-row-toggle {
       display: none;
     }
 
@@ -947,6 +957,52 @@
         display: block;
         border-bottom: 0;
         padding: 7px 0;
+      }
+
+      .card-table td.card-summary-cell {
+        display: block;
+        padding: 0;
+      }
+
+      .card-table td.card-summary-cell::before {
+        display: none;
+      }
+
+      .card-summary-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 38px;
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .card-summary-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .card-row-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 6px;
+        font-size: .82rem;
+        line-height: 1;
+        flex: 0 0 auto;
+      }
+
+      .card-table tr:not(.expanded) td.card-row-detail {
+        display: none;
+      }
+
+      .card-table tr.expanded td.card-row-detail {
+        display: block;
       }
 
       .card-table td::before,
@@ -1387,6 +1443,7 @@
           <tbody id="scheduleRows"></tbody>
         </table>
       </div>
+      <p id="scheduleLoading" class="hint hidden" aria-live="polite">Loading...</p>
     </section>
 
     <section class="content-grid">
@@ -1499,6 +1556,13 @@
         <a class="calculator-link" href="#calculatorForm">Try it in the calculator →</a>
       </div>
     </section>
+
+    <section id="about" class="panel content-section about-section">
+      <h2>About This Calculator</h2>
+      <p>This calculator was built to give people a clear, honest picture of their credit card debt. It runs entirely in your browser — your numbers are never sent to a server.</p>
+      <p>The math follows standard amortization: each month, interest accrues on the remaining balance at APR ÷ 12. Payments cover interest first, then reduce principal. The avalanche and snowball methods apply any extra payment to the target debt after all minimums are met. Results are estimates; your actual payoff may vary based on issuer rules, fees, and payment timing.</p>
+      <p>Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a>. We review all feedback.</p>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -1561,6 +1625,7 @@
       var scheduleRows = document.getElementById("scheduleRows");
       var scheduleNote = document.getElementById("scheduleNote");
       var toggleSchedule = document.getElementById("toggleSchedule");
+      var scheduleLoading = document.getElementById("scheduleLoading");
       var methodDescription = document.getElementById("methodDescription");
       var customOrderPanel = document.getElementById("customOrderPanel");
       var customOrderList = document.getElementById("customOrderList");
@@ -1573,6 +1638,7 @@
       var nextId = 1;
       var loanNextId = 1;
       var showAllSchedule = false;
+      var scheduleRenderGeneration = 0;
       var printPreviousShowAll = false;
       var lastResult = null;
       var lastCards = [];
@@ -1670,22 +1736,41 @@
         }[method] || "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.";
       }
 
-      function addCardRow(card) {
+      function updateCardSummary(row) {
+        var name = getField(row, "name") || "Card";
+        var balance = Number(getField(row, "balance"));
+        var apr = Number(getField(row, "apr"));
+        var summary = row.querySelector(".card-summary-text");
+        var toggle = row.querySelector(".card-row-toggle");
+        if (summary) {
+          summary.textContent = name + " · " + money(balance) + " · " + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + "%";
+        }
+        if (toggle) {
+          toggle.textContent = row.classList.contains("expanded") ? "▲" : "▼";
+          toggle.setAttribute("aria-expanded", String(row.classList.contains("expanded")));
+          toggle.setAttribute("aria-label", row.classList.contains("expanded") ? "Collapse card details" : "Expand card details");
+        }
+      }
+
+      function addCardRow(card, options) {
         if (cardRows.children.length >= MAX_CARDS) return;
         var data = card || {};
+        var settings = options || {};
         var id = data.id || "card-" + nextId++;
         var tr = document.createElement("tr");
         tr.className = "mobile-card-row";
+        if (settings.expandOnMobile) tr.classList.add("expanded");
         tr.dataset.id = id;
         tr.innerHTML =
-          '<td class="name-cell" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
-          '<td class="amount-cell" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
-          '<td class="amount-cell" data-label="Min Payment ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
-          '<td class="intro-cell" data-label="Promo"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
+          '<td class="card-summary-cell" colspan="6"><div class="card-summary-line"><span class="card-summary-text"></span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button></div></td>' +
+          '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
+          '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
+          '<td class="amount-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
+          '<td class="amount-cell card-row-detail" data-label="Min Payment ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
+          '<td class="intro-cell card-row-detail" data-label="Promo"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
-          '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
+          '<td class="remove-cell card-row-detail" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
           var introDiv = tr.querySelector(".intro-fields");
@@ -1696,6 +1781,10 @@
             introBtn.setAttribute("aria-expanded", "true");
           }
         }
+        tr.addEventListener("input", function () {
+          updateCardSummary(tr);
+        });
+        updateCardSummary(tr);
         cardRows.appendChild(tr);
         if (customOrder.indexOf(id) === -1) customOrder.push(id);
         updateAddButton();
@@ -2228,8 +2317,11 @@
       }
 
       function renderSchedule(result) {
-        var rows = showAllSchedule ? result.timeline : result.timeline.slice(0, 24);
-        scheduleRows.innerHTML = rows.map(function (row) {
+        var generation = ++scheduleRenderGeneration;
+        var maxDisplayRows = showAllSchedule ? Math.min(result.timeline.length, 240) : Math.min(result.timeline.length, 24);
+        var rows = result.timeline.slice(0, maxDisplayRows);
+
+        function scheduleRowHtml(row) {
           return "<tr>" +
             "<td>" + row.month + "</td>" +
             "<td>" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
@@ -2239,15 +2331,56 @@
             "<td>" + moneyCents(row.endingBalance) + "</td>" +
             "<td>" + escapeHtml(row.target || "-") + "</td>" +
             "</tr>";
-        }).join("");
+        }
+
+        function scheduleStatus(count) {
+          var note = "Showing " + count + " of " + result.timeline.length + " months.";
+          if (showAllSchedule && result.timeline.length > 240) {
+            note += " Schedule capped at 20 years for display. Full payoff timeline shown in the results above.";
+          }
+          return note;
+        }
 
         if (result.timeline.length > 24) {
           toggleSchedule.classList.remove("hidden");
           toggleSchedule.textContent = showAllSchedule ? "Show First 24" : "Show All";
-          scheduleNote.textContent = showAllSchedule ? "Showing all " + result.timeline.length + " modeled months." : "First 24 of " + result.timeline.length + " modeled months shown.";
         } else {
           toggleSchedule.classList.add("hidden");
-          scheduleNote.textContent = "Showing all modeled months.";
+        }
+
+        if (!showAllSchedule || rows.length <= 24) {
+          scheduleRows.innerHTML = rows.map(scheduleRowHtml).join("");
+          scheduleNote.textContent = scheduleStatus(rows.length);
+          scheduleLoading.classList.add("hidden");
+          return;
+        }
+
+        scheduleRows.innerHTML = "";
+        scheduleNote.textContent = scheduleStatus(0);
+        scheduleLoading.classList.remove("hidden");
+
+        var rendered = 0;
+        function renderBatch() {
+          if (generation !== scheduleRenderGeneration) return;
+          var nextRows = rows.slice(rendered, rendered + 100);
+          scheduleRows.insertAdjacentHTML("beforeend", nextRows.map(scheduleRowHtml).join(""));
+          rendered += nextRows.length;
+          scheduleNote.textContent = scheduleStatus(rendered);
+          if (rendered < rows.length) {
+            if (window.requestAnimationFrame) {
+              window.requestAnimationFrame(renderBatch);
+            } else {
+              window.setTimeout(renderBatch, 0);
+            }
+          } else {
+            scheduleLoading.classList.add("hidden");
+          }
+        }
+
+        if (window.requestAnimationFrame) {
+          window.requestAnimationFrame(renderBatch);
+        } else {
+          window.setTimeout(renderBatch, 0);
         }
       }
 
@@ -2519,8 +2652,10 @@
           setError(error);
           emptyResults.classList.remove("hidden");
           resultsContent.classList.add("hidden");
+          scheduleRenderGeneration += 1;
           comparisonRows.innerHTML = "";
           scheduleRows.innerHTML = "";
+          scheduleLoading.classList.add("hidden");
           methodRecommendation.classList.add("hidden");
           methodRecommendation.textContent = "";
           renderCriticalWarnings([]);
@@ -2590,6 +2725,16 @@
 
       cardRows.addEventListener("input", update);
       cardRows.addEventListener("click", function (event) {
+        var rowToggle = event.target.closest("button[data-action='toggle-card-row'], .card-summary-line");
+        if (rowToggle) {
+          var toggleRow = rowToggle.closest("tr");
+          if (toggleRow) {
+            toggleRow.classList.toggle("expanded");
+            updateCardSummary(toggleRow);
+          }
+          return;
+        }
+
         var button = event.target.closest("button[data-action='remove']");
         if (button) {
           var row = button.closest("tr");
@@ -2599,6 +2744,7 @@
           } else if (row) {
             customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
             row.querySelectorAll("input").forEach(function (input) { input.value = ""; });
+            updateCardSummary(row);
           }
           updateAddButton();
           update();
@@ -2644,7 +2790,7 @@
       });
 
       addCardButton.addEventListener("click", function () {
-        addCardRow();
+        addCardRow(null, { expandOnMobile: true });
         update();
       });
 
