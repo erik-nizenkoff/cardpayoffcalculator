@@ -3157,8 +3157,14 @@
         Array.prototype.slice.call(optionScenarioList.querySelectorAll('[data-option-field="amount"]')).forEach(function (input) {
           if (input.dataset.optionAutoDefault === "true") {
             input.value = defaultAmount;
+            input.setAttribute("value", defaultAmount);
           }
         });
+      }
+
+      function currentDefaultOptionAmount() {
+        var cardTotal = roundCents(sumCardBalances(readCards()));
+        return cardTotal > EPSILON ? String(cardTotal) : "";
       }
 
       function optionScenarioTitle(type) {
@@ -3182,13 +3188,13 @@
 
         var inputs = "";
         if (type === "balance-transfer") {
-          inputs = optionScenarioInputHtml("Transfer Amount ($)", "amount", values.amount != null ? values.amount : "", 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
+          inputs = optionScenarioInputHtml("Transfer Amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
             optionScenarioInputHtml("Transfer Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "") +
             optionScenarioInputHtml("Intro APR (%)", "introApr", values.introApr != null ? values.introApr : 0, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
             optionScenarioInputHtml("Promo Months", "introMonths", values.introMonths != null ? values.introMonths : 18, 'type="number" min="1" max="120" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Post-Promo APR (%)", "postApr", values.postApr != null ? values.postApr : "", 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "Current avg");
         } else {
-          inputs = optionScenarioInputHtml("Loan Amount ($)", "amount", values.amount != null ? values.amount : "", 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
+          inputs = optionScenarioInputHtml("Loan Amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
             optionScenarioInputHtml("Loan APR (%)", "apr", values.apr != null ? values.apr : 12.99, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
             optionScenarioInputHtml("Term Months", "term", values.term != null ? values.term : 36, 'type="number" min="1" max="360" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Origination Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "");
