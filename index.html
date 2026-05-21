@@ -454,6 +454,36 @@
       text-align: right;
     }
 
+    .month-plan {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .month-plan h3 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .month-plan table {
+      min-width: 0;
+      font-size: .84rem;
+    }
+
+    .month-plan th,
+    .month-plan td {
+      padding: 8px 6px;
+    }
+
+    .assumptions-note {
+      margin-top: 14px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
     .target-card,
     .savings-card {
       margin-top: 12px;
@@ -675,6 +705,62 @@
       table {
         min-width: 650px;
       }
+
+      .card-table,
+      .loan-table {
+        min-width: 0;
+      }
+
+      .card-table thead,
+      .loan-table thead {
+        display: none;
+      }
+
+      .card-table tr,
+      .loan-table tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px;
+      }
+
+      .card-table td,
+      .loan-table td {
+        display: block;
+        border-bottom: 0;
+        padding: 7px 0;
+      }
+
+      .card-table td::before,
+      .loan-table td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 5px;
+        color: var(--muted);
+        font-size: .72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+
+      .card-table td.remove-cell,
+      .loan-table td.remove-cell {
+        text-align: left;
+        padding-top: 2px;
+      }
+
+      .card-table td.remove-cell::before,
+      .loan-table td.remove-cell::before {
+        content: "";
+        display: none;
+      }
+
+      .intro-fields {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
     }
   </style>
   <script type="application/ld+json">
@@ -853,8 +939,8 @@
       <aside class="panel results-panel" aria-live="polite">
         <div class="section-head">
           <div>
-            <h2>Results</h2>
-            <p id="methodDescription">Avalanche sends extra payment to the highest APR card first.</p>
+            <h2>Your Payoff Plan</h2>
+            <p id="methodDescription">Here's what it takes to get debt-free.</p>
           </div>
         </div>
 
@@ -876,7 +962,26 @@
 
           <div class="summary-line"><span>First payoff target</span><strong id="firstTarget">-</strong></div>
           <div class="summary-line"><span>Total paid</span><strong id="totalPaid">$0</strong></div>
+
+          <div id="monthPlan" class="month-plan hidden">
+            <h3>Month 1 Payment Breakdown</h3>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Debt Name</th>
+                    <th>This Month's Payment</th>
+                    <th>of which Interest</th>
+                    <th>Principal</th>
+                    <th>Remaining Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="monthPlanRows"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
+        <div class="assumptions-note">Estimates assume fixed APR, no new charges, and payments made on the same day each month. Actual payoff may vary based on issuer minimum rules, fees, and payment timing.</div>
       </aside>
     </section>
 
@@ -1014,6 +1119,8 @@
       var targetResult = document.getElementById("targetResult");
       var savingsResult = document.getElementById("savingsResult");
       var warningsEl = document.getElementById("warnings");
+      var monthPlan = document.getElementById("monthPlan");
+      var monthPlanRows = document.getElementById("monthPlanRows");
       var comparisonRows = document.getElementById("comparisonRows");
       var scheduleRows = document.getElementById("scheduleRows");
       var scheduleNote = document.getElementById("scheduleNote");
@@ -1110,10 +1217,10 @@
 
       function methodHelp(method) {
         return {
-          avalanche: "Avalanche sends extra payment to the highest APR card first.",
-          snowball: "Snowball sends extra payment to the smallest balance first.",
-          minimum: "Minimum only uses the calculated minimum payment for each card."
-        }[method] || "Avalanche sends extra payment to the highest APR card first.";
+          avalanche: "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.",
+          snowball: "Here's what it takes to get debt-free. Snowball sends extra payment to the smallest balance first.",
+          minimum: "Here's what it takes to get debt-free. Minimum only uses the calculated minimum payment for each card."
+        }[method] || "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.";
       }
 
       function addCardRow(card) {
@@ -1121,16 +1228,17 @@
         var data = card || {};
         var id = data.id || "card-" + nextId++;
         var tr = document.createElement("tr");
+        tr.className = "mobile-card-row";
         tr.dataset.id = id;
         tr.innerHTML =
-          '<td class="name-cell"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
-          '<td class="amount-cell"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
-          '<td class="amount-cell"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
-          '<td class="intro-cell"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
+          '<td class="name-cell" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
+          '<td class="amount-cell" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
+          '<td class="amount-cell" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
+          '<td class="amount-cell" data-label="Min Payment ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
+          '<td class="intro-cell" data-label="Promo"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
-          '<td class="remove-cell"><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
+          '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
           var introDiv = tr.querySelector(".intro-fields");
@@ -1154,14 +1262,15 @@
         var data = loan || {};
         var id = data.id || "loan-" + loanNextId++;
         var tr = document.createElement("tr");
+        tr.className = "mobile-card-row";
         tr.dataset.id = id;
         tr.innerHTML =
-          '<td class="name-cell"><input data-field="name" aria-label="Loan name" value="' + escapeHtml(data.name || "") + '" placeholder="Auto Loan"></td>' +
-          '<td class="amount-cell"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell"><input data-field="rate" aria-label="Interest rate" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.rate != null ? data.rate : "") + '" placeholder="6.5"></td>' +
-          '<td class="amount-cell"><input data-field="payment" aria-label="Fixed monthly payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.payment != null ? data.payment : "") + '" placeholder="300"></td>' +
-          '<td class="amount-cell"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48"></td>' +
-          '<td class="remove-cell"><button type="button" class="icon-button danger" data-action="remove-loan" aria-label="Remove loan" title="Remove loan">×</button></td>';
+          '<td class="name-cell" data-label="Loan Name"><input data-field="name" aria-label="Loan name" value="' + escapeHtml(data.name || "") + '" placeholder="Auto Loan"></td>' +
+          '<td class="amount-cell" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
+          '<td class="amount-cell" data-label="Rate (%)"><input data-field="rate" aria-label="Interest rate" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.rate != null ? data.rate : "") + '" placeholder="6.5"></td>' +
+          '<td class="amount-cell" data-label="Monthly Payment ($)"><input data-field="payment" aria-label="Fixed monthly payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.payment != null ? data.payment : "") + '" placeholder="300"></td>' +
+          '<td class="amount-cell" data-label="Term (months)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48"></td>' +
+          '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove-loan" aria-label="Remove loan" title="Remove loan">×</button></td>';
         loanRows.appendChild(tr);
       }
 
@@ -1313,6 +1422,7 @@
         var totalInterest = 0;
         var totalPaid = 0;
         var warnings = [];
+        var introWarnings = {};
         var summaries = allDebts.map(function (d) {
           return { id: d.id, name: d.name, startingBalance: d.startingBalance, payoffMonth: null, interestPaid: 0, type: d.type };
         });
@@ -1323,10 +1433,10 @@
           var interest = roundCents(card.balance * (card.apr / 100 / 12));
           var minimum = calculatedMinimum(card, interest);
           if (card.statedMinimum <= interest + EPSILON) {
-            warnings.push(card.name + "'s entered minimum is less than or equal to the first month's interest. That is a revolving-debt trap unless the issuer requires a higher minimum or you pay extra.");
+            warnings.push(card.name + "'s entered minimum is less than or equal to the first month's interest. The minimum payment may not reduce the balance meaningfully; consider paying more than the minimum.");
           }
           if (interest >= minimum - EPSILON) {
-            warnings.push(card.name + "'s minimum payment does not cover enough interest to reliably reduce principal.");
+            warnings.push(card.name + "'s minimum payment may not reduce the balance meaningfully; consider paying more than the minimum.");
           }
         });
 
@@ -1342,6 +1452,10 @@
 
           allDebts.forEach(function (debt, index) {
             if (debt.balance <= EPSILON) return;
+            if (debt.type === "card" && debt.introApr != null && debt.introMonths != null && month === debt.introMonths + 1 && !introWarnings[debt.id]) {
+              warnings.push(debt.name + ": intro rate expired at month " + debt.introMonths + ". Standard APR of " + debt.apr + "% now applies.");
+              introWarnings[debt.id] = true;
+            }
             var interest = monthlyInterestForDebt(debt, month);
             interests[index] = interest;
             minimums[index] = calculatedMinimum(debt, interest);
@@ -1500,6 +1614,30 @@
         var monthsSaved = baseline.months - selected.months;
         savingsResult.classList.remove("hidden");
         savingsResult.innerHTML = "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than minimum-only.";
+      }
+
+      function renderMonthPlan(result) {
+        var firstMonth = result.timeline[0];
+        if (!firstMonth || !result.debtNames.length) {
+          monthPlan.classList.add("hidden");
+          monthPlanRows.innerHTML = "";
+          return;
+        }
+
+        monthPlan.classList.remove("hidden");
+        monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
+          var payment = firstMonth.payments[index] || 0;
+          var interest = firstMonth.interests[index] || 0;
+          var principal = roundCents(payment - interest);
+          var balance = firstMonth.balances[index] || 0;
+          return "<tr>" +
+            "<td>" + escapeHtml(name) + "</td>" +
+            "<td>" + moneyCents(payment) + "</td>" +
+            "<td>" + moneyCents(interest) + "</td>" +
+            "<td>" + moneyCents(Math.max(0, principal)) + "</td>" +
+            "<td>" + moneyCents(balance) + "</td>" +
+            "</tr>";
+        }).join("");
       }
 
       function renderComparison(cards, loans, extraPayment) {
@@ -1729,10 +1867,19 @@
 
       // Combo chart tooltip
       comboCanvas.addEventListener("mousemove", function (e) {
+        showComboTooltip(e.clientX);
+      });
+
+      comboCanvas.addEventListener("touchmove", function (e) {
+        if (!e.touches || !e.touches.length) return;
+        showComboTooltip(e.touches[0].clientX);
+      }, { passive: true });
+
+      function showComboTooltip(clientX) {
         var data = comboCanvas._chartData;
         if (!data) { comboTooltip.classList.add("hidden"); return; }
         var rect = comboCanvas.getBoundingClientRect();
-        var mouseX = e.clientX - rect.left;
+        var mouseX = clientX - rect.left;
         var pad = data.pad;
         var innerW = data.W - pad.left - pad.right;
         var months = data.result.timeline.length;
@@ -1753,9 +1900,13 @@
           });
         }
         comboTooltip.innerHTML = lines.map(function (l, i) { return (i === 0 ? "<strong>" + escapeHtml(l) + "</strong>" : escapeHtml(l)); }).join("<br>");
-      });
+      }
 
       comboCanvas.addEventListener("mouseleave", function () {
+        comboTooltip.classList.add("hidden");
+      });
+
+      comboCanvas.addEventListener("touchend", function () {
         comboTooltip.classList.add("hidden");
       });
 
@@ -1822,6 +1973,7 @@
         renderWarnings(warnings);
         renderTarget(cards, loans, method);
         renderSavings(result, baseline, Number(extraInput.value || 0));
+        renderMonthPlan(result);
         renderComparison(cards, loans, Number(extraInput.value || 0));
         renderSchedule(result);
         drawCharts(result);
