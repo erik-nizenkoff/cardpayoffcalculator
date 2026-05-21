@@ -2108,6 +2108,10 @@
         return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
       }
 
+      function bind(element, type, handler, options) {
+        if (element) element.addEventListener(type, handler, options);
+      }
+
       function addMonths(monthValue, offset) {
         var parts = String(monthValue || currentMonthValue()).split("-").map(Number);
         var date = new Date(Date.UTC(parts[0], parts[1] - 1 + offset, 1));
@@ -3597,8 +3601,8 @@
         update({ skipTracking: true, skipUrlUpdate: Boolean(settings.skipUrlUpdate) });
       }
 
-      cardRows.addEventListener("input", scheduleUpdate);
-      cardRows.addEventListener("click", function (event) {
+      bind(cardRows, "input", scheduleUpdate);
+      bind(cardRows, "click", function (event) {
         var rowToggle = event.target.closest("button[data-action='toggle-card-row'], .card-summary-line");
         if (rowToggle) {
           var toggleRow = rowToggle.closest("tr");
@@ -3635,8 +3639,8 @@
         }
       });
 
-      loanRows.addEventListener("input", scheduleUpdate);
-      loanRows.addEventListener("click", function (event) {
+      bind(loanRows, "input", scheduleUpdate);
+      bind(loanRows, "click", function (event) {
         var button = event.target.closest("button[data-action='remove-loan']");
         if (!button) return;
         var row = button.closest("tr");
@@ -3647,7 +3651,7 @@
         update();
       });
 
-      customOrderPanel.addEventListener("click", function (event) {
+      bind(customOrderPanel, "click", function (event) {
         var button = event.target.closest("button[data-action='custom-up'], button[data-action='custom-down']");
         if (!button) return;
         var item = button.closest(".custom-order-item");
@@ -3663,62 +3667,54 @@
         update();
       });
 
-      addCardButton.addEventListener("click", function () {
+      bind(addCardButton, "click", function () {
         addCardRow(null, { expandOnMobile: true });
         update();
       });
 
-      addLoanButton.addEventListener("click", function () {
+      bind(addLoanButton, "click", function () {
         addLoanRow();
         update();
       });
 
-      sampleButton.addEventListener("click", function () {
+      bind(sampleButton, "click", function () {
         loadSample();
       });
-      clearAllButton.addEventListener("click", function () {
+      bind(clearAllButton, "click", function () {
         loadSample();
       });
-      if (calculatorForm) {
-        calculatorForm.addEventListener("submit", function (event) {
+      bind(calculatorForm, "submit", function (event) {
+        event.preventDefault();
+        update();
+      });
+      bind(calculatorForm, "keydown", function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
           event.preventDefault();
           update();
-        });
-        calculatorForm.addEventListener("keydown", function (event) {
-          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-            event.preventDefault();
-            update();
-          }
-        });
-      }
-      if (loadExampleButton) {
-        loadExampleButton.addEventListener("click", function () {
-          loadSample();
-          document.getElementById("calculatorForm").scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
-
-      [methodInput, extraInput, startInput, targetInput].forEach(function (input) {
-        input.addEventListener("input", scheduleUpdate);
-        input.addEventListener("change", update);
+        }
+      });
+      bind(loadExampleButton, "click", function () {
+        loadSample();
+        if (calculatorForm) calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
       });
 
-      if (dismissHint) {
-        dismissHint.addEventListener("click", dismissFirstRunHint);
-      }
+      [methodInput, extraInput, startInput, targetInput].forEach(function (input) {
+        bind(input, "input", scheduleUpdate);
+        bind(input, "change", update);
+      });
 
-      toggleSchedule.addEventListener("click", function () {
+      bind(dismissHint, "click", dismissFirstRunHint);
+
+      bind(toggleSchedule, "click", function () {
         showAllSchedule = !showAllSchedule;
         if (lastResult) renderSchedule(lastResult);
       });
 
-      printButton.addEventListener("click", function () {
+      bind(printButton, "click", function () {
         window.print();
       });
 
-      if (copySummaryButton) {
-        copySummaryButton.addEventListener("click", copyResultsSummary);
-      }
+      bind(copySummaryButton, "click", copyResultsSummary);
 
       window.addEventListener("beforeprint", function () {
         printPreviousShowAll = showAllSchedule;
