@@ -425,6 +425,24 @@
       margin: 10px 0 12px;
     }
 
+    .secondary-actions {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 0;
+      margin: 10px 0 12px;
+    }
+
+    .secondary-actions summary {
+      padding: 9px 11px;
+      font-size: .84rem;
+    }
+
+    .secondary-actions .result-actions {
+      padding: 0 11px 11px;
+      margin: 0;
+    }
+
     .copy-status {
       color: var(--muted);
       font-size: .82rem;
@@ -437,6 +455,28 @@
       color: var(--muted);
       font-size: .82rem;
       line-height: 1.45;
+    }
+
+    .sample-data-banner {
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f0f7ff;
+      color: #173d70;
+      padding: 10px 12px;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: .88rem;
+    }
+
+    .sample-data-banner strong {
+      color: #123968;
+    }
+
+    .sample-data-banner button {
+      flex: 0 0 auto;
     }
 
     .hint {
@@ -658,9 +698,11 @@
     }
 
     .result-quick-actions a:first-child {
-      border-color: #bfe7cf;
-      background: #f1fbf5;
-      color: var(--green-dark);
+      min-height: 42px;
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(39,103,73,0.22);
     }
 
     .result-quick-actions a:hover,
@@ -757,7 +799,7 @@
       color: #173d70;
       border-radius: 7px;
       padding: 8px 12px;
-      font-size: .85rem;
+      font-size: .82rem;
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -772,7 +814,7 @@
       flex: 0 0 auto;
     }
 
-    .first-run-hint button:not(.secondary) {
+    .first-run-hint .dismiss-button {
       flex: 0 0 auto;
       border: 0;
       background: transparent;
@@ -786,10 +828,16 @@
       cursor: pointer;
     }
 
-    .first-run-actions .secondary {
+    .first-run-actions button {
       min-height: 32px;
-      padding: 6px 9px;
+      padding: 6px 10px;
       font-size: .78rem;
+    }
+
+    .first-run-actions .secondary {
+      background: #fff;
+      color: #173d70;
+      border-color: #bdd7ff;
     }
 
     .first-run-hint button:hover,
@@ -920,6 +968,14 @@
     .month-plan th,
     .month-plan td {
       padding: 8px 6px;
+    }
+
+    .scroll-hint {
+      display: none;
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 800;
     }
 
     .assumptions-note {
@@ -1337,6 +1393,10 @@
         overflow-x: hidden;
       }
 
+      body.input-focused .mobile-summary-bar {
+        display: none;
+      }
+
       .shell {
         width: min(100% - 24px, 1180px);
       }
@@ -1386,6 +1446,11 @@
         margin-top: 10px;
       }
 
+      .sample-data-banner {
+        display: grid;
+        align-items: stretch;
+      }
+
       .settings-grid,
       .metric-grid,
       .example-results,
@@ -1401,6 +1466,10 @@
       .table-scroll {
         overflow-x: auto;
         width: 100%;
+      }
+
+      .scroll-hint {
+        display: block;
       }
 
       table {
@@ -1507,11 +1576,24 @@
 
       .card-summary-text {
         flex: 1 1 auto;
+        display: grid;
+        gap: 3px;
         min-width: 0;
         overflow: hidden;
         font-size: .9rem;
         line-height: 1.25;
         white-space: normal;
+      }
+
+      .card-summary-title {
+        color: var(--ink);
+        font-weight: 900;
+      }
+
+      .card-summary-meta {
+        color: var(--muted);
+        font-size: .8rem;
+        font-weight: 800;
       }
 
       .card-row-toggle {
@@ -1534,7 +1616,7 @@
         background: #f1fbf5;
         color: var(--green-dark);
         padding: 3px 7px;
-        font-size: .68rem;
+        font-size: .72rem;
         font-weight: 900;
         margin-left: auto;
         flex-shrink: 0;
@@ -1874,12 +1956,17 @@
           <div>
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
-            <p class="privacy-note">Calculations update in your browser. Non-identifying calculation inputs and basic usage events may be sent to Supabase and Plausible to improve the tool.</p>
+            <p class="privacy-note">No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve the tool.</p>
           </div>
           <div class="button-row">
             <button type="button" class="secondary" id="sampleButton">Load Sample</button>
             <button type="button" class="secondary" id="clearAllButton">Clear all</button>
           </div>
+        </div>
+
+        <div id="sampleDataBanner" class="sample-data-banner hidden">
+          <span><strong>Sample data loaded.</strong> Replace it with your cards to get your real payoff plan.</span>
+          <button type="button" id="sampleEnterCardsButton">Replace sample with my cards</button>
         </div>
 
         <div class="table-scroll">
@@ -1889,7 +1976,7 @@
                 <th>Card Name</th>
                 <th>Balance ($)</th>
                 <th>APR (%)</th>
-                <th>Minimum ($)</th>
+                <th>Current Minimum Payment ($)</th>
                 <th aria-label="Remove card"></th>
               </tr>
             </thead>
@@ -1899,7 +1986,7 @@
 
         <div class="button-row">
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
-          <span id="rowLimitNote" class="hint">Up to 20 cards. Cards with $0 balance are ignored.</span>
+          <span id="rowLimitNote" class="hint">Use the minimum shown on your latest statement. Up to 20 cards; $0 balances are ignored.</span>
         </div>
 
         <details id="loanSection" class="loan-section">
@@ -1973,7 +2060,7 @@
         <div id="formError" class="notice error hidden" role="alert"></div>
       </form>
 
-      <aside id="resultsPanel" class="panel results-panel" aria-live="polite">
+      <aside id="resultsPanel" class="panel results-panel">
         <div class="section-head">
           <div>
             <h2>Your Payoff Plan</h2>
@@ -1985,10 +2072,10 @@
 
         <div id="resultsContent">
           <div id="firstRunHint" class="first-run-hint hidden">
-            <span>👋 This is sample data — replace it with your own cards to see your real payoff plan.</span>
+            <span><strong>Sample data shown.</strong> Replace cards above for a real payoff plan.</span>
             <div class="first-run-actions">
-              <button type="button" class="secondary" id="enterCardsButton">Enter my cards</button>
-              <button type="button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
+              <button type="button" class="secondary" id="enterCardsButton">Edit cards</button>
+              <button type="button" class="dismiss-button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
             </div>
           </div>
 
@@ -2003,12 +2090,15 @@
           </div>
           <p class="results-disclaimer">Estimates only · Not financial advice</p>
 
-          <div class="button-row result-actions">
-            <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
-            <button type="button" class="secondary" id="copyLinkButton" disabled>Copy share link</button>
-            <button type="button" class="secondary" id="copySummaryButton" disabled>Copy results summary</button>
-            <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
-          </div>
+          <details class="secondary-actions">
+            <summary>Share, export, or copy results</summary>
+            <div class="button-row result-actions">
+              <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
+              <button type="button" class="secondary" id="copyLinkButton" disabled>Copy share link</button>
+              <button type="button" class="secondary" id="copySummaryButton" disabled>Copy results summary</button>
+              <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
+            </div>
+          </details>
 
           <div class="result-quick-actions" aria-label="Result shortcuts">
             <a href="#payoffOptions">Compare options</a>
@@ -2079,6 +2169,7 @@
                 <tbody id="monthPlanRows"></tbody>
               </table>
             </div>
+            <p class="scroll-hint">Scroll sideways to compare the full month-one table.</p>
           </div>
         </div>
         <div class="assumptions-note">Estimates assume fixed APR, no new charges, and payments made on the same day each month. Actual payoff may vary based on issuer minimum rules, fees, and payment timing.</div>
@@ -2123,6 +2214,7 @@
             <tbody id="comparisonRows"></tbody>
           </table>
         </div>
+        <p class="scroll-hint">Scroll sideways to compare all methods.</p>
       </details>
     </section>
 
@@ -2150,6 +2242,7 @@
           <tbody id="scheduleRows"></tbody>
         </table>
       </div>
+      <p class="scroll-hint">Scroll sideways to view the full schedule.</p>
       <p id="scheduleLoading" class="hint hidden" aria-live="polite">Loading...</p>
     </section>
 
@@ -2221,6 +2314,7 @@
           </tbody>
         </table>
       </div>
+      <p class="scroll-hint">Scroll sideways to view the full example table.</p>
       <div class="example-results">
         <div class="example-result"><strong>Avalanche with $250 extra</strong>Paid off in 36 months, $4,234 total interest.</div>
         <div class="example-result"><strong>Snowball with $250 extra</strong>Paid off in 36 months, $4,475 total interest.</div>
@@ -2272,7 +2366,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Calculations run in your browser. We also send non-identifying calculation inputs to Supabase and basic usage events to Plausible to improve this tool. Each visitor gets a random browser ID stored locally; no name, email, card names, or loan names are sent. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve this tool. · Not financial advice</div>
     </div>
   </footer>
 
@@ -2284,7 +2378,7 @@
         <span id="mobileMonthlyPayment">$0/mo</span>
       </div>
     </div>
-    <a href="#resultsPanel">Open full plan ↓</a>
+    <a href="#resultsPanel">View full payoff plan ↓</a>
   </div>
 
   <script>
@@ -2348,7 +2442,9 @@
       var toggleSchedule = document.getElementById("toggleSchedule");
       var scheduleLoading = document.getElementById("scheduleLoading");
       var firstRunHint = document.getElementById("firstRunHint");
+      var sampleDataBanner = document.getElementById("sampleDataBanner");
       var enterCardsButton = document.getElementById("enterCardsButton");
+      var sampleEnterCardsButton = document.getElementById("sampleEnterCardsButton");
       var dismissHint = document.getElementById("dismissHint");
       var methodDescription = document.getElementById("methodDescription");
       var customOrderPanel = document.getElementById("customOrderPanel");
@@ -2371,7 +2467,7 @@
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
-        scheduleLoading, firstRunHint, enterCardsButton, dismissHint, methodDescription, customOrderPanel,
+        scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, sampleEnterCardsButton, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus,
         mobileSummaryBar, mobilePayoffDate, mobileTotalInterest, mobileMonthlyPayment
       ];
@@ -2510,7 +2606,8 @@
         var summary = row.querySelector(".card-summary-text");
         var toggle = row.querySelector(".card-summary-line");
         if (summary) {
-          summary.textContent = name + " · Bal " + money(balance) + " · APR " + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + "% · Min " + money(minimum);
+          summary.innerHTML = '<span class="card-summary-title">' + escapeHtml(name) + '</span>' +
+            '<span class="card-summary-meta">Balance ' + money(balance) + ' · APR ' + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + '% · Minimum ' + money(minimum) + '</span>';
         }
         if (toggle) {
           toggle.setAttribute("aria-expanded", String(row.classList.contains("expanded")));
@@ -2542,7 +2639,7 @@
           '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">+ Intro APR</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
-          '<td class="amount-cell minimum-cell card-row-detail" data-label="Minimum ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
+          '<td class="amount-cell minimum-cell card-row-detail" data-label="Current Minimum Payment ($)"><input data-field="minimum" aria-label="Current minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
           '<td class="remove-cell card-row-detail" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
@@ -3953,7 +4050,7 @@
         }
         mobilePayoffDate.textContent = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
         mobileTotalInterest.textContent = money(result.totalInterest) + " interest";
-        mobileMonthlyPayment.textContent = money(result.monthlyPayment) + "/mo";
+        mobileMonthlyPayment.textContent = "Payment " + money(result.monthlyPayment) + "/mo";
         mobileSummaryBar.classList.remove("hidden");
       }
 
@@ -4008,11 +4105,13 @@
         try {
           if (sessionStorage.getItem("hintDismissed") === "1") return;
         } catch (error) {}
-        firstRunHint.classList.remove("hidden");
+        firstRunHint.classList.add("hidden");
+        sampleDataBanner.classList.remove("hidden");
       }
 
       function dismissFirstRunHint() {
         firstRunHint.classList.add("hidden");
+        sampleDataBanner.classList.add("hidden");
         try {
           sessionStorage.setItem("hintDismissed", "1");
         } catch (error) {}
@@ -4470,7 +4569,10 @@
         }
       }
 
-      bind(cardRows, "input", scheduleUpdate);
+      bind(cardRows, "input", function () {
+        if (!sampleDataBanner.classList.contains("hidden")) sampleDataBanner.classList.add("hidden");
+        scheduleUpdate();
+      });
       bind(optionScenarioList, "input", function (event) {
         if (event.target && event.target.dataset && event.target.dataset.optionField === "amount") {
           event.target.dataset.optionAutoDefault = "false";
@@ -4577,9 +4679,27 @@
       bind(clearAllButton, "click", function () {
         loadBlankEntry({ focus: true, focusField: "name" });
       });
-      bind(enterCardsButton, "click", function () {
+
+      function replaceSampleWithCards() {
         loadBlankEntry({ focus: true, focusField: "name" });
         if (calculatorForm) calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      bind(enterCardsButton, "click", replaceSampleWithCards);
+      bind(sampleEnterCardsButton, "click", replaceSampleWithCards);
+
+      document.addEventListener("focusin", function (event) {
+        if (event.target && event.target.closest && event.target.closest("#calculatorForm")) {
+          document.body.classList.add("input-focused");
+        }
+      });
+      document.addEventListener("focusout", function () {
+        setTimeout(function () {
+          var active = document.activeElement;
+          if (!active || !active.closest || !active.closest("#calculatorForm")) {
+            document.body.classList.remove("input-focused");
+          }
+        }, 0);
       });
       bind(calculatorForm, "submit", function (event) {
         event.preventDefault();

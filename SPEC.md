@@ -89,6 +89,18 @@ Recent UX QA fixes should remain part of the product baseline:
 - Target Payoff Date should be visible in the main payoff settings, not hidden in Advanced.
 - Mobile collapsed card summaries should include name, balance, APR, and minimum payment.
 - Data-heavy tables should remain horizontally scrollable on mobile rather than being squeezed.
+- Mobile sticky summary must not cover focused form fields; hide or offset it during input editing.
+- First-run sample-data messaging should appear near the card inputs, not only in results.
+- Primary CTAs should be explicit: replace sample data, view full payoff plan, edit cards.
+- Share/export/methodology actions should not compete with the primary result or edit-card flow.
+- Privacy copy should state that card numbers, account names, logins, and personal identifiers are not requested while numeric calculation inputs may be sent.
+- Privacy copy near inputs should stay short enough to scan before entering data.
+- Minimum payment inputs should be labeled as current statement minimums.
+- Mobile card summaries should use stacked metadata and a simple Edit affordance.
+- Wide result tables should include a visible sideways-scroll cue on mobile.
+- The primary result-side action should be visually obvious on desktop as well as mobile.
+- Sample-data messaging should be consolidated near the card-entry panel so the first screen has one clear sample-state instruction.
+- Mobile result bars should label compact monetary metrics clearly.
 
 ## Intro APR UX
 
