@@ -1643,14 +1643,6 @@
           "@type": "Answer",
           "text": "Credit card minimums can be close to the monthly interest charge. When most of the payment goes to interest instead of principal, the balance may fall slowly or fail to amortize in a reasonable time."
         }
-      },
-      {
-        "@type": "Question",
-        "name": "Does this calculator store my debt numbers?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
-        }
       }
     ]
   }
@@ -1833,7 +1825,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice · Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
           <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
@@ -1984,10 +1976,6 @@
         <details>
           <summary>Why does minimum-only sometimes show a warning?</summary>
           <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
-        </details>
-        <details>
-          <summary>Does this calculator store my debt numbers?</summary>
-          <p>Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
@@ -3781,6 +3769,37 @@
         };
       }
 
+      function sharedOptionScenario(scenario) {
+        var type = scenario.dataset.optionType;
+        if (type === "balance-transfer") {
+          var postApr = getOptionField(scenario, "postApr");
+          return {
+            type: type,
+            fee: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20), 0, 20),
+            introApr: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "introApr"), 0, 0, MAX_APR), 0, MAX_APR),
+            introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
+            postApr: postApr === "" ? null : cleanSharedNumber(optionNumberValue(postApr, 0, 0, MAX_APR), 0, MAX_APR)
+          };
+        }
+        if (type === "consolidation-loan") {
+          return {
+            type: type,
+            apr: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "apr"), 12.99, 0, MAX_APR), 0, MAX_APR),
+            term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
+            fee: cleanSharedNumber(optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20), 0, 20)
+          };
+        }
+        return null;
+      }
+
+      function sharedOptionScenarios() {
+        if (!optionScenarioList) return [];
+        return Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset"))
+          .slice(0, 30)
+          .map(sharedOptionScenario)
+          .filter(Boolean);
+      }
+
       function updateSharedUrl(cards, loans, method, extraPayment) {
         try {
           if (!window.history || !window.history.replaceState || !window.URL) return;
@@ -3793,6 +3812,7 @@
             targetMonth: isValidMonthValue(targetInput.value) ? targetInput.value : "",
             cards: cards.map(sharedCard),
             loans: (loans || []).map(sharedLoan),
+            optionScenarios: sharedOptionScenarios(),
             customOrder: customOrder.slice(0, 60)
           };
           url.searchParams.set("q", encodeSharedState(state));
@@ -3840,6 +3860,27 @@
           if (item.term != null && (!Number.isFinite(item.term) || item.term < 1)) item.term = null;
           return item;
         }).filter(Boolean) : [];
+        var optionScenarios = Array.isArray(state.optionScenarios) ? state.optionScenarios.slice(0, 30).map(function (scenario) {
+          if (!scenario) return null;
+          if (scenario.type === "balance-transfer") {
+            return {
+              type: "balance-transfer",
+              fee: optionNumberValue(scenario.fee, 3, 0, 20),
+              introApr: optionNumberValue(scenario.introApr, 0, 0, MAX_APR),
+              introMonths: Math.round(optionNumberValue(scenario.introMonths, 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
+              postApr: scenario.postApr == null ? null : optionNumberValue(scenario.postApr, 0, 0, MAX_APR)
+            };
+          }
+          if (scenario.type === "consolidation-loan") {
+            return {
+              type: "consolidation-loan",
+              apr: optionNumberValue(scenario.apr, 12.99, 0, MAX_APR),
+              term: Math.round(optionNumberValue(scenario.term, 36, 1, 360)),
+              fee: optionNumberValue(scenario.fee, 3, 0, 20)
+            };
+          }
+          return null;
+        }).filter(Boolean) : null;
 
         if (!cards.length && !loans.length) {
           clearSharedUrlParam();
@@ -3853,6 +3894,13 @@
         customOrder = [];
         cards.forEach(addCardRow);
         loans.forEach(addLoanRow);
+        if (optionScenarios) {
+          optionScenarioList.innerHTML = "";
+          optionScenarioNextId = 1;
+          optionScenarios.forEach(function (scenario) {
+            addOptionScenario(scenario.type, scenario);
+          });
+        }
         methodInput.value = ["avalanche", "snowball", "minimum", "custom"].indexOf(state.method) !== -1 ? state.method : "avalanche";
         extraInput.value = cleanSharedNumber(state.extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0;
         startInput.value = isValidMonthValue(state.startMonth) ? state.startMonth : currentMonthValue();

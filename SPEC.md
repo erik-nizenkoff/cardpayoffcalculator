@@ -62,6 +62,8 @@ Assumptions:
 - Fees are counted in Interest + fees.
 - This is neutral modeling first. Do not add affiliate links until there is traffic and the affiliate/disclosure approach is explicitly approved.
 
+Share links must save and restore the payoff option scenario list, including zero scenarios, multiple balance transfer scenarios, and multiple consolidation loan scenarios. A copied link should recreate the same option inputs before recalculating results.
+
 ## Intro APR UX
 
 Intro APR controls must not be hidden behind a horizontal scrollbar. The intro-rate affordance should be visible near the primary APR field in the normal card-entry flow.
