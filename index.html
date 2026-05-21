@@ -1624,7 +1624,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice · Anonymous usage data collected</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
           <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
@@ -3085,8 +3085,8 @@
               balance: c.balance,
               apr: c.apr,
               minimum: c.minimum,
-              introApr: c.introApr || null,
-              introMonths: c.introMonths || null
+              introApr: c.introApr != null ? c.introApr : null,
+              introMonths: c.introMonths != null ? c.introMonths : null
             };
           });
           var loanData = (loans || []).map(function (l) {
@@ -3117,7 +3117,7 @@
             total_balance: Math.round(totalBalance * 100) / 100,
             avg_apr: avgApr,
             months_to_payoff: result.months || null,
-            total_interest: result.totalInterest ? Math.round(result.totalInterest * 100) / 100 : null
+            total_interest: result.totalInterest != null ? Math.round(result.totalInterest * 100) / 100 : null
           };
 
           fetch(SUPABASE_URL + '/rest/v1/calculations', {
