@@ -2238,24 +2238,29 @@
 
       function readLoans() {
         return Array.prototype.slice.call(loanRows.querySelectorAll("tr")).map(function (row, index) {
+          var nameVal = getLoanField(row, "name");
           var balanceVal = getLoanField(row, "balance");
           var rateVal = getLoanField(row, "rate");
           var paymentVal = getLoanField(row, "payment");
           var termVal = getLoanField(row, "term");
+          var hasEnteredValue = [nameVal, balanceVal, rateVal, paymentVal, termVal].some(function (value) {
+            return value !== "";
+          });
           var loan = {
             id: row.dataset.id,
-            name: getLoanField(row, "name") || "Loan " + (index + 1),
-            balance: Number(balanceVal),
+            name: nameVal || "Loan " + (index + 1),
+            balance: balanceVal === "" ? NaN : Number(balanceVal),
             rate: rateVal === "" ? NaN : Number(rateVal),
             payment: paymentVal === "" ? NaN : Number(paymentVal),
-            term: termVal === "" ? null : Number(termVal)
+            term: termVal === "" ? null : Number(termVal),
+            hasEnteredValue: hasEnteredValue
           };
           if (loan.payment > 0 && loan.term != null && !isNaN(loan.term) && loan.term > 0 && loan.balance > 0 && loan.payment * loan.term < loan.balance * 0.5) {
             loan.warning = loan.name + ": fixed payment may be too low to pay off the loan within the remaining term.";
           }
           return loan;
         }).filter(function (loan) {
-          return loan.balance > 0 || loan.payment > 0 || !isNaN(loan.rate) || (loan.term != null && !isNaN(loan.term));
+          return loan.balance > 0 || (loan.balance !== 0 && loan.hasEnteredValue);
         });
       }
 
@@ -2266,22 +2271,29 @@
 
       function readCards() {
         return Array.prototype.slice.call(cardRows.querySelectorAll("tr")).map(function (row, index) {
+          var nameVal = getField(row, "name");
+          var balanceVal = getField(row, "balance");
           var aprVal = getField(row, "apr");
+          var minimumVal = getField(row, "minimum");
           var introAprVal = getField(row, "introApr");
           var introMonthsVal = getField(row, "introMonths");
           var introApr = introAprVal !== "" ? Number(introAprVal) : null;
           var introMonths = introMonthsVal !== "" ? Number(introMonthsVal) : null;
+          var hasEnteredValue = [nameVal, balanceVal, aprVal, minimumVal, introAprVal, introMonthsVal].some(function (value) {
+            return value !== "";
+          });
           return {
             id: row.dataset.id,
-            name: getField(row, "name") || "Card " + (index + 1),
-            balance: Number(getField(row, "balance")),
+            name: nameVal || "Card " + (index + 1),
+            balance: balanceVal === "" ? NaN : Number(balanceVal),
             apr: aprVal === "" ? NaN : Number(aprVal),
-            minimum: Number(getField(row, "minimum")),
+            minimum: minimumVal === "" ? NaN : Number(minimumVal),
             introApr: introApr,
-            introMonths: introMonths
+            introMonths: introMonths,
+            hasEnteredValue: hasEnteredValue
           };
         }).filter(function (card) {
-          return card.balance > 0;
+          return card.balance > 0 || (card.balance !== 0 && card.hasEnteredValue);
         });
       }
 
