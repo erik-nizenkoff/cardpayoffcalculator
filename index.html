@@ -432,6 +432,13 @@
       min-height: 1.2em;
     }
 
+    .privacy-note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
     .hint {
       margin: 5px 0 0;
       color: var(--muted);
@@ -676,6 +683,55 @@
       font-size: .95rem;
     }
 
+    .minimum-note {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.45;
+    }
+
+    .decision-snapshot {
+      margin-top: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+
+    .decision-snapshot h4 {
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-size: .88rem;
+    }
+
+    .decision-rows {
+      display: grid;
+      gap: 6px;
+    }
+
+    .decision-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--soft);
+      padding: 8px;
+      font-size: .82rem;
+    }
+
+    .decision-row.best-row {
+      background: #f1fbf5;
+      border-color: #bfe7cf;
+    }
+
+    .decision-row strong {
+      color: var(--ink);
+    }
+
+    .decision-row span {
+      color: var(--muted);
+    }
+
     .results-disclaimer {
       font-size: .72rem;
       color: var(--muted);
@@ -709,7 +765,14 @@
       gap: 10px;
     }
 
-    .first-run-hint button {
+    .first-run-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .first-run-hint button:not(.secondary) {
       flex: 0 0 auto;
       border: 0;
       background: transparent;
@@ -721,6 +784,12 @@
       font-size: 1rem;
       line-height: 1;
       cursor: pointer;
+    }
+
+    .first-run-actions .secondary {
+      min-height: 32px;
+      padding: 6px 9px;
+      font-size: .78rem;
     }
 
     .first-run-hint button:hover,
@@ -1288,6 +1357,13 @@
         overflow-x: hidden;
       }
 
+      input,
+      select,
+      button,
+      summary {
+        scroll-margin-bottom: 120px;
+      }
+
       .hero-date {
         font-size: 2rem;
       }
@@ -1323,12 +1399,12 @@
       }
 
       .table-scroll {
-        overflow-x: hidden;
+        overflow-x: auto;
         width: 100%;
       }
 
       table {
-        min-width: 0;
+        min-width: 640px;
       }
 
       .card-table,
@@ -1798,6 +1874,7 @@
           <div>
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
+            <p class="privacy-note">Calculations update in your browser. Non-identifying calculation inputs and basic usage events may be sent to Supabase and Plausible to improve the tool.</p>
           </div>
           <div class="button-row">
             <button type="button" class="secondary" id="sampleButton">Load Sample</button>
@@ -1869,6 +1946,12 @@
             <p class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
+          <div class="field-stack">
+            <label for="targetMonth">Target Payoff Date</label>
+            <input id="targetMonth" aria-label="Target payoff date" type="month">
+            <p class="hint">Optional. Shows the monthly payment needed by that month.</p>
+          </div>
+
         </div>
 
         <details id="advancedOptions" class="advanced-options">
@@ -1877,12 +1960,6 @@
             <div class="field-stack">
               <label for="startMonth">Start Month</label>
               <input id="startMonth" aria-label="Start month" type="month">
-            </div>
-
-            <div class="field-stack">
-              <label for="targetMonth">Target Payoff Date</label>
-              <input id="targetMonth" aria-label="Target payoff date" type="month">
-              <p class="hint">Optional. Shows the monthly payment needed by that month.</p>
             </div>
           </div>
         </details>
@@ -1909,7 +1986,10 @@
         <div id="resultsContent">
           <div id="firstRunHint" class="first-run-hint hidden">
             <span>👋 This is sample data — replace it with your own cards to see your real payoff plan.</span>
-            <button type="button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
+            <div class="first-run-actions">
+              <button type="button" class="secondary" id="enterCardsButton">Enter my cards</button>
+              <button type="button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
+            </div>
           </div>
 
           <div class="result-hero">
@@ -1945,13 +2025,20 @@
 
             <div class="metric-grid supporting-metrics">
               <div class="metric"><span>Total Balance</span><strong id="totalBalance">$0</strong></div>
-              <div class="metric"><span>Total Minimums</span><strong id="totalMinimums">$0</strong></div>
+              <div class="metric"><span>Estimated Starting Minimums</span><strong id="totalMinimums">$0</strong></div>
               <div class="metric"><span>Months to Payoff</span><strong id="payoffMonths">-</strong></div>
               <div class="metric"><span>Monthly Payment</span><strong id="monthlyPayment">$0</strong></div>
             </div>
+            <p class="minimum-note">Estimated minimums use the greater of your entered minimum, $25, or 1% of balance plus monthly interest.</p>
 
             <div id="targetResult" class="target-card hidden"></div>
             <div id="savingsResult" class="savings-card hidden"></div>
+            <div id="criticalWarnings" class="notice error hidden"></div>
+            <div id="warnings" class="notice warning hidden"></div>
+            <div id="decisionSnapshot" class="decision-snapshot hidden">
+              <h4>Quick Method Snapshot</h4>
+              <div id="decisionRows" class="decision-rows"></div>
+            </div>
           </div>
 
           <div id="payoffOptions" class="payoff-options result-section">
@@ -1972,8 +2059,6 @@
             <div id="payoffOptionRows" class="option-card-grid"></div>
             <p id="payoffOptionNote" class="option-note"></p>
           </div>
-          <div id="criticalWarnings" class="notice error hidden"></div>
-          <div id="warnings" class="notice warning hidden"></div>
 
           <div class="summary-line"><span>First payoff target</span><strong id="firstTarget">-</strong></div>
           <div class="summary-line"><span>Total paid</span><strong id="totalPaid">$0</strong></div>
@@ -2187,7 +2272,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Calculations run in your browser. We also send non-identifying calculation inputs to Supabase to improve this tool. Each visitor gets a random browser ID stored locally; no name, email, card names, or loan names are sent. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Calculations run in your browser. We also send non-identifying calculation inputs to Supabase and basic usage events to Plausible to improve this tool. Each visitor gets a random browser ID stored locally; no name, email, card names, or loan names are sent. · Not financial advice</div>
     </div>
   </footer>
 
@@ -2256,11 +2341,14 @@
       var monthPlanRows = document.getElementById("monthPlanRows");
       var comparisonRows = document.getElementById("comparisonRows");
       var comparisonSection = document.getElementById("comparisonSection");
+      var decisionSnapshot = document.getElementById("decisionSnapshot");
+      var decisionRows = document.getElementById("decisionRows");
       var scheduleRows = document.getElementById("scheduleRows");
       var scheduleNote = document.getElementById("scheduleNote");
       var toggleSchedule = document.getElementById("toggleSchedule");
       var scheduleLoading = document.getElementById("scheduleLoading");
       var firstRunHint = document.getElementById("firstRunHint");
+      var enterCardsButton = document.getElementById("enterCardsButton");
       var dismissHint = document.getElementById("dismissHint");
       var methodDescription = document.getElementById("methodDescription");
       var customOrderPanel = document.getElementById("customOrderPanel");
@@ -2282,8 +2370,8 @@
         totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
-        comparisonRows, comparisonSection, scheduleRows, scheduleNote, toggleSchedule,
-        scheduleLoading, firstRunHint, dismissHint, methodDescription, customOrderPanel,
+        comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
+        scheduleLoading, firstRunHint, enterCardsButton, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus,
         mobileSummaryBar, mobilePayoffDate, mobileTotalInterest, mobileMonthlyPayment
       ];
@@ -2418,10 +2506,11 @@
         var name = getField(row, "name") || "Card";
         var balance = Number(getField(row, "balance"));
         var apr = Number(getField(row, "apr"));
+        var minimum = Number(getField(row, "minimum"));
         var summary = row.querySelector(".card-summary-text");
         var toggle = row.querySelector(".card-summary-line");
         if (summary) {
-          summary.textContent = name + " · " + money(balance) + " · " + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + "%";
+          summary.textContent = name + " · Bal " + money(balance) + " · APR " + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + "% · Min " + money(minimum);
         }
         if (toggle) {
           toggle.setAttribute("aria-expanded", String(row.classList.contains("expanded")));
@@ -2603,6 +2692,8 @@
         resultsContent.classList.add("hidden");
         scheduleRenderGeneration += 1;
         comparisonRows.innerHTML = "";
+        decisionRows.innerHTML = "";
+        decisionSnapshot.classList.add("hidden");
         if (payoffOptionRows) payoffOptionRows.innerHTML = "";
         if (payoffOptionNote) payoffOptionNote.textContent = "";
         scheduleRows.innerHTML = "";
@@ -3197,6 +3288,23 @@
             "</tr>";
         }).join("");
         return rows;
+      }
+
+      function renderDecisionSnapshot(rows, selectedResult) {
+        if (!decisionSnapshot || !decisionRows || !rows || !rows.length) return;
+        var currentCost = selectedResult ? selectedResult.totalInterest : rows[0].totalInterest;
+        var finiteRows = rows.filter(function (row) { return !row.capped; });
+        var bestInterest = finiteRows.length ? Math.min.apply(null, finiteRows.map(function (row) { return row.totalInterest; })) : null;
+        decisionRows.innerHTML = rows.map(function (result) {
+          var delta = roundCents(result.totalInterest - currentCost);
+          var deltaText = Math.abs(delta) <= EPSILON ? "Current" : (delta < 0 ? "Saves " + money(Math.abs(delta)) : "Costs +" + money(delta));
+          return '<div class="decision-row ' + (bestInterest !== null && result.totalInterest === bestInterest ? "best-row" : "") + '">' +
+            '<strong>' + escapeHtml(methodLabel(result.method)) + '</strong>' +
+            '<span>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + '</span>' +
+            '<span>' + deltaText + '</span>' +
+            '</div>';
+        }).join("");
+        decisionSnapshot.classList.remove("hidden");
       }
 
       function sumCardBalances(cards) {
@@ -4287,6 +4395,7 @@
         renderCriticalWarnings(result.criticalWarnings || []);
         renderWarnings(warnings);
         var comparisonResults = renderComparison(cards, loans, Number(extraInput.value || 0), result, baseline);
+        renderDecisionSnapshot(comparisonResults, result);
         renderMethodRecommendation(cards, loans, Number(extraInput.value || 0), comparisonResults);
         renderPayoffOptions(cards, loans, result);
         renderTarget(cards, loans, method);
@@ -4324,6 +4433,41 @@
         updateAddButton();
         showFirstRunHint();
         update({ skipTracking: true, skipUrlUpdate: Boolean(settings.skipUrlUpdate) });
+      }
+
+      function focusFirstCardField(field) {
+        var input = cardRows.querySelector('[data-field="' + field + '"]') || cardRows.querySelector("input");
+        if (input) {
+          try {
+            input.focus({ preventScroll: true });
+          } catch (error) {
+            input.focus();
+          }
+        }
+      }
+
+      function loadBlankEntry(options) {
+        var settings = options || {};
+        cardRows.innerHTML = "";
+        loanRows.innerHTML = "";
+        nextId = 1;
+        loanNextId = 1;
+        customOrder = [];
+        showAllSchedule = false;
+        addCardRow({ name: "", balance: "", apr: "", minimum: "" }, { expandOnMobile: true });
+        methodInput.value = "avalanche";
+        extraInput.value = "0";
+        startInput.value = currentMonthValue();
+        targetInput.value = "";
+        resetDefaultOptionScenarios();
+        updateAddButton();
+        setError("");
+        dismissFirstRunHint();
+        hideCalculatedResults(DEFAULT_EMPTY_MESSAGE);
+        if (!settings.keepUrl) clearSharedUrlParam();
+        if (settings.focus) {
+          setTimeout(function () { focusFirstCardField(settings.focusField || "name"); }, 0);
+        }
       }
 
       bind(cardRows, "input", scheduleUpdate);
@@ -4431,7 +4575,11 @@
         loadSample();
       });
       bind(clearAllButton, "click", function () {
-        loadSample();
+        loadBlankEntry({ focus: true, focusField: "name" });
+      });
+      bind(enterCardsButton, "click", function () {
+        loadBlankEntry({ focus: true, focusField: "name" });
+        if (calculatorForm) calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
       });
       bind(calculatorForm, "submit", function (event) {
         event.preventDefault();

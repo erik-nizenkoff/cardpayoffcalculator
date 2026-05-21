@@ -82,7 +82,13 @@ Recent UX QA fixes should remain part of the product baseline:
 - Payoff option assumptions should be compact on mobile so results are visible before dense inputs.
 - Mobile card summary rows should be keyboard/focus accessible, not only mouse/touch clickable.
 - Compare payoff methods should be reachable from the results shortcut area.
-- Footer privacy copy should clearly say calculations run in the browser while non-identifying calculation inputs are also sent to Supabase for product improvement.
+- Footer privacy copy should clearly say calculations run in the browser while non-identifying calculation inputs are also sent to Supabase and basic usage events to Plausible for product improvement.
+- Results must label calculated minimums as estimated starting minimums and explain that the model uses the greater of entered minimum, $25, or 1% plus interest.
+- First-run UX should include an Enter My Cards path that clears sample data, opens the first card row, and focuses editing.
+- Clear all should produce a blank editable card state, not reload the sample.
+- Target Payoff Date should be visible in the main payoff settings, not hidden in Advanced.
+- Mobile collapsed card summaries should include name, balance, APR, and minimum payment.
+- Data-heavy tables should remain horizontally scrollable on mobile rather than being squeezed.
 
 ## Intro APR UX
 
