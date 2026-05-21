@@ -349,6 +349,53 @@
       margin-top: 18px;
     }
 
+    .custom-order-panel {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      padding: 14px;
+    }
+
+    .custom-order-panel h3 {
+      margin-bottom: 4px;
+    }
+
+    .custom-order-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .custom-order-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 8px 10px;
+    }
+
+    .custom-order-item span {
+      color: var(--ink);
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .custom-order-actions {
+      display: flex;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .custom-order-actions button {
+      min-height: 34px;
+      min-width: 34px;
+      padding: 5px 8px;
+    }
+
     .field-stack {
       display: grid;
       gap: 6px;
@@ -653,6 +700,48 @@
       font-size: .88rem;
     }
 
+    .site-footer a {
+      color: var(--navy);
+      font-weight: 800;
+    }
+
+    .footer-update {
+      margin-top: 6px;
+    }
+
+    .mobile-summary-bar {
+      display: none;
+    }
+
+    .mobile-summary-main {
+      display: grid;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .mobile-summary-main span:first-child {
+      color: #a7d8bd;
+      font-size: 1rem;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .mobile-summary-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      color: rgba(255,255,255,.78);
+      font-size: .78rem;
+    }
+
+    .mobile-summary-bar a {
+      color: #a7d8bd;
+      font-size: .82rem;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -681,6 +770,7 @@
 
       main {
         padding-top: 14px;
+        padding-bottom: 90px;
       }
 
       .panel {
@@ -761,6 +851,87 @@
         display: grid;
         grid-template-columns: 1fr;
       }
+
+      .mobile-summary-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--navy);
+        color: #fff;
+        padding: 10px 16px;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 100;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.18);
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #000;
+        font-size: 11pt;
+      }
+
+      .input-panel,
+      .site-header button,
+      .mobile-summary-bar,
+      .chart-tooltip,
+      #toggleSchedule,
+      #printButton {
+        display: none !important;
+      }
+
+      .panel,
+      .content-section,
+      .chart-tooltip {
+        box-shadow: none !important;
+      }
+
+      .shell {
+        width: 100%;
+      }
+
+      main {
+        padding: 0;
+      }
+
+      .calculator-layout,
+      .content-grid {
+        display: block;
+      }
+
+      .results-panel {
+        position: static;
+      }
+
+      .visual-panel,
+      .compare-panel,
+      .schedule-panel,
+      .content-grid {
+        break-inside: avoid;
+      }
+
+      .table-scroll {
+        overflow: visible;
+      }
+
+      table,
+      .schedule-table,
+      .month-plan table {
+        min-width: 0;
+        width: 100%;
+        font-size: 9pt;
+      }
+
+      .chart-canvas {
+        display: block !important;
+        max-width: 100%;
+        border: 1px solid #999;
+      }
     }
   </style>
   <script type="application/ld+json">
@@ -797,7 +968,7 @@
         "name": "Does this calculator store my debt numbers?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. The calculator runs in your browser. It has no analytics, no account system, and no form that submits your debt data anywhere."
+          "text": "No. All calculations run in your browser. Nothing you enter is submitted to a server or stored. This site uses Plausible Analytics, a privacy-friendly tool that counts page visits without cookies or personal data."
         }
       }
     ]
@@ -844,7 +1015,7 @@
       </div>
       <div class="privacy-note" aria-label="Privacy note">
         <strong>Private by design</strong>
-        No login, no tracking, and no submitted forms. Your numbers stay in this browser.
+        Your numbers stay in this browser — nothing is submitted or stored. This site uses privacy-friendly analytics (no cookies, no personal data).
       </div>
     </div>
   </header>
@@ -912,6 +1083,7 @@
               <option value="avalanche">Avalanche: highest APR first</option>
               <option value="snowball">Snowball: smallest balance first</option>
               <option value="minimum">Minimum Only</option>
+              <option value="custom">Custom order</option>
             </select>
           </div>
 
@@ -933,15 +1105,22 @@
           </div>
         </div>
 
+        <div id="customOrderPanel" class="custom-order-panel hidden">
+          <h3>Custom Payoff Order</h3>
+          <p class="hint">Extra payment goes to the first active debt in this list, then continues down the order.</p>
+          <div id="customOrderList" class="custom-order-list"></div>
+        </div>
+
         <div id="formError" class="notice error hidden" role="alert"></div>
       </form>
 
-      <aside class="panel results-panel" aria-live="polite">
+      <aside id="resultsPanel" class="panel results-panel" aria-live="polite">
         <div class="section-head">
           <div>
             <h2>Your Payoff Plan</h2>
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
           </div>
+          <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
         </div>
 
         <div id="emptyResults" class="results-empty hidden">Enter at least one card with a balance, APR, and minimum payment to see live results.</div>
@@ -1076,6 +1255,10 @@
           <p>If a card&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
         </details>
         <details>
+          <summary>Does this calculator store my debt numbers?</summary>
+          <p>No. All calculations run in your browser. Nothing you enter is submitted to a server or stored. This site uses Plausible Analytics, a privacy-friendly tool that counts page visits without cookies or personal data.</p>
+        </details>
+        <details>
           <summary>Can I use this offline?</summary>
           <p>Yes. This is a single self-contained HTML file with client-side calculations. After the page is loaded or saved, it can run without a network connection.</p>
         </details>
@@ -1084,8 +1267,22 @@
   </main>
 
   <footer class="site-footer">
-    <div class="shell">CardPayoffCalculator.com provides educational estimates only. It is not financial, legal, tax, or credit counseling advice.</div>
+    <div class="shell">
+      <div>CardPayoffCalculator.com provides educational estimates only. It is not financial, legal, tax, or credit counseling advice.</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a></div>
+    </div>
   </footer>
+
+  <div id="mobileSummaryBar" class="mobile-summary-bar hidden">
+    <div class="mobile-summary-main">
+      <span id="mobilePayoffDate">-</span>
+      <div class="mobile-summary-meta">
+        <span id="mobileTotalInterest">$0</span>
+        <span id="mobileMonthlyPayment">$0/mo</span>
+      </div>
+    </div>
+    <a href="#resultsPanel">See full plan ↓</a>
+  </div>
 
   <script>
     (function () {
@@ -1126,13 +1323,22 @@
       var scheduleNote = document.getElementById("scheduleNote");
       var toggleSchedule = document.getElementById("toggleSchedule");
       var methodDescription = document.getElementById("methodDescription");
+      var customOrderPanel = document.getElementById("customOrderPanel");
+      var customOrderList = document.getElementById("customOrderList");
+      var printButton = document.getElementById("printButton");
+      var mobileSummaryBar = document.getElementById("mobileSummaryBar");
+      var mobilePayoffDate = document.getElementById("mobilePayoffDate");
+      var mobileTotalInterest = document.getElementById("mobileTotalInterest");
+      var mobileMonthlyPayment = document.getElementById("mobileMonthlyPayment");
 
       var nextId = 1;
       var loanNextId = 1;
       var showAllSchedule = false;
+      var printPreviousShowAll = false;
       var lastResult = null;
       var lastCards = [];
       var lastLoans = [];
+      var customOrder = [];
 
       var moneyFormatter = new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -1211,7 +1417,8 @@
         return {
           avalanche: "Avalanche",
           snowball: "Snowball",
-          minimum: "Minimum Only"
+          minimum: "Minimum Only",
+          custom: "Custom Order"
         }[method] || "Avalanche";
       }
 
@@ -1219,7 +1426,8 @@
         return {
           avalanche: "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.",
           snowball: "Here's what it takes to get debt-free. Snowball sends extra payment to the smallest balance first.",
-          minimum: "Here's what it takes to get debt-free. Minimum only uses the calculated minimum payment for each card."
+          minimum: "Here's what it takes to get debt-free. Minimum only uses the calculated minimum payment for each card.",
+          custom: "Here's what it takes to get debt-free. Custom order sends extra payment down your chosen debt list."
         }[method] || "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.";
       }
 
@@ -1250,6 +1458,7 @@
           }
         }
         cardRows.appendChild(tr);
+        if (customOrder.indexOf(id) === -1) customOrder.push(id);
         updateAddButton();
       }
 
@@ -1272,6 +1481,7 @@
           '<td class="amount-cell" data-label="Term (months)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48"></td>' +
           '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove-loan" aria-label="Remove loan" title="Remove loan">×</button></td>';
         loanRows.appendChild(tr);
+        if (customOrder.indexOf(id) === -1) customOrder.push(id);
       }
 
       function getLoanField(row, field) {
@@ -1388,8 +1598,61 @@
         return debts.filter(function (d) { return d.balance > EPSILON; });
       }
 
+      function activeOrderItems(cards, loans) {
+        return normalizeCards(cards).concat(normalizeLoans(loans || [])).map(function (debt) {
+          return { id: debt.id, name: debt.name };
+        });
+      }
+
+      function syncCustomOrder(items) {
+        var activeIds = items.map(function (item) { return item.id; });
+        customOrder = customOrder.filter(function (id) {
+          return activeIds.indexOf(id) !== -1;
+        });
+        items.forEach(function (item) {
+          if (customOrder.indexOf(item.id) === -1) customOrder.push(item.id);
+        });
+      }
+
+      function customOrderPosition(id) {
+        var index = customOrder.indexOf(id);
+        return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+      }
+
+      function renderCustomOrderPanel(cards, loans, method) {
+        var items = activeOrderItems(cards, loans);
+        syncCustomOrder(items);
+        if (method !== "custom") {
+          customOrderPanel.classList.add("hidden");
+          customOrderList.innerHTML = "";
+          return;
+        }
+
+        customOrderPanel.classList.remove("hidden");
+        if (!items.length) {
+          customOrderList.innerHTML = '<div class="hint">Add at least one active debt to set a custom order.</div>';
+          return;
+        }
+
+        var itemById = {};
+        items.forEach(function (item) { itemById[item.id] = item; });
+        var ordered = customOrder.map(function (id) { return itemById[id]; }).filter(Boolean);
+        customOrderList.innerHTML = ordered.map(function (item, index) {
+          return '<div class="custom-order-item" data-id="' + escapeHtml(item.id) + '">' +
+            '<span>' + escapeHtml(item.name) + '</span>' +
+            '<div class="custom-order-actions">' +
+              '<button type="button" class="secondary" data-action="custom-up" aria-label="Move ' + escapeHtml(item.name) + ' up"' + (index === 0 ? " disabled" : "") + '>↑</button>' +
+              '<button type="button" class="secondary" data-action="custom-down" aria-label="Move ' + escapeHtml(item.name) + ' down"' + (index === ordered.length - 1 ? " disabled" : "") + '>↓</button>' +
+            '</div>' +
+          '</div>';
+        }).join("");
+      }
+
       function targetSort(method) {
         return function (a, b) {
+          if (method === "custom") {
+            return customOrderPosition(a.id) - customOrderPosition(b.id) || a.name.localeCompare(b.name);
+          }
           if (method === "snowball") {
             return a.balance - b.balance || b.apr - a.apr || a.name.localeCompare(b.name);
           }
@@ -1929,6 +2192,21 @@
         formError.textContent = message;
       }
 
+      function hideMobileSummary() {
+        mobileSummaryBar.classList.add("hidden");
+      }
+
+      function updateMobileSummary(result) {
+        if (!result) {
+          hideMobileSummary();
+          return;
+        }
+        mobilePayoffDate.textContent = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
+        mobileTotalInterest.textContent = money(result.totalInterest) + " interest";
+        mobileMonthlyPayment.textContent = money(result.monthlyPayment) + "/mo";
+        mobileSummaryBar.classList.remove("hidden");
+      }
+
       function update() {
         var cards = readCards();
         var loans = readLoans();
@@ -1937,6 +2215,7 @@
         var extra = Math.max(0, Number(extraInput.value || 0));
 
         methodDescription.textContent = methodHelp(method);
+        renderCustomOrderPanel(cards, loans, method);
 
         if (error) {
           setError(error);
@@ -1945,6 +2224,7 @@
           comparisonRows.innerHTML = "";
           scheduleRows.innerHTML = "";
           lastResult = null;
+          hideMobileSummary();
           return;
         }
 
@@ -1965,6 +2245,7 @@
         monthlyPaymentEl.textContent = money(result.monthlyPayment);
         totalPaidEl.textContent = money(result.totalPaid);
         firstTargetEl.textContent = result.timeline[0] ? (result.timeline[0].target || "-") : "-";
+        updateMobileSummary(result);
 
         var warnings = result.warnings.slice();
         if (method === "minimum" && result.capped) {
@@ -1984,6 +2265,7 @@
         loanRows.innerHTML = "";
         nextId = 1;
         loanNextId = 1;
+        customOrder = [];
         [
           { name: "Rewards Visa", balance: 8500, apr: 22.99, minimum: 170 },
           { name: "Store Card", balance: 1200, apr: 28.99, minimum: 45 },
@@ -2002,8 +2284,10 @@
         if (button) {
           var row = button.closest("tr");
           if (row && cardRows.children.length > 1) {
+            customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
             row.remove();
           } else if (row) {
+            customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
             row.querySelectorAll("input").forEach(function (input) { input.value = ""; });
           }
           updateAddButton();
@@ -2026,7 +2310,26 @@
         var button = event.target.closest("button[data-action='remove-loan']");
         if (!button) return;
         var row = button.closest("tr");
-        if (row) row.remove();
+        if (row) {
+          customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
+          row.remove();
+        }
+        update();
+      });
+
+      customOrderPanel.addEventListener("click", function (event) {
+        var button = event.target.closest("button[data-action='custom-up'], button[data-action='custom-down']");
+        if (!button) return;
+        var item = button.closest(".custom-order-item");
+        if (!item) return;
+        var index = customOrder.indexOf(item.dataset.id);
+        if (index === -1) return;
+        var direction = button.dataset.action === "custom-up" ? -1 : 1;
+        var nextIndex = index + direction;
+        if (nextIndex < 0 || nextIndex >= customOrder.length) return;
+        var moved = customOrder[index];
+        customOrder[index] = customOrder[nextIndex];
+        customOrder[nextIndex] = moved;
         update();
       });
 
@@ -2049,6 +2352,21 @@
 
       toggleSchedule.addEventListener("click", function () {
         showAllSchedule = !showAllSchedule;
+        if (lastResult) renderSchedule(lastResult);
+      });
+
+      printButton.addEventListener("click", function () {
+        window.print();
+      });
+
+      window.addEventListener("beforeprint", function () {
+        printPreviousShowAll = showAllSchedule;
+        showAllSchedule = true;
+        if (lastResult) renderSchedule(lastResult);
+      });
+
+      window.addEventListener("afterprint", function () {
+        showAllSchedule = printPreviousShowAll;
         if (lastResult) renderSchedule(lastResult);
       });
 
