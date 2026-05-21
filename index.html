@@ -23,6 +23,8 @@
     plausible.init()
   </script>
   <style>
+    /* Critical CSS inlined — no render-blocking stylesheets */
+    /* Google Fonts URL includes display=swap; font-display: swap is handled by Google Fonts. */
     :root {
       --navy: #0f2444;
       --navy-2: #18385f;
@@ -572,6 +574,29 @@
       font-weight: 800;
     }
 
+    .calc-method-link {
+      font-size: .75rem;
+      margin-top: 4px;
+    }
+
+    .calc-method-link a {
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .calc-method-link a:hover {
+      color: var(--navy);
+    }
+
+    .results-disclaimer {
+      font-size: .72rem;
+      color: rgba(255,255,255,0.45);
+      text-align: center;
+      margin: -8px 0 12px;
+      letter-spacing: .04em;
+    }
+
     .result-explainer {
       margin-top: 8px;
       padding: 10px 12px;
@@ -884,6 +909,15 @@
     .about-section {
       border-top-color: var(--green);
       margin-top: 20px;
+    }
+
+    .disclaimer-notice {
+      font-size: .8rem;
+      color: var(--muted);
+      border-left: 3px solid var(--line);
+      padding-left: 12px;
+      margin-top: 12px;
+      line-height: 1.6;
     }
 
     .content-section p,
@@ -1590,8 +1624,10 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
+          <p class="results-disclaimer">Estimates only · Not financial advice</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
+          <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
           <div id="resultExplainer" class="result-explainer hidden"></div>
 
           <div class="metric-grid supporting-metrics">
@@ -1813,16 +1849,16 @@
 
     <section id="about" class="panel content-section about-section">
       <h2>About This Calculator</h2>
-      <p>This calculator was built to give people a clear, honest picture of their debt. It runs entirely in your browser — your numbers are never sent to a server.</p>
-      <p>The math follows standard amortization: each month, interest accrues on the remaining balance at APR ÷ 12. Payments cover interest first, then reduce principal. The avalanche and snowball methods apply any extra payment to the target debt after all minimums are met. Results are estimates; your actual payoff may vary based on issuer rules, fees, and payment timing.</p>
-      <p>Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a>. We review all feedback.</p>
+      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Every calculation runs locally in your browser — your numbers are never sent to a server or stored anywhere.</p>
+      <p>The avalanche and snowball methods are the two most widely recommended debt payoff strategies by consumer finance educators. This tool lets you compare them side by side alongside your current minimum-payment path so you can see the real cost of each choice.</p>
+      <p>Built and maintained by the Card Payoff Calculator team. Last updated: May 2026. Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a> — we review all feedback.</p>
+      <p class="disclaimer-notice">This calculator is for educational and planning purposes only. Results are estimates based on the inputs you provide and standard amortization math. This is not financial advice. For personalized guidance, consult a certified financial planner or credit counselor.</p>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="shell">
-      <div>CardPayoffCalculator.com provides educational estimates only. It is not financial, legal, tax, or credit counseling advice.</div>
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a></div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Not financial advice</div>
     </div>
   </footer>
 
@@ -2477,9 +2513,17 @@
         }).join("");
       }
 
-      function renderMethodRecommendation(cards, loans, extraPayment) {
-        var avalanche = simulate(cards, { method: "avalanche", extraPayment: extraPayment }, loans);
-        var snowball = simulate(cards, { method: "snowball", extraPayment: extraPayment }, loans);
+      function findResultByMethod(results, method) {
+        return (results || []).filter(function (result) {
+          return result && result.method === method;
+        })[0] || null;
+      }
+
+      function renderMethodRecommendation(cards, loans, extraPayment, comparisonResults) {
+        var avalanche = findResultByMethod(comparisonResults, "avalanche") ||
+          simulate(cards, { method: "avalanche", extraPayment: extraPayment }, loans);
+        var snowball = findResultByMethod(comparisonResults, "snowball") ||
+          simulate(cards, { method: "snowball", extraPayment: extraPayment }, loans);
         var message;
 
         if (!avalanche.capped && !snowball.capped) {
@@ -2576,10 +2620,15 @@
         }).join("");
       }
 
-      function renderComparison(cards, loans, extraPayment) {
+      function renderComparison(cards, loans, extraPayment, preResult, preBaseline) {
         var methods = ["avalanche", "snowball", "minimum"];
-        // Note: these simulate() calls are intentional for comparison — 3 methods x full simulation.
         var rows = methods.map(function (method) {
+          if (preResult && preResult.method === method && (method === "minimum" || preResult.extraPayment === extraPayment)) {
+            return preResult;
+          }
+          if (preBaseline && method === "minimum") {
+            return preBaseline;
+          }
           return simulate(cards, { method: method, extraPayment: method === "minimum" ? 0 : extraPayment }, loans);
         });
         var finiteRows = rows.filter(function (row) { return !row.capped; });
@@ -2601,6 +2650,7 @@
             "<td>" + (first ? escapeHtml(first.name) + " in " + duration(first.payoffMonth, false) : "-") + "</td>" +
             "</tr>";
         }).join("");
+        return rows;
       }
 
       function renderSchedule(result) {
@@ -2731,6 +2781,7 @@
 
       function drawComboChart(result) {
         if (!comboCanvas || !comboCanvas.getContext) return;
+        if (!result || !result.timeline || result.timeline.length === 0) return;
         var currentWidth = comboCanvas.parentElement ? comboCanvas.parentElement.getBoundingClientRect().width : 0;
         var midIdx = Math.floor(result.timeline.length / 2);
         var midBal = result.timeline[midIdx] ? result.timeline[midIdx].endingBalance : 0;
@@ -3069,11 +3120,11 @@
         }
         renderCriticalWarnings(result.criticalWarnings || []);
         renderWarnings(warnings);
-        renderMethodRecommendation(cards, loans, Number(extraInput.value || 0));
+        var comparisonResults = renderComparison(cards, loans, Number(extraInput.value || 0), result, baseline);
+        renderMethodRecommendation(cards, loans, Number(extraInput.value || 0), comparisonResults);
         renderTarget(cards, loans, method);
         renderSavings(result, baseline, Number(extraInput.value || 0));
         renderMonthPlan(result);
-        renderComparison(cards, loans, Number(extraInput.value || 0));
         renderSchedule(result);
         drawCharts(result);
       }
