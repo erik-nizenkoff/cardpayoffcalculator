@@ -2373,6 +2373,7 @@
         methodRecommendation.textContent = "";
         renderCriticalWarnings([]);
         renderWarnings([]);
+        clearCharts();
         lastResult = null;
         setCopySummaryAvailable(false);
         hideMobileSummary();
@@ -3033,6 +3034,17 @@
       var comboCanvas = document.getElementById("comboChart");
       var comboTooltip = document.getElementById("comboTooltip");
       var chartLegend = document.getElementById("chartLegend");
+
+      function clearCharts() {
+        if (comboCanvas && comboCanvas.getContext) {
+          var ctx = comboCanvas.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, comboCanvas.width, comboCanvas.height);
+          comboCanvas._lastSig = "";
+          comboCanvas._chartData = null;
+        }
+        if (comboTooltip) comboTooltip.classList.add("hidden");
+        if (chartLegend) chartLegend.innerHTML = "";
+      }
 
       function chartPad() { return { top: 24, right: 20, bottom: 48, left: 68 }; }
 
