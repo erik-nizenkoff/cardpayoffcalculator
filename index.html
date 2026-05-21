@@ -2172,6 +2172,8 @@
         var data = card || {};
         var settings = options || {};
         var id = data.id || "card-" + nextId++;
+        var idMatch = /^card-(\d+)$/.exec(id);
+        if (idMatch) nextId = Math.max(nextId, Number(idMatch[1]) + 1);
         var tr = document.createElement("tr");
         tr.className = "mobile-card-row";
         if (settings.expandOnMobile) tr.classList.add("expanded");
@@ -2213,6 +2215,8 @@
       function addLoanRow(loan) {
         var data = loan || {};
         var id = data.id || "loan-" + loanNextId++;
+        var idMatch = /^loan-(\d+)$/.exec(id);
+        if (idMatch) loanNextId = Math.max(loanNextId, Number(idMatch[1]) + 1);
         var tr = document.createElement("tr");
         tr.className = "mobile-card-row";
         tr.dataset.id = id;
