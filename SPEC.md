@@ -38,13 +38,13 @@ After the main results, show a neutral Compare Payoff Options panel.
 The panel must always include the current plan as the baseline. Users can add or remove zero or more scenarios:
 
 - Balance transfer scenarios:
-  - transfer amount in dollars, defaulting to the full current credit card balance when blank
+  - transfer amount in dollars, prefilled to the full current credit card balance and editable
   - transfer fee percent
   - intro APR
   - promo months
   - post-promo APR, defaulting to the current weighted average card APR when blank
 - Debt consolidation loan scenarios:
-  - loan amount in dollars, defaulting to the full current credit card balance when blank
+  - loan amount in dollars, prefilled to the full current credit card balance and editable
   - loan APR
   - term months
   - origination fee percent
