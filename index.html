@@ -267,9 +267,25 @@
       border-bottom: 2px solid var(--line);
     }
 
+    .card-table {
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    .card-table th:nth-child(1) { width: 36%; }
+    .card-table th:nth-child(2) { width: 17%; }
+    .card-table th:nth-child(3) { width: 25%; }
+    .card-table th:nth-child(4) { width: 15%; }
+    .card-table th:nth-child(5) { width: 7%; }
+
     .card-table td {
       border: none;
       border-bottom: 1px solid #f0f4fa;
+    }
+
+    .card-table .remove-cell {
+      padding-left: 4px;
+      padding-right: 0;
     }
 
     input[type="text"],
@@ -295,9 +311,11 @@
       box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
     }
 
-    .name-cell { min-width: 150px; }
-    .amount-cell { width: 128px; }
-    .remove-cell { width: 50px; text-align: right; }
+    .name-cell { width: 36%; min-width: 0; }
+    .amount-cell { width: 17%; }
+    .apr-cell { width: 25%; min-width: 0; }
+    .minimum-cell { width: 15%; }
+    .remove-cell { width: 7%; text-align: right; }
 
     .intro-cell {
       min-width: 116px;
@@ -315,6 +333,11 @@
       text-align: left;
       text-decoration: underline;
       text-underline-offset: 2px;
+    }
+
+    .apr-cell .inline-link {
+      display: inline-flex;
+      margin-top: 7px;
     }
 
     .inline-link:hover,
@@ -336,6 +359,16 @@
       gap: 12px;
       flex-wrap: wrap;
       padding: 8px 0 2px;
+    }
+
+    .apr-cell .intro-fields {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .apr-cell .intro-fields label {
+      min-width: 0;
     }
 
     .intro-fields label {
@@ -1585,7 +1618,6 @@
                 <th>Balance ($)</th>
                 <th>APR (%)</th>
                 <th>Minimum ($)</th>
-                <th>Promo</th>
                 <th aria-label="Remove card"></th>
               </tr>
             </thead>
@@ -2189,14 +2221,13 @@
         if (settings.expandOnMobile) tr.classList.add("expanded");
         tr.dataset.id = id;
         tr.innerHTML =
-          '<td class="card-summary-cell" colspan="6"><div class="card-summary-line"><span class="card-summary-text"></span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button><span class="row-chevron">›</span></div></td>' +
+          '<td class="card-summary-cell" colspan="5"><div class="card-summary-line"><span class="card-summary-text"></span><button type="button" class="secondary card-row-toggle" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false">▼</button><span class="row-chevron">›</span></div></td>' +
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"></td>' +
-          '<td class="amount-cell card-row-detail" data-label="Minimum ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
-          '<td class="intro-cell card-row-detail" data-label="Promo"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
+          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">＋ Intro Rate</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
+          '<td class="amount-cell minimum-cell card-row-detail" data-label="Minimum ($)"><input data-field="minimum" aria-label="Minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
           '<td class="remove-cell card-row-detail" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
