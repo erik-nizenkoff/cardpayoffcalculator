@@ -1326,25 +1326,39 @@
     }
 
     @media print {
+      @page {
+        margin: 0.5in;
+      }
+
       body {
         background: #fff;
         color: #000;
         font-size: 11pt;
       }
 
+      .site-header,
       .input-panel,
+      .first-run-hint,
       .site-header button,
       .mobile-summary-bar,
       .chart-tooltip,
+      .calc-method-link,
       #toggleSchedule,
-      #printButton {
+      #printButton,
+      #scheduleLoading {
         display: none !important;
+      }
+
+      a {
+        color: #000;
+        text-decoration: none;
       }
 
       .panel,
       .content-section,
       .chart-tooltip {
         box-shadow: none !important;
+        border-color: #c7c7c7 !important;
       }
 
       .shell {
@@ -1362,13 +1376,49 @@
 
       .results-panel {
         position: static;
+        margin-bottom: 16pt;
+        break-inside: avoid;
+      }
+
+      .section-head,
+      .schedule-head {
+        align-items: start;
+        gap: 8pt;
+      }
+
+      .result-hero {
+        border: 1px solid #999;
+        background: #fff !important;
+        box-shadow: none !important;
+        color: #000;
+        padding: 12pt;
+      }
+
+      .hero-label,
+      .hero-date,
+      .hero-interest strong,
+      .results-disclaimer {
+        color: #000 !important;
+      }
+
+      .metric,
+      .target-card,
+      .savings-card,
+      .notice,
+      .result-explainer {
+        background: #fff !important;
+        border-color: #999 !important;
+        color: #000 !important;
       }
 
       .visual-panel,
       .compare-panel,
-      .schedule-panel,
       .content-grid {
-        break-inside: avoid;
+        break-inside: avoid-page;
+      }
+
+      .schedule-panel {
+        break-before: page;
       }
 
       .table-scroll {
@@ -1381,6 +1431,26 @@
         min-width: 0;
         width: 100%;
         font-size: 9pt;
+      }
+
+      thead {
+        display: table-header-group;
+      }
+
+      tr,
+      .summary-line,
+      .metric {
+        break-inside: avoid;
+      }
+
+      th,
+      td {
+        padding: 5pt 4pt;
+      }
+
+      .schedule-table th,
+      .schedule-table td {
+        white-space: normal;
       }
 
       .chart-canvas {
