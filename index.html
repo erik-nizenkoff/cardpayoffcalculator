@@ -3988,6 +3988,64 @@
         return true;
       }
 
+      function trackingPayoffOptions(cards) {
+        var cardTotal = roundCents(sumCardBalances(cards));
+        if (cardTotal <= EPSILON) return [];
+        var averageApr = weightedCardApr(cards);
+        return readPayoffOptionScenarios(averageApr, cardTotal).map(function (scenario, index) {
+          var item = {
+            index: index + 1,
+            type: scenario.type,
+            amount: scenario.amount,
+            feeRate: scenario.feeRate
+          };
+          if (scenario.type === "balance-transfer") {
+            item.introApr = scenario.introApr;
+            item.introMonths = scenario.introMonths;
+            item.postApr = scenario.postApr;
+          } else {
+            item.apr = scenario.apr;
+            item.termMonths = scenario.term;
+          }
+          return item;
+        });
+      }
+
+      function legacyCalculationPayload(payload) {
+        var legacy = {};
+        Object.keys(payload).forEach(function (key) {
+          if ([
+            "payoff_options",
+            "num_payoff_options",
+            "num_balance_transfer_options",
+            "num_consolidation_loan_options"
+          ].indexOf(key) === -1) {
+            legacy[key] = payload[key];
+          }
+        });
+        return legacy;
+      }
+
+      function postCalculationPayload(payload) {
+        function post(body) {
+          return fetch(SUPABASE_URL + '/rest/v1/calculations', {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(body)
+          });
+        }
+
+        return post(payload).then(function (response) {
+          if (response.ok || !payload.payoff_options) return response;
+          return post(legacyCalculationPayload(payload));
+        });
+      }
+
       function trackCalculation(cards, loans, options, result) {
         try {
           var uid = getUid();
@@ -4016,6 +4074,9 @@
             return d.apr != null ? d.apr : (d.rate || 0);
           }).filter(function (a) { return a > 0; });
           var avgApr = allAprs.length ? Math.round((allAprs.reduce(function (s, a) { return s + a; }, 0) / allAprs.length) * 100) / 100 : 0;
+          var payoffOptionData = trackingPayoffOptions(cards);
+          var balanceTransferOptionCount = payoffOptionData.filter(function (option) { return option.type === "balance-transfer"; }).length;
+          var consolidationLoanOptionCount = payoffOptionData.filter(function (option) { return option.type === "consolidation-loan"; }).length;
 
           var payload = {
             uid: uid,
@@ -4029,19 +4090,14 @@
             total_balance: Math.round(totalBalance * 100) / 100,
             avg_apr: avgApr,
             months_to_payoff: result.months || null,
-            total_interest: result.totalInterest != null ? Math.round(result.totalInterest * 100) / 100 : null
+            total_interest: result.totalInterest != null ? Math.round(result.totalInterest * 100) / 100 : null,
+            payoff_options: payoffOptionData,
+            num_payoff_options: payoffOptionData.length,
+            num_balance_transfer_options: balanceTransferOptionCount,
+            num_consolidation_loan_options: consolidationLoanOptionCount
           };
 
-          fetch(SUPABASE_URL + '/rest/v1/calculations', {
-            method: 'POST',
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify(payload)
-          }).catch(function () {});
+          postCalculationPayload(payload).catch(function () {});
         } catch (e) {}
       }
 

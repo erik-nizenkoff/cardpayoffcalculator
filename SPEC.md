@@ -84,6 +84,20 @@ The footer should contain the data disclosure. If the project later adds account
 
 Preferred direction: reduce collection to aggregate/non-identifying metrics where practical rather than adding more prominent repeated disclosure.
 
+## Calculation Data Payload
+
+The Supabase calculation row should include the payoff option scenario inputs so later analysis can understand whether users are modeling balance transfers or debt consolidation loans.
+
+Store payoff options without card or loan names:
+
+- option type: balance transfer or consolidation loan
+- amount modeled
+- balance transfer fee, intro APR, promo months, and post-promo APR
+- consolidation loan APR, term months, and origination fee
+- counts for total payoff options, balance transfer options, and consolidation loan options
+
+If the database schema is not updated yet, the app should fail gracefully and keep the legacy calculation insert path working.
+
 ## Monetization Direction
 
 Balance transfer cards and debt consolidation loans are a likely affiliate opportunity after traffic is established.
