@@ -883,22 +883,15 @@
     <section class="panel visual-panel" aria-label="Debt payoff visualizations">
       <div class="section-head">
         <div>
-          <h2>Visualizations</h2>
-          <p>See total balance over time and how each debt falls away.</p>
+          <h2>Balance Over Time</h2>
+          <p>Stacked area shows each debt's remaining balance; the dark line shows total balance.</p>
         </div>
       </div>
-      <div class="chart-grid">
-        <div class="chart-box">
-          <h3>Total Balance Over Time</h3>
-          <canvas id="balanceLineChart" class="chart-canvas" height="300" aria-label="Line chart showing total remaining balance by month"></canvas>
-          <div id="lineChartTooltip" class="chart-tooltip hidden"></div>
-        </div>
-        <div class="chart-box">
-          <h3>Balance by Debt</h3>
-          <canvas id="debtStackChart" class="chart-canvas" height="300" aria-label="Stacked bar chart showing remaining balance for each debt by month"></canvas>
-          <div id="chartLegend" class="chart-legend"></div>
-        </div>
+      <div class="chart-box" style="position:relative">
+        <canvas id="comboChart" class="chart-canvas" style="height:360px" aria-label="Combined chart: stacked area per debt and total balance line over time"></canvas>
+        <div id="comboTooltip" class="chart-tooltip hidden"></div>
       </div>
+      <div id="chartLegend" class="chart-legend" style="margin-top:10px"></div>
     </section>
 
     <section class="panel compare-panel">
@@ -1303,7 +1296,7 @@
       function startingMinimumTotal(cards, loans) {
         var allDebts = normalizeCards(cards).concat(normalizeLoans(loans || []));
         return roundCents(allDebts.reduce(function (sum, debt) {
-          var interest = roundCents(debt.balance * (debt.apr / 100 / 12));
+          var interest = monthlyInterestForDebt(debt, 1);
           return sum + calculatedMinimum(debt, interest);
         }, 0));
       }
@@ -1567,23 +1560,24 @@
         "#0ea5e9","#4ade80","#fb923c","#c084fc","#f43f5e"
       ];
 
-      var lineCanvas = document.getElementById("balanceLineChart");
-      var stackCanvas = document.getElementById("debtStackChart");
-      var lineTooltip = document.getElementById("lineChartTooltip");
+      var comboCanvas = document.getElementById("comboChart");
+      var comboTooltip = document.getElementById("comboTooltip");
       var chartLegend = document.getElementById("chartLegend");
 
-      function chartPad() { return { top: 20, right: 16, bottom: 44, left: 64 }; }
+      function chartPad() { return { top: 24, right: 20, bottom: 48, left: 68 }; }
 
-      function setCanvasSize(canvas) {
+      function setCanvasSize(canvas, heightPx) {
         var rect = canvas.parentElement.getBoundingClientRect();
         var w = Math.max(200, rect.width);
+        var h = heightPx || 360;
         canvas.width = w * window.devicePixelRatio;
-        canvas.height = 300 * window.devicePixelRatio;
+        canvas.height = h * window.devicePixelRatio;
         canvas.style.width = w + "px";
-        canvas.style.height = "300px";
+        canvas.style.height = h + "px";
       }
 
       function niceTickStep(range, maxTicks) {
+        if (!range || range <= 0) return 1;
         var rough = range / maxTicks;
         var mag = Math.pow(10, Math.floor(Math.log10(rough)));
         var residual = rough / mag;
@@ -1591,236 +1585,182 @@
         return step * mag;
       }
 
-      function drawLineChart(result) {
-        if (!lineCanvas || !lineCanvas.getContext) return;
-        setCanvasSize(lineCanvas);
-        var dpr = window.devicePixelRatio;
-        var ctx = lineCanvas.getContext("2d");
-        ctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
-        var pad = chartPad();
-        var W = lineCanvas.width / dpr;
-        var H = lineCanvas.height / dpr;
-        ctx.scale(dpr, dpr);
-
-        var timeline = result.timeline;
-        if (!timeline || timeline.length === 0) {
-          ctx.scale(1/dpr, 1/dpr);
-          return;
-        }
-
-        var maxBalance = result.startingBalance;
-        var months = timeline.length;
-        var innerW = W - pad.left - pad.right;
-        var innerH = H - pad.top - pad.bottom;
-
-        // Gridlines + y-axis
-        var yStep = niceTickStep(maxBalance, 5);
-        var yTicks = [];
-        for (var y = 0; y <= maxBalance + yStep; y += yStep) {
-          if (y > maxBalance * 1.05) break;
-          yTicks.push(y);
-        }
-
-        ctx.font = "11px Inter, system-ui, sans-serif";
-        ctx.fillStyle = "#667085";
-        ctx.textAlign = "right";
-        ctx.textBaseline = "middle";
-
-        yTicks.forEach(function (tick) {
-          var yPos = pad.top + innerH - (tick / maxBalance) * innerH;
-          ctx.strokeStyle = "#e9eef6";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(pad.left, yPos);
-          ctx.lineTo(W - pad.right, yPos);
-          ctx.stroke();
-          ctx.fillText("$" + (tick >= 1000 ? (tick / 1000).toFixed(tick % 1000 === 0 ? 0 : 1) + "k" : tick), pad.left - 6, yPos);
-        });
-
-        // X-axis ticks
-        var xStep = niceTickStep(months, 6);
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        for (var m = 0; m <= months; m += xStep) {
-          var xPos = pad.left + (m / months) * innerW;
-          ctx.strokeStyle = "#e9eef6";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(xPos, pad.top);
-          ctx.lineTo(xPos, pad.top + innerH);
-          ctx.stroke();
-          ctx.fillStyle = "#667085";
-          ctx.fillText("Mo " + m, xPos, pad.top + innerH + 6);
-        }
-
-        // Axes
-        ctx.strokeStyle = "#d9e2ef";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(pad.left, pad.top);
-        ctx.lineTo(pad.left, pad.top + innerH);
-        ctx.lineTo(W - pad.right, pad.top + innerH);
-        ctx.stroke();
-
-        // Line
-        ctx.beginPath();
-        ctx.strokeStyle = "#0f2444";
-        ctx.lineWidth = 2.5;
-        ctx.lineJoin = "round";
-        // Start point (month 0 = starting balance)
-        ctx.moveTo(pad.left, pad.top + innerH - (result.startingBalance / maxBalance) * innerH);
-        timeline.forEach(function (row, i) {
-          var xp = pad.left + ((i + 1) / months) * innerW;
-          var yp = pad.top + innerH - (Math.max(0, row.endingBalance) / maxBalance) * innerH;
-          ctx.lineTo(xp, yp);
-        });
-        ctx.stroke();
-
-        // Fill under line
-        ctx.lineTo(pad.left + innerW, pad.top + innerH);
-        ctx.lineTo(pad.left, pad.top + innerH);
-        ctx.closePath();
-        ctx.fillStyle = "rgba(15,36,68,0.06)";
-        ctx.fill();
-
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-        // Store timeline reference for tooltip
-        lineCanvas._chartData = { result: result, pad: pad, W: W, H: H };
+      function fmtK(v) {
+        if (v === 0) return "$0";
+        if (v >= 1000) return "$" + (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + "k";
+        return "$" + v;
       }
 
-      function drawStackChart(result) {
-        if (!stackCanvas || !stackCanvas.getContext) return;
-        setCanvasSize(stackCanvas);
+      function drawComboChart(result) {
+        if (!comboCanvas || !comboCanvas.getContext) return;
+        setCanvasSize(comboCanvas, 360);
         var dpr = window.devicePixelRatio;
-        var ctx = stackCanvas.getContext("2d");
-        ctx.clearRect(0, 0, stackCanvas.width, stackCanvas.height);
-        var pad = chartPad();
-        var W = stackCanvas.width / dpr;
-        var H = stackCanvas.height / dpr;
+        var ctx = comboCanvas.getContext("2d");
+        var W = comboCanvas.width / dpr;
+        var H = comboCanvas.height / dpr;
+        ctx.clearRect(0, 0, comboCanvas.width, comboCanvas.height);
+        ctx.save();
         ctx.scale(dpr, dpr);
 
         var timeline = result.timeline;
         var debtNames = result.debtNames || [];
-        if (!timeline || timeline.length === 0 || !debtNames.length) {
-          ctx.scale(1/dpr, 1/dpr);
-          return;
-        }
+        var numDebts = debtNames.length;
 
-        var maxBalance = result.startingBalance;
-        var months = timeline.length;
+        if (!timeline || timeline.length === 0) { ctx.restore(); return; }
+
+        var pad = chartPad();
         var innerW = W - pad.left - pad.right;
         var innerH = H - pad.top - pad.bottom;
+        var maxBalance = result.startingBalance;
+        var months = timeline.length;
 
-        // Sample interval
-        var sampleEvery = months <= 36 ? 1 : 3;
-        var samples = [];
-        // Month 0 (starting)
-        samples.push({ month: 0, balances: debtNames.map(function (_, i) {
-          return result.summaries && result.summaries[i] ? result.summaries[i].startingBalance : 0;
-        }) });
-        timeline.forEach(function (row, i) {
-          if ((i + 1) % sampleEvery === 0 || i === timeline.length - 1) {
-            samples.push({ month: i + 1, balances: row.balances || [] });
-          }
+        // Build per-debt balance series (index 0 = month 0 starting, then month 1..N)
+        // Month 0: starting balances from summaries
+        var series = debtNames.map(function (_, di) {
+          return [result.summaries[di] ? result.summaries[di].startingBalance : 0];
         });
+        timeline.forEach(function (row) {
+          debtNames.forEach(function (_, di) {
+            series[di].push(row.balances && row.balances[di] != null ? Math.max(0, row.balances[di]) : 0);
+          });
+        });
+        var totalPoints = months + 1; // 0..months
 
-        var barCount = samples.length;
-        var barW = Math.max(2, innerW / barCount - 1);
+        function xPos(i) { return pad.left + (i / Math.max(1, totalPoints - 1)) * innerW; }
+        function yPos(v) { return pad.top + innerH - (v / Math.max(1, maxBalance)) * innerH; }
 
         // Y gridlines
-        var yStep = niceTickStep(maxBalance, 5);
+        var yStep = niceTickStep(maxBalance, 6);
         ctx.font = "11px Inter, system-ui, sans-serif";
-        ctx.fillStyle = "#667085";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-
-        for (var y = 0; y <= maxBalance * 1.05; y += yStep) {
-          if (y > maxBalance * 1.1) break;
-          var yPos = pad.top + innerH - (y / maxBalance) * innerH;
+        for (var yv = 0; yv <= maxBalance * 1.05; yv += yStep) {
+          if (yv > maxBalance * 1.1) break;
+          var yp = yPos(yv);
           ctx.strokeStyle = "#e9eef6";
           ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(pad.left, yPos);
-          ctx.lineTo(W - pad.right, yPos);
-          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(pad.left, yp); ctx.lineTo(W - pad.right, yp); ctx.stroke();
           ctx.fillStyle = "#667085";
-          ctx.fillText("$" + (y >= 1000 ? (y / 1000).toFixed(y % 1000 === 0 ? 0 : 1) + "k" : y), pad.left - 6, yPos);
+          ctx.fillText(fmtK(Math.round(yv)), pad.left - 6, yp);
         }
 
-        // Bars
-        samples.forEach(function (sample, si) {
-          var x = pad.left + (si / (barCount - 1 || 1)) * innerW - barW / 2;
-          var yBase = pad.top + innerH;
-          var stackTotal = 0;
-          sample.balances.forEach(function (bal) { stackTotal += bal || 0; });
-          var yRunning = yBase;
-
-          sample.balances.forEach(function (bal, di) {
-            if (!bal || bal <= 0) return;
-            var barH = (bal / maxBalance) * innerH;
-            ctx.fillStyle = CHART_COLORS[di % CHART_COLORS.length];
-            ctx.fillRect(x, yRunning - barH, barW, barH);
-            yRunning -= barH;
-          });
-
-          // X label every ~6 samples
-          if (si % Math.max(1, Math.floor(barCount / 6)) === 0 || si === barCount - 1) {
-            ctx.fillStyle = "#667085";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "top";
-            ctx.fillText("Mo " + sample.month, x + barW / 2, pad.top + innerH + 6);
-          }
-        });
+        // X gridlines + labels
+        var xStep = niceTickStep(months, 7);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        for (var mo = 0; mo <= months; mo += xStep) {
+          var xp = xPos(mo);
+          ctx.strokeStyle = "#e9eef6";
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(xp, pad.top); ctx.lineTo(xp, pad.top + innerH); ctx.stroke();
+          ctx.fillStyle = "#667085";
+          ctx.fillText("Mo " + mo, xp, pad.top + innerH + 6);
+        }
 
         // Axes
-        ctx.strokeStyle = "#d9e2ef";
+        ctx.strokeStyle = "#c9d5e3";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(pad.left, pad.top);
-        ctx.lineTo(pad.left, pad.top + innerH);
-        ctx.lineTo(W - pad.right, pad.top + innerH);
+        ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + innerH); ctx.lineTo(W - pad.right, pad.top + innerH);
         ctx.stroke();
 
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // Stacked area (bottom up: debt 0 at bottom, last at top)
+        // Compute cumulative stacks per point
+        var stacks = [];
+        for (var i = 0; i < totalPoints; i++) {
+          var cumul = [0];
+          for (var di = 0; di < numDebts; di++) {
+            cumul.push(cumul[di] + (series[di][i] || 0));
+          }
+          stacks.push(cumul);
+        }
+
+        // Draw each debt band
+        for (var di = numDebts - 1; di >= 0; di--) {
+          var color = CHART_COLORS[di % CHART_COLORS.length];
+          ctx.beginPath();
+          // Top edge of this band (cumul[di+1])
+          ctx.moveTo(xPos(0), yPos(stacks[0][di + 1]));
+          for (var i = 1; i < totalPoints; i++) {
+            ctx.lineTo(xPos(i), yPos(stacks[i][di + 1]));
+          }
+          // Bottom edge of this band (cumul[di]), reversed
+          for (var i = totalPoints - 1; i >= 0; i--) {
+            ctx.lineTo(xPos(i), yPos(stacks[i][di]));
+          }
+          ctx.closePath();
+          ctx.fillStyle = color + "cc"; // slight transparency
+          ctx.fill();
+          // Top border line
+          ctx.beginPath();
+          ctx.moveTo(xPos(0), yPos(stacks[0][di + 1]));
+          for (var i = 1; i < totalPoints; i++) {
+            ctx.lineTo(xPos(i), yPos(stacks[i][di + 1]));
+          }
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // Total balance line overlay (dark)
+        ctx.beginPath();
+        ctx.moveTo(xPos(0), yPos(maxBalance));
+        timeline.forEach(function (row, i) {
+          ctx.lineTo(xPos(i + 1), yPos(Math.max(0, row.endingBalance)));
+        });
+        ctx.strokeStyle = "#0f2444";
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = "round";
+        ctx.setLineDash([]);
+        ctx.stroke();
+
+        ctx.restore();
 
         // Legend
-        chartLegend.innerHTML = debtNames.map(function (name, i) {
-          return '<span class="legend-item"><span class="legend-swatch" style="background:' + CHART_COLORS[i % CHART_COLORS.length] + '"></span>' + escapeHtml(name) + '</span>';
-        }).join("");
+        chartLegend.innerHTML =
+          '<span class="legend-item"><span class="legend-swatch" style="background:#0f2444;height:3px;border-radius:2px"></span>Total Balance</span>' +
+          debtNames.map(function (name, di) {
+            return '<span class="legend-item"><span class="legend-swatch" style="background:' + CHART_COLORS[di % CHART_COLORS.length] + '"></span>' + escapeHtml(name) + '</span>';
+          }).join("");
+
+        // Store for tooltip
+        comboCanvas._chartData = { result: result, pad: pad, W: W, H: H, totalPoints: totalPoints, xPos: xPos, yPos: yPos, stacks: stacks };
       }
 
-      // Line chart tooltip
-      lineCanvas.addEventListener("mousemove", function (e) {
-        var data = lineCanvas._chartData;
-        if (!data) { lineTooltip.classList.add("hidden"); return; }
-        var rect = lineCanvas.getBoundingClientRect();
+      // Combo chart tooltip
+      comboCanvas.addEventListener("mousemove", function (e) {
+        var data = comboCanvas._chartData;
+        if (!data) { comboTooltip.classList.add("hidden"); return; }
+        var rect = comboCanvas.getBoundingClientRect();
         var mouseX = e.clientX - rect.left;
         var pad = data.pad;
         var innerW = data.W - pad.left - pad.right;
         var months = data.result.timeline.length;
-        if (mouseX < pad.left || mouseX > data.W - pad.right) {
-          lineTooltip.classList.add("hidden"); return;
-        }
+        if (mouseX < pad.left || mouseX > data.W - pad.right) { comboTooltip.classList.add("hidden"); return; }
         var fraction = (mouseX - pad.left) / innerW;
         var monthIdx = Math.round(fraction * months) - 1;
         if (monthIdx < 0) monthIdx = 0;
         if (monthIdx >= months) monthIdx = months - 1;
         var row = data.result.timeline[monthIdx];
-        if (!row) { lineTooltip.classList.add("hidden"); return; }
-        lineTooltip.classList.remove("hidden");
-        lineTooltip.style.left = Math.min(mouseX + 12, rect.width - 140) + "px";
-        lineTooltip.style.top = "8px";
-        lineTooltip.textContent = "Month " + row.month + ": " + money(row.endingBalance) + " remaining";
+        if (!row) { comboTooltip.classList.add("hidden"); return; }
+        comboTooltip.classList.remove("hidden");
+        comboTooltip.style.left = Math.min(mouseX + 12, rect.width - 160) + "px";
+        comboTooltip.style.top = "8px";
+        var lines = ["Month " + row.month + ": " + money(row.endingBalance) + " total"];
+        if (row.balances) {
+          row.balances.forEach(function (bal, di) {
+            if (bal > 0.5) lines.push((data.result.debtNames[di] || "Debt " + (di+1)) + ": " + money(bal));
+          });
+        }
+        comboTooltip.innerHTML = lines.map(function (l, i) { return (i === 0 ? "<strong>" + escapeHtml(l) + "</strong>" : escapeHtml(l)); }).join("<br>");
       });
 
-      lineCanvas.addEventListener("mouseleave", function () {
-        lineTooltip.classList.add("hidden");
+      comboCanvas.addEventListener("mouseleave", function () {
+        comboTooltip.classList.add("hidden");
       });
 
       function drawCharts(result) {
-        drawLineChart(result);
-        drawStackChart(result);
+        drawComboChart(result);
       }
 
       window.addEventListener("resize", function () {
