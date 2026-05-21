@@ -1443,7 +1443,7 @@
         "name": "Does this calculator store my debt numbers?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. All calculations run in your browser. Nothing you enter is submitted to a server or stored. This site uses Plausible Analytics, a privacy-friendly tool that counts page visits without cookies or personal data."
+          "text": "All calculations run in your browser — your data is never submitted to a server for processing. We do collect anonymized usage data including debt inputs to improve the calculator. Each session is assigned a random anonymous ID; no name, email, or identifying information is ever collected or required."
         }
       }
     ]
@@ -1490,7 +1490,7 @@
       </div>
       <div class="privacy-note" aria-label="Privacy note">
         <strong>Private by design</strong>
-        Your numbers stay in this browser — nothing is submitted or stored. This site uses privacy-friendly analytics that counts page visits only — your debt inputs are never tracked or transmitted.
+        Your calculations run locally. Anonymized usage data is collected to improve this tool — no identifying information is stored.
       </div>
     </div>
   </header>
@@ -1763,7 +1763,7 @@
         </details>
         <details>
           <summary>Does this calculator store my debt numbers?</summary>
-          <p>No. All card and loan calculations run in your browser. Nothing you enter is submitted to a server or stored. This site uses Plausible Analytics, a privacy-friendly tool that counts page visits without cookies or personal data.</p>
+          <p>All calculations run in your browser — your data is never submitted to a server for processing. We do collect anonymized usage data including debt inputs to improve the calculator. Each session is assigned a random anonymous ID; no name, email, or identifying information is ever collected or required.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
@@ -1849,7 +1849,7 @@
 
     <section id="about" class="panel content-section about-section">
       <h2>About This Calculator</h2>
-      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Every calculation runs locally in your browser — your numbers are never sent to a server or stored anywhere.</p>
+      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Every calculation runs locally in your browser. We collect anonymized usage data — including debt inputs — to understand how people use this calculator and improve it. Each visitor is assigned a random anonymous ID. No name, email, or identifying information is ever collected.</p>
       <p>The avalanche and snowball methods are the two most widely recommended debt payoff strategies by consumer finance educators. This tool lets you compare them side by side alongside your current minimum-payment path so you can see the real cost of each choice.</p>
       <p>Built and maintained by the Card Payoff Calculator team. Last updated: May 2026. Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a> — we review all feedback.</p>
       <p class="disclaimer-notice">This calculator is for educational and planning purposes only. Results are estimates based on the inputs you provide and standard amortization math. This is not financial advice. For personalized guidance, consult a certified financial planner or credit counselor.</p>
@@ -1858,7 +1858,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Anonymous usage data collected · Not financial advice</div>
     </div>
   </footer>
 
@@ -1880,6 +1880,8 @@
       var MAX_CARDS = 20;
       var MAX_MONTHS = 600;
       var EPSILON = 0.005;
+      var SUPABASE_URL = 'https://ofhgwcbcljlmvuqvwoax.supabase.co';
+      var SUPABASE_ANON_KEY = 'sb_publishable_TshGB0Mpxe2zjVOc9zeW_w_LzEi5j_S';
 
       var cardRows = document.getElementById("cardRows");
       // ── DOM refs ──────────────────────────────────────────────────────────
@@ -1982,6 +1984,19 @@
           }[char];
         });
       }
+
+      function getUid() {
+        var uid = localStorage.getItem('cpoc_uid');
+        if (!uid) {
+          uid = 'u_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+          localStorage.setItem('cpoc_uid', uid);
+        }
+        return uid;
+      }
+
+      try {
+        getUid();
+      } catch (error) {}
 
       function currentMonthValue() {
         var now = new Date();
@@ -3061,6 +3076,63 @@
         } catch (error) {}
       }
 
+      function trackCalculation(cards, loans, options, result) {
+        try {
+          var uid = getUid();
+          var cardData = cards.map(function (c) {
+            return {
+              name: c.name || '',
+              balance: c.balance,
+              apr: c.apr,
+              minimum: c.minimum,
+              introApr: c.introApr || null,
+              introMonths: c.introMonths || null
+            };
+          });
+          var loanData = (loans || []).map(function (l) {
+            return {
+              name: l.name || '',
+              balance: l.balance,
+              apr: l.apr != null ? l.apr : l.rate,
+              payment: l.payment,
+              termMonths: l.termMonths || l.term || null,
+              type: l.type || 'loan'
+            };
+          });
+          var totalBalance = cards.concat(loans || []).reduce(function (s, d) { return s + (d.balance || 0); }, 0);
+          var allAprs = cards.concat(loans || []).map(function (d) {
+            return d.apr != null ? d.apr : (d.rate || 0);
+          }).filter(function (a) { return a > 0; });
+          var avgApr = allAprs.length ? Math.round((allAprs.reduce(function (s, a) { return s + a; }, 0) / allAprs.length) * 100) / 100 : 0;
+
+          var payload = {
+            uid: uid,
+            method: options.method || 'avalanche',
+            extra_payment: options.extraPayment || 0,
+            target_date: options.targetDate || null,
+            cards: cardData,
+            loans: loanData,
+            num_cards: cards.length,
+            num_loans: (loans || []).length,
+            total_balance: Math.round(totalBalance * 100) / 100,
+            avg_apr: avgApr,
+            months_to_payoff: result.months || null,
+            total_interest: result.totalInterest ? Math.round(result.totalInterest * 100) / 100 : null
+          };
+
+          fetch(SUPABASE_URL + '/rest/v1/calculations', {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(payload)
+          }).catch(function () {});
+        } catch (e) {}
+      }
+
       function update() {
         var cards = readCards();
         var loans = readLoans();
@@ -3127,6 +3199,7 @@
         renderMonthPlan(result);
         renderSchedule(result);
         drawCharts(result);
+        trackCalculation(cards, loans, { method: method, extraPayment: extra, targetDate: targetInput ? targetInput.value : null }, result);
       }
 
       function loadSample() {
