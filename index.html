@@ -1443,7 +1443,7 @@
         "name": "Does this calculator store my debt numbers?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "All calculations run in your browser — your data is never submitted to a server for processing. We do collect anonymized usage data including debt inputs to improve the calculator. Each session is assigned a random anonymous ID; no name, email, or identifying information is ever collected or required."
+          "text": "Your payoff calculation runs in your browser rather than on a server. We collect pseudonymous usage data including debt inputs to improve the calculator. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
         }
       }
     ]
@@ -1490,7 +1490,7 @@
       </div>
       <div class="privacy-note" aria-label="Privacy note">
         <strong>Private by design</strong>
-        Your calculations run locally. Anonymized usage data is collected to improve this tool — no identifying information is stored.
+        Your calculations run locally. Pseudonymous usage data is collected to improve this tool; card and loan names are not sent.
       </div>
     </div>
   </header>
@@ -1763,7 +1763,7 @@
         </details>
         <details>
           <summary>Does this calculator store my debt numbers?</summary>
-          <p>All calculations run in your browser — your data is never submitted to a server for processing. We do collect anonymized usage data including debt inputs to improve the calculator. Each session is assigned a random anonymous ID; no name, email, or identifying information is ever collected or required.</p>
+          <p>Your payoff calculation runs in your browser rather than on a server. We collect pseudonymous usage data including debt inputs to improve the calculator. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
@@ -1849,7 +1849,7 @@
 
     <section id="about" class="panel content-section about-section">
       <h2>About This Calculator</h2>
-      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Every calculation runs locally in your browser. We collect anonymized usage data — including debt inputs — to understand how people use this calculator and improve it. Each visitor is assigned a random anonymous ID. No name, email, or identifying information is ever collected.</p>
+      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Your payoff calculation runs in your browser rather than on a server. We collect pseudonymous usage data — including debt inputs — to understand how people use this calculator and improve it. Each visitor is assigned a random browser ID stored locally. No name or email is collected, and card or loan names are not sent.</p>
       <p>The avalanche and snowball methods are the two most widely recommended debt payoff strategies by consumer finance educators. This tool lets you compare them side by side alongside your current minimum-payment path so you can see the real cost of each choice.</p>
       <p>Built and maintained by the Card Payoff Calculator team. Last updated: May 2026. Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a> — we review all feedback.</p>
       <p class="disclaimer-notice">This calculator is for educational and planning purposes only. Results are estimates based on the inputs you provide and standard amortization math. This is not financial advice. For personalized guidance, consult a certified financial planner or credit counselor.</p>
@@ -1879,12 +1879,16 @@
 
       var MAX_CARDS = 20;
       var MAX_MONTHS = 600;
+      var MAX_APR = 79.99;
+      var MIN_INTRO_MONTHS = 1;
+      var MAX_INTRO_MONTHS = 120;
       var EPSILON = 0.005;
       var SUPABASE_URL = 'https://ofhgwcbcljlmvuqvwoax.supabase.co';
       var SUPABASE_ANON_KEY = 'sb_publishable_TshGB0Mpxe2zjVOc9zeW_w_LzEi5j_S';
 
       var cardRows = document.getElementById("cardRows");
       // ── DOM refs ──────────────────────────────────────────────────────────
+      var calculatorForm = document.getElementById("calculatorForm");
       var addCardButton = document.getElementById("addCardButton");
       var addLoanButton = document.getElementById("addLoanButton");
       var loanRows = document.getElementById("loanRows");
@@ -2123,7 +2127,8 @@
       }
 
       function getLoanField(row, field) {
-        return row.querySelector('[data-field="' + field + '"]').value.trim();
+        var el = row.querySelector('[data-field="' + field + '"]');
+        return el ? el.value.trim() : "";
       }
 
       function readLoans() {
@@ -2160,11 +2165,7 @@
           var introAprVal = getField(row, "introApr");
           var introMonthsVal = getField(row, "introMonths");
           var introApr = introAprVal !== "" ? Number(introAprVal) : null;
-          var introMonths = introMonthsVal !== "" ? parseInt(introMonthsVal, 10) : null;
-          if (introMonths !== null && introMonths <= 0) {
-            introApr = null;
-            introMonths = null;
-          }
+          var introMonths = introMonthsVal !== "" ? Number(introMonthsVal) : null;
           return {
             id: row.dataset.id,
             name: getField(row, "name") || "Card " + (index + 1),
@@ -2184,8 +2185,12 @@
         for (var i = 0; i < cards.length; i += 1) {
           var card = cards[i];
           if (!Number.isFinite(card.balance) || card.balance <= 0) return card.name + ": enter a balance above $0.";
-          if (isNaN(card.apr) || card.apr < 0) return card.name + ": enter an APR (use 0 for a 0% card)";
+          if (!Number.isFinite(card.apr) || card.apr < 0 || card.apr > MAX_APR) return card.name + ": enter an APR from 0% to 79.99%.";
           if (!Number.isFinite(card.minimum) || card.minimum <= 0) return card.name + ": enter a minimum payment above $0.";
+          if (card.introApr !== null || card.introMonths !== null) {
+            if (!Number.isFinite(card.introApr) || card.introApr < 0 || card.introApr > MAX_APR) return card.name + ": enter an intro APR from 0% to 79.99%.";
+            if (!Number.isInteger(card.introMonths) || card.introMonths < MIN_INTRO_MONTHS || card.introMonths > MAX_INTRO_MONTHS) return card.name + ": enter intro months from 1 to 120.";
+          }
         }
         return "";
       }
@@ -2193,9 +2198,10 @@
       function validateLoans(loans) {
         for (var i = 0; i < loans.length; i += 1) {
           var loan = loans[i];
-          if (isNaN(loan.rate) || loan.rate < 0) return loan.name + ": enter an interest rate (use 0 for a 0% loan)";
-          if (isNaN(loan.payment) || loan.payment <= 0) return loan.name + ": enter a fixed monthly payment above $0";
-          if (isNaN(loan.balance) || loan.balance <= 0) return loan.name + ": enter a balance above $0";
+          if (!Number.isFinite(loan.rate) || loan.rate < 0 || loan.rate > MAX_APR) return loan.name + ": enter an interest rate from 0% to 79.99%.";
+          if (!Number.isFinite(loan.payment) || loan.payment <= 0) return loan.name + ": enter a fixed monthly payment above $0";
+          if (!Number.isFinite(loan.balance) || loan.balance <= 0) return loan.name + ": enter a balance above $0";
+          if (loan.term != null && (!Number.isFinite(loan.term) || loan.term < 1)) return loan.name + ": enter a remaining term of at least 1 month.";
         }
         return "";
       }
@@ -3079,9 +3085,9 @@
       function trackCalculation(cards, loans, options, result) {
         try {
           var uid = getUid();
-          var cardData = cards.map(function (c) {
+          var cardData = cards.map(function (c, index) {
             return {
-              name: c.name || '',
+              index: index + 1,
               balance: c.balance,
               apr: c.apr,
               minimum: c.minimum,
@@ -3089,9 +3095,9 @@
               introMonths: c.introMonths != null ? c.introMonths : null
             };
           });
-          var loanData = (loans || []).map(function (l) {
+          var loanData = (loans || []).map(function (l, index) {
             return {
-              name: l.name || '',
+              index: index + 1,
               balance: l.balance,
               apr: l.apr != null ? l.apr : l.rate,
               payment: l.payment,
@@ -3133,13 +3139,16 @@
         } catch (e) {}
       }
 
-      function update() {
+      function update(options) {
+        options = options || {};
         var cards = readCards();
         var loans = readLoans();
         var error = validateCards(cards, loans);
         if (!error) error = validateLoans(loans);
         var method = methodInput.value;
-        var extra = Math.max(0, Number(extraInput.value || 0));
+        var extraValue = Number(extraInput.value || 0);
+        if (!error && (!Number.isFinite(extraValue) || extraValue < 0)) error = "Enter an extra payment of $0 or more.";
+        var extra = Math.max(0, extraValue);
 
         methodDescription.textContent = methodHelp(method);
         renderCustomOrderPanel(cards, loans, method);
@@ -3199,7 +3208,9 @@
         renderMonthPlan(result);
         renderSchedule(result);
         drawCharts(result);
-        trackCalculation(cards, loans, { method: method, extraPayment: extra, targetDate: targetInput ? targetInput.value : null }, result);
+        if (!options.skipTracking) {
+          trackCalculation(cards, loans, { method: method, extraPayment: extra, targetDate: targetInput ? targetInput.value : null }, result);
+        }
       }
 
       function loadSample() {
@@ -3218,7 +3229,7 @@
         targetInput.value = "";
         updateAddButton();
         showFirstRunHint();
-        update();
+        update({ skipTracking: true });
       }
 
       cardRows.addEventListener("input", scheduleUpdate);
@@ -3298,6 +3309,12 @@
       });
 
       sampleButton.addEventListener("click", loadSample);
+      if (calculatorForm) {
+        calculatorForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+          update();
+        });
+      }
       if (loadExampleButton) {
         loadExampleButton.addEventListener("click", function () {
           loadSample();
