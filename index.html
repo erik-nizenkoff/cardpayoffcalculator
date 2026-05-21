@@ -1443,7 +1443,7 @@
         "name": "Does this calculator store my debt numbers?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Your payoff calculation runs in your browser rather than on a server. We collect pseudonymous usage data including debt inputs to improve the calculator. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
+          "text": "Your payoff calculation runs in your browser rather than on a server. We use Supabase to collect pseudonymous usage data including debt inputs to improve the calculator. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
         }
       }
     ]
@@ -1490,7 +1490,7 @@
       </div>
       <div class="privacy-note" aria-label="Privacy note">
         <strong>Private by design</strong>
-        Your calculations run locally. Pseudonymous usage data is collected to improve this tool; card and loan names are not sent.
+        Your calculations run locally. Supabase collects pseudonymous usage data to improve this tool; card and loan names are not sent.
       </div>
     </div>
   </header>
@@ -1624,7 +1624,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice · Anonymous usage data collected</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice · Supabase usage data collected</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
           <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
@@ -1763,7 +1763,7 @@
         </details>
         <details>
           <summary>Does this calculator store my debt numbers?</summary>
-          <p>Your payoff calculation runs in your browser rather than on a server. We collect pseudonymous usage data including debt inputs to improve the calculator. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+          <p>Your payoff calculation runs in your browser rather than on a server. We use Supabase to collect pseudonymous usage data including debt inputs to improve the calculator. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
@@ -1849,7 +1849,7 @@
 
     <section id="about" class="panel content-section about-section">
       <h2>About This Calculator</h2>
-      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Your payoff calculation runs in your browser rather than on a server. We collect pseudonymous usage data — including debt inputs — to understand how people use this calculator and improve it. Each visitor is assigned a random browser ID stored locally. No name or email is collected, and card or loan names are not sent.</p>
+      <p>Card Payoff Calculator uses standard amortization math to model how your debt balances shrink over time with different payment strategies. Your payoff calculation runs in your browser rather than on a server. We use Supabase to collect pseudonymous usage data — including debt inputs — to understand how people use this calculator and improve it. Each visitor is assigned a random browser ID stored locally. No name or email is collected, and card or loan names are not sent.</p>
       <p>The avalanche and snowball methods are the two most widely recommended debt payoff strategies by consumer finance educators. This tool lets you compare them side by side alongside your current minimum-payment path so you can see the real cost of each choice.</p>
       <p>Built and maintained by the Card Payoff Calculator team. Last updated: May 2026. Found a bug or have a suggestion? <a href="mailto:hello@cardpayoffcalculator.com">Send us a note</a> — we review all feedback.</p>
       <p class="disclaimer-notice">This calculator is for educational and planning purposes only. Results are estimates based on the inputs you provide and standard amortization math. This is not financial advice. For personalized guidance, consult a certified financial planner or credit counselor.</p>
@@ -1858,7 +1858,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Anonymous usage data collected · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="mailto:hello@cardpayoffcalculator.com">Report an issue</a> · For educational use only · Supabase usage data collected · Not financial advice</div>
     </div>
   </footer>
 
@@ -3082,6 +3082,141 @@
         } catch (error) {}
       }
 
+      function isValidMonthValue(value) {
+        return /^\d{4}-\d{2}$/.test(String(value || ""));
+      }
+
+      function cleanSharedNumber(value, min, max) {
+        var number = Number(value);
+        if (!Number.isFinite(number) || number < min || number > max) return null;
+        return Math.round(number * 100) / 100;
+      }
+
+      function encodeSharedState(state) {
+        var json = JSON.stringify(state);
+        return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+
+      function decodeSharedState(value) {
+        try {
+          var base64 = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+          while (base64.length % 4) base64 += "=";
+          return JSON.parse(decodeURIComponent(escape(atob(base64))));
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function sharedCard(card, index) {
+        var item = {
+          id: card.id || "card-" + (index + 1),
+          balance: cleanSharedNumber(card.balance, 0, Number.MAX_SAFE_INTEGER),
+          apr: cleanSharedNumber(card.apr, 0, MAX_APR),
+          minimum: cleanSharedNumber(card.minimum, 0, Number.MAX_SAFE_INTEGER)
+        };
+        if (card.introApr != null && card.introMonths != null) {
+          item.introApr = cleanSharedNumber(card.introApr, 0, MAX_APR);
+          item.introMonths = Math.round(Number(card.introMonths));
+        }
+        return item;
+      }
+
+      function sharedLoan(loan, index) {
+        return {
+          id: loan.id || "loan-" + (index + 1),
+          balance: cleanSharedNumber(loan.balance, 0, Number.MAX_SAFE_INTEGER),
+          rate: cleanSharedNumber(loan.rate, 0, MAX_APR),
+          payment: cleanSharedNumber(loan.payment, 0, Number.MAX_SAFE_INTEGER),
+          term: loan.term == null ? null : Math.round(Number(loan.term))
+        };
+      }
+
+      function updateSharedUrl(cards, loans, method, extraPayment) {
+        try {
+          if (!window.history || !window.history.replaceState || !window.URL) return;
+          var url = new URL(window.location.href);
+          var state = {
+            v: 1,
+            method: method,
+            extraPayment: cleanSharedNumber(extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0,
+            startMonth: isValidMonthValue(startInput.value) ? startInput.value : "",
+            targetMonth: isValidMonthValue(targetInput.value) ? targetInput.value : "",
+            cards: cards.map(sharedCard),
+            loans: (loans || []).map(sharedLoan),
+            customOrder: customOrder.slice(0, 60)
+          };
+          url.searchParams.set("q", encodeSharedState(state));
+          window.history.replaceState(null, "", url.toString());
+        } catch (error) {}
+      }
+
+      function clearSharedUrlParam() {
+        try {
+          if (!window.history || !window.history.replaceState || !window.URL) return;
+          var url = new URL(window.location.href);
+          url.searchParams.delete("q");
+          window.history.replaceState(null, "", url.toString());
+        } catch (error) {}
+      }
+
+      function loadSharedState() {
+        var params;
+        try {
+          params = new URLSearchParams(window.location.search);
+        } catch (error) {
+          return false;
+        }
+        var encoded = params.get("q");
+        if (!encoded) return false;
+
+        var state = decodeSharedState(encoded);
+        if (!state || state.v !== 1) {
+          clearSharedUrlParam();
+          return false;
+        }
+
+        var cards = Array.isArray(state.cards) ? state.cards.slice(0, MAX_CARDS).map(function (card, index) {
+          var item = sharedCard(card || {}, index);
+          if (!item.balance || item.apr === null || !item.minimum) return null;
+          if (item.introApr === null || !Number.isInteger(item.introMonths) || item.introMonths < MIN_INTRO_MONTHS || item.introMonths > MAX_INTRO_MONTHS) {
+            delete item.introApr;
+            delete item.introMonths;
+          }
+          return item;
+        }).filter(Boolean) : [];
+        var loans = Array.isArray(state.loans) ? state.loans.map(function (loan, index) {
+          var item = sharedLoan(loan || {}, index);
+          if (!item.balance || item.rate === null || !item.payment) return null;
+          if (item.term != null && (!Number.isFinite(item.term) || item.term < 1)) item.term = null;
+          return item;
+        }).filter(Boolean) : [];
+
+        if (!cards.length && !loans.length) {
+          clearSharedUrlParam();
+          return false;
+        }
+
+        cardRows.innerHTML = "";
+        loanRows.innerHTML = "";
+        nextId = 1;
+        loanNextId = 1;
+        customOrder = [];
+        cards.forEach(addCardRow);
+        loans.forEach(addLoanRow);
+        methodInput.value = ["avalanche", "snowball", "minimum", "custom"].indexOf(state.method) !== -1 ? state.method : "avalanche";
+        extraInput.value = cleanSharedNumber(state.extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0;
+        startInput.value = isValidMonthValue(state.startMonth) ? state.startMonth : currentMonthValue();
+        targetInput.value = isValidMonthValue(state.targetMonth) ? state.targetMonth : "";
+        if (Array.isArray(state.customOrder)) {
+          customOrder = state.customOrder.filter(function (id) {
+            return typeof id === "string";
+          }).slice(0, 60);
+        }
+        updateAddButton();
+        update({ skipTracking: true, skipUrlUpdate: true });
+        return true;
+      }
+
       function trackCalculation(cards, loans, options, result) {
         try {
           var uid = getUid();
@@ -3208,12 +3343,16 @@
         renderMonthPlan(result);
         renderSchedule(result);
         drawCharts(result);
+        if (!options.skipUrlUpdate) {
+          updateSharedUrl(cards, loans, method, extra);
+        }
         if (!options.skipTracking) {
           trackCalculation(cards, loans, { method: method, extraPayment: extra, targetDate: targetInput ? targetInput.value : null }, result);
         }
       }
 
-      function loadSample() {
+      function loadSample(options) {
+        var settings = options || {};
         cardRows.innerHTML = "";
         loanRows.innerHTML = "";
         nextId = 1;
@@ -3229,7 +3368,7 @@
         targetInput.value = "";
         updateAddButton();
         showFirstRunHint();
-        update({ skipTracking: true });
+        update({ skipTracking: true, skipUrlUpdate: Boolean(settings.skipUrlUpdate) });
       }
 
       cardRows.addEventListener("input", scheduleUpdate);
@@ -3352,7 +3491,9 @@
       });
 
       startInput.value = currentMonthValue();
-      loadSample();
+      if (!loadSharedState()) {
+        loadSample({ skipUrlUpdate: true });
+      }
     })();
   </script>
 </body>
