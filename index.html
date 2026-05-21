@@ -3570,6 +3570,7 @@
         nextId = 1;
         loanNextId = 1;
         customOrder = [];
+        showAllSchedule = false;
         [
           { name: "Rewards Visa", balance: 8500, apr: 22.99, minimum: 170 },
           { name: "Store Card", balance: 1200, apr: 28.99, minimum: 45 },
@@ -3577,6 +3578,7 @@
         ].forEach(addCardRow);
         methodInput.value = "avalanche";
         extraInput.value = "250";
+        startInput.value = currentMonthValue();
         targetInput.value = "";
         updateAddButton();
         showFirstRunHint();
@@ -3659,7 +3661,9 @@
         update();
       });
 
-      sampleButton.addEventListener("click", loadSample);
+      sampleButton.addEventListener("click", function () {
+        loadSample();
+      });
       clearAllButton.addEventListener("click", function () {
         loadSample();
       });
