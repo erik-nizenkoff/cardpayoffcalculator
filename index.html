@@ -13,6 +13,9 @@
   <meta property="og:site_name" content="Card Payoff Calculator">
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#0f2444">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Privacy-friendly analytics by Plausible -->
   <script async src="https://plausible.io/js/pa-mYBwitol8vFmYdQ-pqsNR.js"></script>
   <script>
@@ -43,8 +46,9 @@
     body {
       margin: 0;
       color: var(--text);
-      background: #fbfcff;
+      background: #f4f7fc;
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
       line-height: 1.5;
     }
 
@@ -63,28 +67,41 @@
       font-weight: 800;
       cursor: pointer;
       padding: 9px 14px;
+      box-shadow: 0 2px 8px rgba(39,103,73,0.3);
+      transition: all 0.15s ease;
     }
 
     button:hover,
     button:focus-visible {
       background: var(--green-dark);
+      box-shadow: 0 4px 12px rgba(39,103,73,0.4);
+      transform: translateY(-1px);
     }
 
     button.secondary {
       background: #fff;
       color: var(--navy);
       border: 1px solid #b8c6d9;
+      box-shadow: none;
+      transition: all 0.15s ease;
     }
 
     button.secondary:hover,
     button.secondary:focus-visible {
       background: #eef4fb;
+      box-shadow: none;
     }
 
     button.danger {
       background: #fff5f2;
       color: var(--red);
       border: 1px solid #f4c7c1;
+      box-shadow: none;
+    }
+
+    button.danger:hover,
+    button.danger:focus-visible {
+      box-shadow: none;
     }
 
     button.icon-button {
@@ -99,9 +116,15 @@
       line-height: 1;
     }
 
+    button.icon-button:hover,
+    button.icon-button:focus-visible {
+      transform: scale(1.1);
+    }
+
     button:disabled {
       opacity: .55;
       cursor: not-allowed;
+      transform: none;
     }
 
     .shell {
@@ -110,7 +133,8 @@
     }
 
     .site-header {
-      background: var(--navy);
+      background: linear-gradient(160deg, #0f2444 0%, #152d52 60%, #1a3a6b 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       color: #fff;
       padding: 30px 0;
     }
@@ -124,7 +148,7 @@
 
     .eyebrow {
       margin: 0 0 7px;
-      color: #a7d8bd;
+      color: #6ee7b7;
       font-size: .82rem;
       font-weight: 900;
       letter-spacing: .08em;
@@ -150,7 +174,9 @@
       margin-bottom: 4px;
       color: var(--ink);
       font-size: 1.25rem;
+      font-weight: 800;
       line-height: 1.2;
+      letter-spacing: -0.02em;
     }
 
     h3 {
@@ -193,10 +219,11 @@
 
     .panel {
       border: 1px solid var(--line);
+      border-top: 3px solid transparent;
       border-radius: 8px;
       background: var(--panel);
       box-shadow: var(--shadow);
-      padding: 18px;
+      padding: 22px;
     }
 
     .section-head {
@@ -271,6 +298,7 @@
       background: transparent;
       color: var(--navy);
       padding: 0;
+      box-shadow: none;
       font-size: .82rem;
       font-weight: 900;
       text-align: left;
@@ -282,6 +310,8 @@
     .inline-link:focus-visible {
       background: transparent;
       color: var(--green-dark);
+      box-shadow: none;
+      transform: none;
     }
 
     .intro-row td {
@@ -442,6 +472,7 @@
     .results-panel {
       position: sticky;
       top: 16px;
+      border-top-color: var(--green);
     }
 
     .results-empty {
@@ -460,43 +491,45 @@
     }
 
     .result-hero {
-      border: 1px solid #bfe7cf;
-      border-radius: 8px;
-      background: linear-gradient(180deg, #f1fbf5 0%, #fffaf3 100%);
-      padding: 16px;
-      margin: 14px 0 10px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0f2444 0%, #1a3a6b 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 32px rgba(15,36,68,0.3);
+      padding: 20px;
+      margin: 0 0 16px;
     }
 
     .hero-label {
       display: block;
-      color: var(--muted);
-      font-size: .76rem;
-      font-weight: 900;
-      letter-spacing: .06em;
+      color: rgba(255,255,255,0.7);
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
       text-transform: uppercase;
     }
 
     .hero-date {
       display: block;
       margin-top: 4px;
-      color: var(--green-dark);
-      font-size: clamp(2rem, 5vw, 2.8rem);
+      color: #4ade80;
+      font-size: 2.4rem;
       font-weight: 900;
-      line-height: 1.05;
+      line-height: 1.1;
       overflow-wrap: anywhere;
     }
 
     .hero-interest {
       margin-top: 14px;
       padding-top: 12px;
-      border-top: 1px solid rgba(192, 86, 33, .22);
+      border-top: 1px solid rgba(255,255,255,0.12);
     }
 
     .hero-interest strong {
       display: block;
       margin-top: 4px;
-      color: var(--orange);
-      font-size: clamp(1.35rem, 3vw, 1.75rem);
+      color: #fbbf24;
+      font-size: 1.4rem;
+      font-weight: 800;
       line-height: 1.1;
     }
 
@@ -542,12 +575,19 @@
       border: 0;
       background: transparent;
       color: inherit;
+      box-shadow: none;
       width: 24px;
       height: 24px;
       padding: 0;
       font-size: 1rem;
       line-height: 1;
       cursor: pointer;
+    }
+
+    .first-run-hint button:hover,
+    .first-run-hint button:focus-visible {
+      box-shadow: none;
+      transform: none;
     }
 
     .loan-section,
@@ -580,10 +620,16 @@
 
     .metric {
       border: 1px solid var(--line);
+      border-left: 3px solid var(--line);
       border-radius: 8px;
       background: var(--soft);
       padding: 12px;
-      min-height: 88px;
+      min-height: 72px;
+      transition: border-color 0.2s;
+    }
+
+    .metric:hover {
+      border-left-color: var(--green);
     }
 
     .metric span {
@@ -599,7 +645,7 @@
       display: block;
       margin-top: 5px;
       color: var(--navy);
-      font-size: clamp(1.2rem, 2vw, 1.55rem);
+      font-size: clamp(1rem, 1.8vw, 1.3rem);
       line-height: 1.15;
       overflow-wrap: anywhere;
     }
@@ -607,12 +653,12 @@
     .metric.positive strong { color: var(--green-dark); }
 
     .supporting-metrics .metric {
-      min-height: 76px;
+      min-height: 72px;
       padding: 10px;
     }
 
     .supporting-metrics .metric strong {
-      font-size: clamp(1.05rem, 1.7vw, 1.32rem);
+      font-size: clamp(1rem, 1.8vw, 1.3rem);
     }
 
     .limit-badge {
@@ -957,6 +1003,10 @@
     }
 
     @media (max-width: 640px) {
+      body {
+        font-size: 15px;
+      }
+
       .shell {
         width: min(100% - 24px, 1180px);
       }
@@ -967,11 +1017,23 @@
 
       main {
         padding-top: 14px;
-        padding-bottom: 90px;
+        padding-bottom: 80px;
       }
 
       .panel {
-        padding: 14px;
+        padding: 16px;
+      }
+
+      .hero-date {
+        font-size: 2rem;
+      }
+
+      .hero-interest strong {
+        font-size: 1.2rem;
+      }
+
+      .metric strong {
+        line-height: 1.2;
       }
 
       .section-head,
@@ -2500,10 +2562,10 @@
 
       // ── Charts ───────────────────────────────────────────────────────────
       var CHART_COLORS = [
-        "#3b82f6","#ef4444","#10b981","#f59e0b","#8b5cf6",
+        "#3b82f6","#f43f5e","#10b981","#f59e0b","#8b5cf6",
         "#ec4899","#06b6d4","#84cc16","#f97316","#6366f1",
         "#14b8a6","#e11d48","#a855f7","#22d3ee","#d97706",
-        "#0ea5e9","#4ade80","#fb923c","#c084fc","#f43f5e"
+        "#0ea5e9","#4ade80","#fb923c","#c084fc","#ef4444"
       ];
 
       var comboCanvas = document.getElementById("comboChart");
@@ -2535,6 +2597,25 @@
         if (v === 0) return "$0";
         if (v >= 1000) return "$" + (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + "k";
         return "$" + v;
+      }
+
+      function roundedTopRect(ctx, x, y, width, height, radius) {
+        var r = Math.max(0, Math.min(radius, width / 2, height));
+        if (ctx.roundRect) {
+          ctx.beginPath();
+          ctx.roundRect(x, y, width, height, [r, r, 0, 0]);
+          ctx.fill();
+          return;
+        }
+        ctx.beginPath();
+        ctx.moveTo(x, y + height);
+        ctx.lineTo(x, y + r);
+        ctx.arc(x + r, y + r, r, Math.PI, Math.PI * 1.5);
+        ctx.lineTo(x + width - r, y);
+        ctx.arc(x + width - r, y + r, r, Math.PI * 1.5, 0);
+        ctx.lineTo(x + width, y + height);
+        ctx.closePath();
+        ctx.fill();
       }
 
       function drawComboChart(result) {
@@ -2572,6 +2653,9 @@
         var maxBalance = result.startingBalance;
         var months = timeline.length;
 
+        ctx.fillStyle = "#fafcff";
+        ctx.fillRect(pad.left, pad.top, innerW, innerH);
+
         // Build per-debt balance series (index 0 = month 0 starting, then month 1..N)
         // Month 0: starting balances from summaries
         var series = debtNames.map(function (_, di) {
@@ -2595,8 +2679,8 @@
         for (var yv = 0; yv <= maxBalance * 1.05; yv += yStep) {
           if (yv > maxBalance * 1.1) break;
           var yp = yPos(yv);
-          ctx.strokeStyle = "#e9eef6";
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = "#f0f4fa";
+          ctx.lineWidth = 0.5;
           ctx.beginPath(); ctx.moveTo(pad.left, yp); ctx.lineTo(W - pad.right, yp); ctx.stroke();
           ctx.fillStyle = "#667085";
           ctx.fillText(fmtK(Math.round(yv)), pad.left - 6, yp);
@@ -2608,8 +2692,8 @@
         ctx.textBaseline = "top";
         for (var mo = 0; mo <= months; mo += xStep) {
           var xp = xPos(mo);
-          ctx.strokeStyle = "#e9eef6";
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = "#f0f4fa";
+          ctx.lineWidth = 0.5;
           ctx.beginPath(); ctx.moveTo(xp, pad.top); ctx.lineTo(xp, pad.top + innerH); ctx.stroke();
           ctx.fillStyle = "#667085";
           ctx.fillText("Mo " + mo, xp, pad.top + innerH + 6);
@@ -2617,7 +2701,7 @@
 
         // Axes
         ctx.strokeStyle = "#c9d5e3";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + innerH); ctx.lineTo(W - pad.right, pad.top + innerH);
         ctx.stroke();
@@ -2634,7 +2718,7 @@
         }
 
         var pointGap = innerW / Math.max(1, totalPoints - 1);
-        var barWidth = Math.max(1, Math.min(18, pointGap * 0.72));
+        var barWidth = Math.max(1, Math.min(18, pointGap * 0.72 * 0.85) - 2);
 
         for (var i = 0; i < totalPoints; i++) {
           var xp = xPos(i);
@@ -2645,7 +2729,7 @@
             var topY = yPos(stacks[i][di + 1]);
             var bottomY = yPos(stacks[i][di]);
             ctx.fillStyle = CHART_COLORS[di % CHART_COLORS.length];
-            ctx.fillRect(barX, topY, barWidth, Math.max(1, bottomY - topY));
+            roundedTopRect(ctx, barX, topY, barWidth, Math.max(1, bottomY - topY), Math.min(4, barWidth / 2));
           }
         }
 
