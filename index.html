@@ -1643,14 +1643,6 @@
           "@type": "Answer",
           "text": "Credit card minimums can be close to the monthly interest charge. When most of the payment goes to interest instead of principal, the balance may fall slowly or fail to amortize in a reasonable time."
         }
-      },
-      {
-        "@type": "Question",
-        "name": "Does this calculator store my debt numbers?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent."
-        }
       }
     ]
   }
@@ -1833,7 +1825,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice · Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
+          <p class="results-disclaimer">Estimates only · Not financial advice</p>
 
           <div id="methodRecommendation" class="method-recommendation hidden"></div>
           <p class="calc-method-link"><a href="#methodology">How we calculate this ↓</a></p>
@@ -1855,24 +1847,10 @@
                 <p>Model a balance transfer or consolidation loan against your current monthly payment.</p>
               </div>
             </div>
-            <div class="option-settings-grid">
-              <fieldset class="option-fieldset">
-                <legend>Balance Transfer</legend>
-                <div class="option-inputs">
-                  <label for="btFee">Transfer Fee (%)<input id="btFee" type="number" min="0" max="20" step="0.1" inputmode="decimal" value="3"></label>
-                  <label for="btIntroApr">Intro APR (%)<input id="btIntroApr" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="0"></label>
-                  <label for="btIntroMonths">Promo Months<input id="btIntroMonths" type="number" min="1" max="120" step="1" inputmode="numeric" value="18"></label>
-                  <label for="btPostApr">Post-Promo APR (%)<input id="btPostApr" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" placeholder="Current avg"></label>
-                </div>
-              </fieldset>
-              <fieldset class="option-fieldset">
-                <legend>Consolidation Loan</legend>
-                <div class="option-inputs">
-                  <label for="consolidationApr">Loan APR (%)<input id="consolidationApr" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="12.99"></label>
-                  <label for="consolidationTerm">Term Months<input id="consolidationTerm" type="number" min="1" max="360" step="1" inputmode="numeric" value="36"></label>
-                  <label for="consolidationFee">Origination Fee (%)<input id="consolidationFee" type="number" min="0" max="20" step="0.1" inputmode="decimal" value="3"></label>
-                </div>
-              </fieldset>
+            <div id="optionScenarioList" class="option-settings-grid"></div>
+            <div class="option-actions">
+              <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
+              <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
             </div>
             <div id="payoffOptionRows" class="option-card-grid"></div>
             <p id="payoffOptionNote" class="option-note"></p>
@@ -1998,10 +1976,6 @@
         <details>
           <summary>Why does minimum-only sometimes show a warning?</summary>
           <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
-        </details>
-        <details>
-          <summary>Does this calculator store my debt numbers?</summary>
-          <p>Your payoff calculation runs in your browser rather than on a server. Supabase collects pseudonymous usage data, including debt inputs, to improve this tool. Each visitor is assigned a random browser ID stored locally; no name or email is collected, and card or loan names are not sent.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
@@ -2155,12 +2129,10 @@
       var savingsResult = document.getElementById("savingsResult");
       var methodRecommendation = document.getElementById("methodRecommendation");
       var resultExplainer = document.getElementById("resultExplainer");
+      var payoffOptions = document.getElementById("payoffOptions");
+      var optionScenarioList = document.getElementById("optionScenarioList");
       var payoffOptionRows = document.getElementById("payoffOptionRows");
       var payoffOptionNote = document.getElementById("payoffOptionNote");
-      var payoffOptionInputs = [
-        "btFee", "btIntroApr", "btIntroMonths", "btPostApr",
-        "consolidationApr", "consolidationTerm", "consolidationFee"
-      ].map(function (id) { return document.getElementById(id); }).filter(Boolean);
       var criticalWarningsEl = document.getElementById("criticalWarnings");
       var warningsEl = document.getElementById("warnings");
       var monthPlan = document.getElementById("monthPlan");
@@ -2191,7 +2163,8 @@
         targetInput, emptyResults, resultsContent, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
-        resultExplainer, criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
+        resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
+        criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, scheduleRows, scheduleNote, toggleSchedule,
         scheduleLoading, firstRunHint, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus,
@@ -2204,6 +2177,7 @@
 
       var nextId = 1;
       var loanNextId = 1;
+      var optionScenarioNextId = 1;
       var showAllSchedule = false;
       var scheduleRenderGeneration = 0;
       var updateTimer = null;
@@ -3123,14 +3097,6 @@
         }, 0) / total;
       }
 
-      function optionNumber(element, fallback, min, max) {
-        var value = element && element.value !== "" ? Number(element.value) : fallback;
-        if (!Number.isFinite(value)) value = fallback;
-        value = Math.max(min, value);
-        if (max != null) value = Math.min(max, value);
-        return value;
-      }
-
       function loanPaymentForTerm(balance, apr, months) {
         if (!months || months <= 0) return 0;
         var monthlyRate = Math.max(0, apr) / 100 / 12;
@@ -3143,6 +3109,91 @@
         var minimum = startingMinimumTotal(cards, loans);
         var extra = Math.max(0, roundCents(monthlyBudget - minimum));
         return simulate(cards, { method: "avalanche", extraPayment: extra }, loans);
+      }
+
+      function optionScenarioTitle(type) {
+        return type === "balance-transfer" ? "Balance Transfer" : "Consolidation Loan";
+      }
+
+      function optionScenarioInputHtml(label, field, value, attrs, placeholder) {
+        return '<label>' + label + '<input data-option-field="' + field + '" ' + attrs +
+          ' value="' + escapeHtml(value == null ? "" : value) + '"' +
+          (placeholder ? ' placeholder="' + escapeHtml(placeholder) + '"' : "") +
+          '></label>';
+      }
+
+      function addOptionScenario(type, data) {
+        if (!optionScenarioList) return;
+        var values = data || {};
+        var scenario = document.createElement("fieldset");
+        scenario.className = "option-fieldset";
+        scenario.dataset.optionType = type;
+        scenario.dataset.optionId = "option-" + optionScenarioNextId++;
+
+        var inputs = "";
+        if (type === "balance-transfer") {
+          inputs = optionScenarioInputHtml("Transfer Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "") +
+            optionScenarioInputHtml("Intro APR (%)", "introApr", values.introApr != null ? values.introApr : 0, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
+            optionScenarioInputHtml("Promo Months", "introMonths", values.introMonths != null ? values.introMonths : 18, 'type="number" min="1" max="120" step="1" inputmode="numeric"', "") +
+            optionScenarioInputHtml("Post-Promo APR (%)", "postApr", values.postApr != null ? values.postApr : "", 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "Current avg");
+        } else {
+          inputs = optionScenarioInputHtml("Loan APR (%)", "apr", values.apr != null ? values.apr : 12.99, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
+            optionScenarioInputHtml("Term Months", "term", values.term != null ? values.term : 36, 'type="number" min="1" max="360" step="1" inputmode="numeric"', "") +
+            optionScenarioInputHtml("Origination Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "");
+        }
+
+        scenario.innerHTML = '<div class="option-fieldset-head"><strong>' + optionScenarioTitle(type) + '</strong>' +
+          '<button type="button" class="icon-button danger" data-action="remove-option-scenario" aria-label="Remove ' + optionScenarioTitle(type) + '" title="Remove option">×</button></div>' +
+          '<div class="option-inputs">' + inputs + '</div>';
+        optionScenarioList.appendChild(scenario);
+      }
+
+      function resetDefaultOptionScenarios() {
+        if (!optionScenarioList) return;
+        optionScenarioList.innerHTML = "";
+        optionScenarioNextId = 1;
+        addOptionScenario("balance-transfer");
+        addOptionScenario("consolidation-loan");
+      }
+
+      function getOptionField(scenario, field) {
+        var input = scenario.querySelector('[data-option-field="' + field + '"]');
+        return input ? input.value.trim() : "";
+      }
+
+      function optionNumberValue(value, fallback, min, max) {
+        var number = value !== "" ? Number(value) : fallback;
+        if (!Number.isFinite(number)) number = fallback;
+        number = Math.max(min, number);
+        if (max != null) number = Math.min(max, number);
+        return number;
+      }
+
+      function readPayoffOptionScenarios(averageApr) {
+        if (!optionScenarioList) return [];
+        var counts = { "balance-transfer": 0, "consolidation-loan": 0 };
+        return Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset")).map(function (scenario) {
+          var type = scenario.dataset.optionType;
+          counts[type] = (counts[type] || 0) + 1;
+          var suffix = counts[type] > 1 ? " " + counts[type] : "";
+          if (type === "balance-transfer") {
+            return {
+              type: type,
+              name: "Balance transfer" + suffix,
+              feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
+              introApr: optionNumberValue(getOptionField(scenario, "introApr"), 0, 0, MAX_APR),
+              introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
+              postApr: optionNumberValue(getOptionField(scenario, "postApr"), averageApr, 0, MAX_APR)
+            };
+          }
+          return {
+            type: "consolidation-loan",
+            name: "Consolidation loan" + suffix,
+            apr: optionNumberValue(getOptionField(scenario, "apr"), 12.99, 0, MAX_APR),
+            term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
+            feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20)
+          };
+        });
       }
 
       function renderPayoffOptionRow(row, bestCost) {
@@ -3173,44 +3224,7 @@
         var currentMonthlyBudget = currentResult.monthlyPayment;
         var currentCost = currentResult.totalInterest;
         var averageApr = weightedCardApr(cards);
-        var btFeeRate = optionNumber(document.getElementById("btFee"), 3, 0, 20);
-        var btIntroApr = optionNumber(document.getElementById("btIntroApr"), 0, 0, MAX_APR);
-        var btIntroMonths = Math.round(optionNumber(document.getElementById("btIntroMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS));
-        var btPostApr = optionNumber(document.getElementById("btPostApr"), averageApr, 0, MAX_APR);
-        var consolidationApr = optionNumber(document.getElementById("consolidationApr"), 12.99, 0, MAX_APR);
-        var consolidationTerm = Math.round(optionNumber(document.getElementById("consolidationTerm"), 36, 1, 360));
-        var consolidationFeeRate = optionNumber(document.getElementById("consolidationFee"), 3, 0, 20);
-
-        var btFee = roundCents(cardTotal * btFeeRate / 100);
-        var btCards = [{
-          id: "option-balance-transfer",
-          name: "Balance transfer card",
-          balance: roundCents(cardTotal + btFee),
-          apr: btPostApr,
-          minimum: 25,
-          introApr: btIntroApr,
-          introMonths: btIntroMonths
-        }];
-        var btResult = simulateWithMonthlyBudget(btCards, loans, currentMonthlyBudget);
-        var btWatchout = btResult.months > btIntroMonths
-          ? "Promo expires before payoff; post-promo APR applies."
-          : "Paid before promo expires in this model.";
-
-        var loanFee = roundCents(cardTotal * consolidationFeeRate / 100);
-        var loanBalance = roundCents(cardTotal + loanFee);
-        var consolidationPayment = loanPaymentForTerm(loanBalance, consolidationApr, consolidationTerm);
-        var consolidationLoans = (loans || []).concat([{
-          id: "option-consolidation-loan",
-          name: "Consolidation loan",
-          balance: loanBalance,
-          rate: consolidationApr,
-          payment: consolidationPayment,
-          term: consolidationTerm
-        }]);
-        var consolidationResult = simulateWithMonthlyBudget([], consolidationLoans, currentMonthlyBudget);
-        var consolidationWatchout = consolidationResult.monthlyPayment > currentMonthlyBudget + EPSILON
-          ? "Required payment is higher than current plan."
-          : "Fixed term; compare fees and APR before applying.";
+        var scenarios = readPayoffOptionScenarios(averageApr);
 
         var rows = [
           {
@@ -3219,28 +3233,65 @@
             totalCost: currentCost,
             currentCost: currentCost,
             watchout: "No new credit product."
-          },
-          {
-            name: "Balance transfer",
-            result: btResult,
-            totalCost: roundCents(btResult.totalInterest + btFee),
-            currentCost: currentCost,
-            watchout: btWatchout
-          },
-          {
-            name: "Consolidation loan",
+          }
+        ];
+
+        scenarios.forEach(function (scenario, index) {
+          if (scenario.type === "balance-transfer") {
+            var btFee = roundCents(cardTotal * scenario.feeRate / 100);
+            var btCards = [{
+              id: "option-balance-transfer-" + index,
+              name: scenario.name + " card",
+              balance: roundCents(cardTotal + btFee),
+              apr: scenario.postApr,
+              minimum: 25,
+              introApr: scenario.introApr,
+              introMonths: scenario.introMonths
+            }];
+            var btResult = simulateWithMonthlyBudget(btCards, loans, currentMonthlyBudget);
+            rows.push({
+              name: scenario.name,
+              result: btResult,
+              totalCost: roundCents(btResult.totalInterest + btFee),
+              currentCost: currentCost,
+              watchout: btResult.months > scenario.introMonths
+                ? "Promo expires before payoff; post-promo APR applies."
+                : "Paid before promo expires in this model."
+            });
+            return;
+          }
+
+          var loanFee = roundCents(cardTotal * scenario.feeRate / 100);
+          var loanBalance = roundCents(cardTotal + loanFee);
+          var consolidationPayment = loanPaymentForTerm(loanBalance, scenario.apr, scenario.term);
+          var consolidationLoans = (loans || []).concat([{
+            id: "option-consolidation-loan-" + index,
+            name: scenario.name,
+            balance: loanBalance,
+            rate: scenario.apr,
+            payment: consolidationPayment,
+            term: scenario.term
+          }]);
+          var consolidationResult = simulateWithMonthlyBudget([], consolidationLoans, currentMonthlyBudget);
+          rows.push({
+            name: scenario.name,
             result: consolidationResult,
             totalCost: roundCents(consolidationResult.totalInterest + loanFee),
             currentCost: currentCost,
-            watchout: consolidationWatchout
-          }
-        ];
+            watchout: consolidationResult.monthlyPayment > currentMonthlyBudget + EPSILON
+              ? "Required payment is higher than current plan."
+              : "Fixed term; compare fees and APR before applying."
+          });
+        });
+
         var availableRows = rows.filter(function (row) { return !row.result.capped; });
         var bestCost = availableRows.length ? Math.min.apply(null, availableRows.map(function (row) { return row.totalCost; })) : null;
         payoffOptionRows.innerHTML = rows.map(function (row) {
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
-        payoffOptionNote.textContent = "Assumes the transfer or loan pays off credit card balances only. Existing installment loans stay in the plan. Fees are counted in Interest + Fees.";
+        payoffOptionNote.textContent = scenarios.length
+          ? "Assumes each transfer or loan pays off credit card balances only. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
+          : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
       function renderSchedule(result) {
@@ -3964,8 +4015,25 @@
       }
 
       bind(cardRows, "input", scheduleUpdate);
-      payoffOptionInputs.forEach(function (input) {
-        bind(input, "input", scheduleUpdate);
+      bind(optionScenarioList, "input", scheduleUpdate);
+      bind(payoffOptions, "click", function (event) {
+        var button = event.target.closest("button[data-action]");
+        if (!button) return;
+        if (button.dataset.action === "add-balance-transfer") {
+          addOptionScenario("balance-transfer");
+          update();
+          return;
+        }
+        if (button.dataset.action === "add-consolidation-loan") {
+          addOptionScenario("consolidation-loan");
+          update();
+          return;
+        }
+        if (button.dataset.action === "remove-option-scenario") {
+          var scenario = button.closest(".option-fieldset");
+          if (scenario) scenario.remove();
+          update();
+        }
       });
       bind(cardRows, "click", function (event) {
         var rowToggle = event.target.closest("button[data-action='toggle-card-row'], .card-summary-line");
@@ -4094,6 +4162,7 @@
       });
 
       startInput.value = currentMonthValue();
+      resetDefaultOptionScenarios();
       if (!loadSharedState()) {
         loadSample({ skipUrlUpdate: true });
       }
