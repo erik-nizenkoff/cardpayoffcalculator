@@ -92,6 +92,11 @@ Recent UX QA fixes should remain part of the product baseline:
 - Mobile sticky summary must not cover focused form fields; hide or offset it during input editing.
 - First-run sample-data messaging should appear near the card inputs, not only in results.
 - Primary CTAs should be explicit: replace sample data, view full payoff plan, edit cards.
+- Sample card names should visibly read as sample/demo data in the card-entry rows.
+- Mobile users should get a visible "View payoff plan" jump once real editable results exist.
+- Optional loans and balance-transfer/consolidation scenarios should stay secondary to the core credit-card payoff flow.
+- Telemetry wording near inputs should plainly mention numeric balances, APRs, minimums, settings, and results without turning privacy into a highlighted feature block.
+- Desktop card entry should stay compact enough that APR, promo APR, and current statement minimums are visible without unnecessary horizontal scanning.
 - Share/export/methodology actions should not compete with the primary result or edit-card flow.
 - Privacy copy should state that card numbers, account names, logins, and personal identifiers are not requested while numeric calculation inputs may be sent.
 - Privacy copy near inputs should stay short enough to scan before entering data.

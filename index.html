@@ -281,8 +281,8 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 680px;
-      font-size: .9rem;
+      min-width: 640px;
+      font-size: .86rem;
     }
 
     th,
@@ -310,11 +310,16 @@
       table-layout: fixed;
     }
 
-    .card-table th:nth-child(1) { width: 36%; }
+    .card-table th:nth-child(1) { width: 30%; }
     .card-table th:nth-child(2) { width: 17%; }
-    .card-table th:nth-child(3) { width: 25%; }
-    .card-table th:nth-child(4) { width: 15%; }
+    .card-table th:nth-child(3) { width: 24%; }
+    .card-table th:nth-child(4) { width: 22%; }
     .card-table th:nth-child(5) { width: 7%; }
+
+    .card-table th,
+    .card-table td {
+      padding: 8px 7px;
+    }
 
     .card-table td {
       border: none;
@@ -349,10 +354,15 @@
       box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
     }
 
-    .name-cell { width: 36%; min-width: 0; }
+    .card-table input {
+      min-height: 36px;
+      padding: 6px 7px;
+    }
+
+    .name-cell { width: 30%; min-width: 0; }
     .amount-cell { width: 17%; }
-    .apr-cell { width: 25%; min-width: 0; }
-    .minimum-cell { width: 15%; }
+    .apr-cell { width: 24%; min-width: 0; }
+    .minimum-cell { width: 22%; }
     .remove-cell { width: 7%; text-align: right; }
 
     .intro-cell {
@@ -572,6 +582,10 @@
       color: var(--muted);
       font-size: .78rem;
       font-weight: 700;
+    }
+
+    .mobile-payoff-jump {
+      display: none;
     }
 
     .settings-grid {
@@ -796,7 +810,7 @@
 
     .result-quick-actions {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
       margin: 0 0 12px;
     }
@@ -983,7 +997,12 @@
     }
 
     .loan-section summary {
-      font-size: 1.05rem;
+      font-size: .92rem;
+      color: var(--muted);
+    }
+
+    .loan-section[open] summary {
+      color: var(--ink);
     }
 
     .advanced-options .settings-grid {
@@ -1145,11 +1164,9 @@
 
     .option-disclaimer {
       margin: 8px 0 12px;
-      border: 1px solid #f6c177;
-      border-radius: 8px;
-      background: #fff8ed;
+      border-left: 3px solid #f6c177;
       color: #7b341e;
-      padding: 10px 12px;
+      padding: 2px 0 2px 10px;
       font-size: .82rem;
       line-height: 1.45;
     }
@@ -1628,6 +1645,21 @@
       .section-head button,
       .schedule-head button {
         margin-top: 10px;
+      }
+
+      .mobile-payoff-jump {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 42px;
+        margin: 8px 0 2px;
+        border: 1px solid var(--green);
+        border-radius: 7px;
+        background: var(--green);
+        color: #fff;
+        font-weight: 900;
+        text-decoration: none;
       }
 
       .sample-data-banner {
@@ -2146,9 +2178,9 @@
         <div class="section-head">
           <div>
             <h2>Your Cards</h2>
-            <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
-            <p class="privacy-note">No card numbers or logins. Anonymous calculator telemetry is optional. <a href="privacy.html">Privacy details</a></p>
-            <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send anonymous calculator telemetry</label>
+            <p>Add balances, APRs, and current statement minimum payments. The calculator fills a useful sample to start.</p>
+            <p class="privacy-note">No card numbers or logins. Optional telemetry can include numeric balances, APRs, minimums, settings, and results. <a href="privacy.html">Privacy details</a></p>
+            <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send calculation telemetry</label>
           </div>
           <div class="button-row">
             <button type="button" class="secondary" id="sampleButton">Load Sample</button>
@@ -2171,7 +2203,7 @@
                 <th>Card Name</th>
                 <th>Balance ($)</th>
                 <th>APR (%)</th>
-                <th>Current Minimum Payment ($)</th>
+                <th>Statement Minimum ($)</th>
                 <th><span class="sr-only">Remove card</span></th>
               </tr>
             </thead>
@@ -2184,9 +2216,10 @@
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
           <span id="rowLimitNote" class="hint">Use the minimum shown on your latest statement. Up to 20 cards; $0 balances are ignored.</span>
         </div>
+        <a id="mobilePayoffJump" class="mobile-payoff-jump hidden" href="#resultsPanel">View payoff plan</a>
 
         <details id="loanSection" class="loan-section">
-          <summary>Installment Loans (optional) — auto, personal, student loans</summary>
+          <summary>More debt types (optional)</summary>
           <div class="subsection-head">
             <div>
               <h2>Installment Loans (optional)</h2>
@@ -2306,10 +2339,8 @@
           <div class="result-quick-actions" aria-label="Result shortcuts">
             <a href="#comparisonSection">Compare methods</a>
             <a href="#monthPlan">Month 1 plan</a>
-            <a href="#payoffOptions">Scenarios</a>
             <a href="#methodology">Methodology</a>
           </div>
-          <p class="minimum-note">Balance-transfer and loan scenarios are optional planning estimates, not offers or recommendations. Add one only if you want to compare the assumptions.</p>
 
           <div class="result-section">
             <h3 class="result-section-title">Plan Details</h3>
@@ -2359,13 +2390,13 @@
           <div id="payoffOptions" class="payoff-options result-section">
             <div class="section-head">
               <div>
-                <h3>Optional Payoff Scenarios</h3>
-                <p>Model a balance transfer or consolidation loan after reviewing your current payoff plan.</p>
+                <h3>Optional Scenarios</h3>
+                <p>Compare balance transfer or consolidation loan assumptions only after reviewing your current payoff plan.</p>
               </div>
             </div>
             <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
             <details id="payoffOptionControls" class="option-controls">
-              <summary>Add or edit balance transfer / loan assumptions</summary>
+              <summary>Add or edit optional scenario assumptions</summary>
               <div id="optionScenarioList" class="option-settings-grid"></div>
               <div class="option-actions">
                 <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
@@ -2679,6 +2710,7 @@
       var mobileTotalInterest = document.getElementById("mobileTotalInterest");
       var mobileMonthlyPayment = document.getElementById("mobileMonthlyPayment");
       var mobileSummaryLink = document.getElementById("mobileSummaryLink");
+      var mobilePayoffJump = document.getElementById("mobilePayoffJump");
 
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
@@ -2691,7 +2723,7 @@
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
-        mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink
+        mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump
       ];
 
       if (requiredElements.some(function (element) { return !element; })) {
@@ -2901,7 +2933,7 @@
           '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">Promo APR</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
-          '<td class="amount-cell minimum-cell card-row-detail" data-label="Current Minimum Payment ($)"><input data-field="minimum" aria-label="Current minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
+          '<td class="amount-cell minimum-cell card-row-detail" data-label="Statement Minimum ($)"><input data-field="minimum" aria-label="Current statement minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
           '<td class="remove-cell card-row-detail" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
@@ -3065,6 +3097,12 @@
         lastResult = null;
         setCopySummaryAvailable(false);
         hideMobileSummary();
+        updateMobilePayoffJump(false);
+      }
+
+      function updateMobilePayoffJump(show) {
+        if (!mobilePayoffJump) return;
+        mobilePayoffJump.classList.toggle("hidden", !show);
       }
 
       function setCopySummaryAvailable(isAvailable) {
@@ -3094,8 +3132,10 @@
         setCopySummaryAvailable(Boolean(lastResult));
         if (isSampleMode) {
           hideMobileSummary();
+          updateMobilePayoffJump(false);
         } else if (lastResult) {
           updateMobileSummary(lastResult);
+          updateMobilePayoffJump(true);
         }
       }
 
@@ -4860,6 +4900,7 @@
         var baseline = simulate(cards, { method: "minimum", extraPayment: 0 }, loans);
         lastResult = result;
         setCopySummaryAvailable(true);
+        updateMobilePayoffJump(!isSampleMode);
 
         totalBalanceEl.textContent = money(result.startingBalance);
         totalMinimumsEl.textContent = money(result.startingMinimumTotal);
@@ -4911,9 +4952,9 @@
         customOrder = [];
         showAllSchedule = false;
         [
-          { name: "Rewards Visa", balance: 8500, apr: 22.99, minimum: 170 },
-          { name: "Store Card", balance: 1200, apr: 28.99, minimum: 45 },
-          { name: "Travel Mastercard", balance: 3200, apr: 19.99, minimum: 64 }
+          { name: "Sample Visa", balance: 8500, apr: 22.99, minimum: 170 },
+          { name: "Sample Store Card", balance: 1200, apr: 28.99, minimum: 45 },
+          { name: "Sample Mastercard", balance: 3200, apr: 19.99, minimum: 64 }
         ].forEach(addCardRow);
         methodInput.value = "avalanche";
         extraInput.value = "250";
