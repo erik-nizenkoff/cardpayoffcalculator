@@ -176,6 +176,8 @@ The browser should avoid visible Supabase 400s when payoff-option telemetry colu
 - Sample-mode share controls should be visibly disabled, not just blocked after click.
 - Sample-mode dismissal copy should not imply the sample data has become a real editable plan.
 - Keep the first viewport focused: one dominant sample-replacement action, concise privacy/telemetry copy, and no redundant sample messaging.
+- In sample mode on mobile, hide redundant sample reload controls, make replacing sample data the dominant action, and show an early jump to the sample payoff plan before the card list.
+- Promo APR controls should stay secondary and low-emphasis unless the user expands them.
 - `/favicon.ico` should resolve successfully for browser polish.
 
 ## Monetization Direction

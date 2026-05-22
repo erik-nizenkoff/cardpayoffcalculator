@@ -385,10 +385,10 @@
 
     .apr-cell .inline-link {
       display: inline-flex;
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: .76rem;
-      font-weight: 800;
+      margin-top: 4px;
+      color: #7b8798;
+      font-size: .72rem;
+      font-weight: 700;
       text-decoration: none;
     }
 
@@ -506,19 +506,19 @@
     }
 
     .privacy-note {
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: .82rem;
-      line-height: 1.45;
+      margin: 7px 0 0;
+      color: #7b8798;
+      font-size: .76rem;
+      line-height: 1.38;
     }
 
     .telemetry-toggle {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      margin-top: 9px;
-      color: var(--muted);
-      font-size: .8rem;
+      margin-top: 7px;
+      color: #7b8798;
+      font-size: .76rem;
       font-weight: 700;
       line-height: 1.35;
     }
@@ -569,6 +569,31 @@
       padding: 7px 10px;
       font-size: .82rem;
       color: #49627f;
+    }
+
+    .sample-data-banner .sample-primary-action {
+      min-height: 44px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 18px rgba(39,103,73,0.22);
+    }
+
+    .sample-data-banner .quiet-button {
+      min-height: 32px;
+      border: 0;
+      background: transparent;
+      color: #49627f;
+      padding: 5px 8px;
+      box-shadow: none;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .sample-data-banner .quiet-button:hover,
+    .sample-data-banner .quiet-button:focus-visible {
+      background: transparent;
+      color: var(--navy);
+      box-shadow: none;
+      transform: none;
     }
 
     .hint {
@@ -1662,9 +1687,23 @@
         text-decoration: none;
       }
 
+      body.sample-mode #sampleButton {
+        display: none;
+      }
+
       .sample-data-banner {
         display: grid;
         align-items: stretch;
+      }
+
+      .sample-data-banner .button-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .sample-data-banner .sample-primary-action {
+        width: 100%;
       }
 
       .settings-grid,
@@ -2179,7 +2218,7 @@
           <div>
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current statement minimum payments. The calculator fills a useful sample to start.</p>
-            <p class="privacy-note">No card numbers or logins. Optional telemetry can include numeric balances, APRs, minimums, settings, and results. <a href="privacy.html">Privacy details</a></p>
+            <p class="privacy-note">No card numbers or logins. Numeric inputs and results may be used for product telemetry. <a href="privacy.html">Privacy details</a></p>
             <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send calculation telemetry</label>
           </div>
           <div class="button-row">
@@ -2191,10 +2230,11 @@
         <div id="sampleDataBanner" class="sample-data-banner hidden">
           <span><strong>Sample data loaded.</strong> Replace it with your cards to get your real payoff plan.</span>
           <div class="button-row">
-            <button type="button" id="sampleEnterCardsButton">Replace sample with my cards</button>
-            <button type="button" class="secondary" id="keepSampleButton">Dismiss sample notice</button>
+            <button type="button" class="sample-primary-action" id="sampleEnterCardsButton">Replace sample with my cards</button>
+            <button type="button" class="secondary quiet-button" id="keepSampleButton">Keep viewing sample</button>
           </div>
         </div>
+        <a id="mobilePayoffJump" class="mobile-payoff-jump hidden" href="#resultsPanel">View sample payoff plan</a>
 
         <div class="table-scroll">
           <table class="card-table">
@@ -2216,7 +2256,6 @@
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
           <span id="rowLimitNote" class="hint">Use the minimum shown on your latest statement. Up to 20 cards; $0 balances are ignored.</span>
         </div>
-        <a id="mobilePayoffJump" class="mobile-payoff-jump hidden" href="#resultsPanel">View payoff plan</a>
 
         <details id="loanSection" class="loan-section">
           <summary>More debt types (optional)</summary>
@@ -2930,7 +2969,7 @@
           '<td class="card-summary-cell" colspan="5"><button type="button" class="card-summary-line" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false"><span class="card-summary-text"></span><span class="row-expand-hint">Tap to edit</span><span class="row-chevron">›</span></button></td>' +
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">Promo APR</button>' +
+          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">Add promo APR</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
           '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
           '<td class="amount-cell minimum-cell card-row-detail" data-label="Statement Minimum ($)"><input data-field="minimum" aria-label="Current statement minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
@@ -3100,9 +3139,10 @@
         updateMobilePayoffJump(false);
       }
 
-      function updateMobilePayoffJump(show) {
+      function updateMobilePayoffJump(show, label) {
         if (!mobilePayoffJump) return;
         mobilePayoffJump.classList.toggle("hidden", !show);
+        mobilePayoffJump.textContent = label || "View payoff plan";
       }
 
       function setCopySummaryAvailable(isAvailable) {
@@ -3122,6 +3162,7 @@
 
       function setSampleMode(enabled) {
         isSampleMode = Boolean(enabled);
+        document.body.classList.toggle("sample-mode", isSampleMode);
         [sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, mobileSampleBadge].forEach(function (element) {
           if (!element) return;
           element.classList.toggle("hidden", !isSampleMode);
@@ -3132,10 +3173,10 @@
         setCopySummaryAvailable(Boolean(lastResult));
         if (isSampleMode) {
           hideMobileSummary();
-          updateMobilePayoffJump(false);
+          updateMobilePayoffJump(Boolean(lastResult), "View sample payoff plan");
         } else if (lastResult) {
           updateMobileSummary(lastResult);
-          updateMobilePayoffJump(true);
+          updateMobilePayoffJump(true, "View payoff plan");
         }
       }
 
@@ -4900,7 +4941,7 @@
         var baseline = simulate(cards, { method: "minimum", extraPayment: 0 }, loans);
         lastResult = result;
         setCopySummaryAvailable(true);
-        updateMobilePayoffJump(!isSampleMode);
+        updateMobilePayoffJump(Boolean(result), isSampleMode ? "View sample payoff plan" : "View payoff plan");
 
         totalBalanceEl.textContent = money(result.startingBalance);
         totalMinimumsEl.textContent = money(result.startingMinimumTotal);
@@ -5076,7 +5117,7 @@
           var expanded = toggleBtn.getAttribute("aria-expanded") === "true";
           if (introDiv) introDiv.classList.toggle("hidden", expanded);
           toggleBtn.setAttribute("aria-expanded", String(!expanded));
-          toggleBtn.textContent = expanded ? "Promo APR" : "Hide promo APR";
+          toggleBtn.textContent = expanded ? "Add promo APR" : "Hide promo APR";
         }
       });
 
