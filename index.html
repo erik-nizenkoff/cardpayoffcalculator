@@ -17,10 +17,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Privacy-friendly analytics by Plausible -->
-  <script async src="https://plausible.io/js/pa-mYBwitol8vFmYdQ-pqsNR.js"></script>
   <script>
-    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
-    plausible.init()
+    (function () {
+      var telemetryKey = "cpoc_telemetry_opt_out";
+      var disabled = false;
+      try {
+        disabled = localStorage.getItem(telemetryKey) === "1";
+      } catch (error) {
+        disabled = false;
+      }
+      if (navigator.doNotTrack === "1" || window.doNotTrack === "1") disabled = true;
+      window.CP_TELEMETRY_KEY = telemetryKey;
+      window.CP_TELEMETRY_DISABLED = disabled;
+      window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
+      window.plausible.init = window.plausible.init || function (i) { plausible.o = i || {}; };
+      if (!disabled) {
+        var script = document.createElement("script");
+        script.async = true;
+        script.src = "https://plausible.io/js/pa-mYBwitol8vFmYdQ-pqsNR.js";
+        document.head.appendChild(script);
+        plausible.init();
+      }
+    }());
   </script>
   <style>
     /* Critical CSS inlined — no render-blocking stylesheets */
@@ -483,6 +501,25 @@
       line-height: 1.45;
     }
 
+    .telemetry-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .telemetry-toggle input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--green);
+      flex: 0 0 auto;
+    }
+
     .privacy-note a,
     .footer-update a {
       color: var(--navy);
@@ -689,6 +726,10 @@
       color: var(--muted);
       font-size: .78rem;
       font-weight: 800;
+    }
+
+    .sample-result-actions {
+      margin-top: 8px;
     }
 
     .hero-label {
@@ -2106,6 +2147,7 @@
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
             <p class="privacy-note">No card numbers or logins. We may store numeric calculator inputs without names or identifiers to improve the tool. <a href="privacy.html">Privacy details</a></p>
+            <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send anonymous calculator telemetry</label>
           </div>
           <div class="button-row">
             <button type="button" class="secondary" id="sampleButton">Load Sample</button>
@@ -2219,6 +2261,9 @@
             <h2>Your Payoff Plan</h2>
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
             <p id="sampleResultBadge" class="sample-inline-note hidden">Sample plan shown - replace the sample cards for your real payoff plan.</p>
+            <div id="sampleResultActions" class="sample-result-actions hidden">
+              <button type="button" class="secondary" id="resultEnterCardsButton">Replace sample with my cards</button>
+            </div>
           </div>
         </div>
 
@@ -2573,10 +2618,12 @@
       var extraInput = document.getElementById("extraPayment");
       var startInput = document.getElementById("startMonth");
       var targetInput = document.getElementById("targetMonth");
+      var telemetryOptOut = document.getElementById("telemetryOptOut");
       var resultsPanel = document.getElementById("resultsPanel");
       var emptyResults = document.getElementById("emptyResults");
       var resultsContent = document.getElementById("resultsContent");
       var sampleResultBadge = document.getElementById("sampleResultBadge");
+      var sampleResultActions = document.getElementById("sampleResultActions");
       var sampleHeroBadge = document.getElementById("sampleHeroBadge");
       var sampleShareNote = document.getElementById("sampleShareNote");
       var sampleChartBadge = document.getElementById("sampleChartBadge");
@@ -2612,6 +2659,7 @@
       var firstRunHint = document.getElementById("firstRunHint");
       var sampleDataBanner = document.getElementById("sampleDataBanner");
       var enterCardsButton = document.getElementById("enterCardsButton");
+      var resultEnterCardsButton = document.getElementById("resultEnterCardsButton");
       var sampleEnterCardsButton = document.getElementById("sampleEnterCardsButton");
       var keepSampleButton = document.getElementById("keepSampleButton");
       var dismissHint = document.getElementById("dismissHint");
@@ -2633,13 +2681,13 @@
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
         clearAllButton, loadExampleButton, formError, methodInput, extraInput, startInput,
-        targetInput, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
+        targetInput, telemetryOptOut, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
-        scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
+        scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
         mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink
       ];
@@ -2721,6 +2769,35 @@
 
       function bind(element, type, handler, options) {
         if (element) element.addEventListener(type, handler, options);
+      }
+
+      function telemetryDisabled() {
+        try {
+          return window.CP_TELEMETRY_DISABLED === true ||
+            localStorage.getItem(window.CP_TELEMETRY_KEY || "cpoc_telemetry_opt_out") === "1" ||
+            navigator.doNotTrack === "1" ||
+            window.doNotTrack === "1";
+        } catch (error) {
+          return window.CP_TELEMETRY_DISABLED === true ||
+            navigator.doNotTrack === "1" ||
+            window.doNotTrack === "1";
+        }
+      }
+
+      function setTelemetryOptOut(enabled) {
+        window.CP_TELEMETRY_DISABLED = Boolean(enabled);
+        try {
+          if (enabled) {
+            localStorage.setItem(window.CP_TELEMETRY_KEY || "cpoc_telemetry_opt_out", "1");
+          } else {
+            localStorage.removeItem(window.CP_TELEMETRY_KEY || "cpoc_telemetry_opt_out");
+          }
+        } catch (error) {}
+      }
+
+      function syncTelemetryOptOutControl() {
+        if (!telemetryOptOut) return;
+        telemetryOptOut.checked = telemetryDisabled();
       }
 
       document.querySelectorAll(".table-scroll").forEach(function (region, index) {
@@ -3002,7 +3079,7 @@
 
       function setSampleMode(enabled) {
         isSampleMode = Boolean(enabled);
-        [sampleResultBadge, sampleHeroBadge, sampleShareNote, sampleChartBadge, mobileSampleBadge].forEach(function (element) {
+        [sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, mobileSampleBadge].forEach(function (element) {
           if (!element) return;
           element.classList.toggle("hidden", !isSampleMode);
         });
@@ -3030,6 +3107,16 @@
             copySummaryStatus.textContent = "";
             copyStatusTimer = null;
           }, 2200);
+        }
+      }
+
+      function showSampleActionRequired(message) {
+        showFirstRunHint();
+        setSampleMode(true);
+        setCopySummaryStatus(message || "Replace sample cards before using this action.");
+        if (sampleDataBanner) sampleDataBanner.classList.remove("hidden");
+        if (calculatorForm && calculatorForm.scrollIntoView) {
+          calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
 
@@ -3068,6 +3155,10 @@
       }
 
       function copyResultsSummary() {
+        if (isSampleMode) {
+          showSampleActionRequired("Replace sample cards before copying a real payoff summary.");
+          return;
+        }
         var summary = buildResultsSummary(lastResult);
         if (!summary) {
           setCopySummaryStatus("No results yet");
@@ -3085,6 +3176,10 @@
       }
 
       function copyShareLink() {
+        if (isSampleMode) {
+          showSampleActionRequired("Replace sample cards before sharing a real payoff plan.");
+          return;
+        }
         if (!lastResult) {
           setCopySummaryStatus("No results yet");
           return;
@@ -3801,12 +3896,17 @@
           return '<div class="option-card"><h4>' + escapeHtml(row.name) + '</h4><p class="option-watchout">' + escapeHtml(row.reason) + '</p></div>';
         }
         var result = row.result;
-        var savings = roundCents(row.currentCost - row.totalCost);
+        var modeledDifference = roundCents(row.currentCost - row.totalCost);
+        var differenceText = Math.abs(modeledDifference) <= EPSILON
+          ? "No modeled difference"
+          : modeledDifference > 0
+            ? money(modeledDifference) + " lower"
+            : money(Math.abs(modeledDifference)) + " higher";
         var isLowest = row.totalCost === bestCost;
         var risk = "";
         var assumptions = row.assumptions || "";
         if (row.type === "balance-transfer") {
-          risk = "Approval and transfer limit are not guaranteed. Fees, lower approved limits, post-promo APR, missed payments, or new purchases can erase savings.";
+          risk = "Approval and transfer limit are not guaranteed. Fees, lower approved limits, post-promo APR, missed payments, or new purchases can make the modeled cost worse.";
         } else if (row.type === "consolidation-loan") {
           risk = "Approval, APR, amount, fees, and term are not guaranteed. A longer term can reduce monthly pressure while keeping debt around longer.";
         } else {
@@ -3820,7 +3920,7 @@
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
           '<div class="summary-line"><span>Monthly payment</span><strong>' + money(result.monthlyPayment) + "</strong></div>" +
           '<div class="summary-line"><span>Interest + fees</span><strong>' + money(row.totalCost) + "</strong></div>" +
-          '<div class="summary-line"><span>Savings vs current</span><strong>' + (savings >= 0 ? money(savings) : "-" + money(Math.abs(savings))) + "</strong></div>" +
+          '<div class="summary-line"><span>Modeled difference vs current</span><strong>' + differenceText + "</strong></div>" +
           '<p class="option-watchout">' + escapeHtml(row.watchout || "") + "</p>" +
           '<p class="option-risk">' + escapeHtml(risk) + "</p>" +
           "</div>";
@@ -4644,6 +4744,7 @@
       }
 
       function trackCalculation(cards, loans, options, result) {
+        if (telemetryDisabled()) return;
         try {
           var uid = getUid();
           var cardData = cards.map(function (c, index) {
@@ -4856,13 +4957,19 @@
         var button = event.target.closest("button[data-action]");
         if (!button) return;
         if (button.dataset.action === "add-balance-transfer") {
-          if (isSampleMode) setSampleMode(false);
+          if (isSampleMode) {
+            showSampleActionRequired("Replace sample cards before adding payoff options.");
+            return;
+          }
           addOptionScenario("balance-transfer");
           update();
           return;
         }
         if (button.dataset.action === "add-consolidation-loan") {
-          if (isSampleMode) setSampleMode(false);
+          if (isSampleMode) {
+            showSampleActionRequired("Replace sample cards before adding payoff options.");
+            return;
+          }
           addOptionScenario("consolidation-loan");
           update();
           return;
@@ -4968,8 +5075,14 @@
       }
 
       bind(enterCardsButton, "click", replaceSampleWithCards);
+      bind(resultEnterCardsButton, "click", replaceSampleWithCards);
       bind(sampleEnterCardsButton, "click", replaceSampleWithCards);
       bind(keepSampleButton, "click", confirmSampleData);
+      syncTelemetryOptOutControl();
+      bind(telemetryOptOut, "change", function () {
+        setTelemetryOptOut(telemetryOptOut.checked);
+        syncTelemetryOptOutControl();
+      });
 
       document.addEventListener("focusin", function (event) {
         if (event.target && event.target.matches && event.target.matches("input, select, textarea")) {

@@ -147,6 +147,8 @@ Telemetry details for current launch state:
 - Plausible may record basic page-view usage when the page loads.
 - Supabase calculation telemetry should not be sent for the default sample load.
 - Supabase calculation telemetry may be sent after a user edits valid numeric calculator inputs or scenarios.
+- Users should have a low-friction way to opt out of calculator telemetry, and the app should respect browser Do Not Track where practical.
+- Privacy copy should state a fixed retention target for raw non-identifying calculator telemetry instead of saying no schedule exists.
 - Privacy page copy should state retention and deletion limits plainly and identify Vercel, Supabase, Plausible, and Google Fonts as service providers/processors where applicable.
 
 ## Calculation Data Payload
