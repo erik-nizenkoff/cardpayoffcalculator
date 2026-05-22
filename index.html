@@ -13,6 +13,7 @@
   <meta property="og:site_name" content="Card Payoff Calculator">
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#0f2444">
+  <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2146,7 +2147,7 @@
           <div>
             <h2>Your Cards</h2>
             <p>Add balances, APRs, and current minimum payments. The calculator fills a useful sample to start.</p>
-            <p class="privacy-note">No card numbers or logins. We may store numeric calculator inputs without names or identifiers to improve the tool. <a href="privacy.html">Privacy details</a></p>
+            <p class="privacy-note">No card numbers or logins. Anonymous calculator telemetry is optional. <a href="privacy.html">Privacy details</a></p>
             <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send anonymous calculator telemetry</label>
           </div>
           <div class="button-row">
@@ -2159,7 +2160,7 @@
           <span><strong>Sample data loaded.</strong> Replace it with your cards to get your real payoff plan.</span>
           <div class="button-row">
             <button type="button" id="sampleEnterCardsButton">Replace sample with my cards</button>
-            <button type="button" class="secondary" id="keepSampleButton">Use sample for now</button>
+            <button type="button" class="secondary" id="keepSampleButton">Dismiss sample notice</button>
           </div>
         </div>
 
@@ -2601,6 +2602,7 @@
       var EPSILON = 0.005;
       var SUPABASE_URL = 'https://ofhgwcbcljlmvuqvwoax.supabase.co';
       var SUPABASE_ANON_KEY = 'sb_publishable_TshGB0Mpxe2zjVOc9zeW_w_LzEi5j_S';
+      var PAYOFF_OPTION_TELEMETRY_ENABLED = false;
       var DEFAULT_EMPTY_MESSAGE = "Enter at least one card with a balance, APR, and minimum payment to see live results.";
       var ZERO_BALANCE_MESSAGE = "All entered balances are $0. You do not have any active debt to model.";
 
@@ -3066,14 +3068,17 @@
       }
 
       function setCopySummaryAvailable(isAvailable) {
-        if (copyLinkButton) copyLinkButton.disabled = !isAvailable;
-        if (copySummaryButton) copySummaryButton.disabled = !isAvailable;
-        var helper = isAvailable
+        var enabled = Boolean(isAvailable) && !isSampleMode;
+        if (copyLinkButton) copyLinkButton.disabled = !enabled;
+        if (copySummaryButton) copySummaryButton.disabled = !enabled;
+        var helper = isSampleMode
+          ? "Sample results are active. Replace sample cards before sharing or copying a real payoff plan."
+          : enabled
           ? "Share links include the current numeric inputs; copy actions are ready."
           : "Share and copy controls activate after valid results are shown.";
         if (copyActionsHelp) copyActionsHelp.textContent = helper;
-        if (copyLinkButton) copyLinkButton.title = isAvailable ? "Copy a link to these calculator inputs" : "Enter valid debt inputs to enable share links";
-        if (copySummaryButton) copySummaryButton.title = isAvailable ? "Copy a plain-English summary of these results" : "Enter valid debt inputs to enable summary copy";
+        if (copyLinkButton) copyLinkButton.title = isSampleMode ? "Replace sample cards before sharing" : enabled ? "Copy a link to these calculator inputs" : "Enter valid debt inputs to enable share links";
+        if (copySummaryButton) copySummaryButton.title = isSampleMode ? "Replace sample cards before copying" : enabled ? "Copy a plain-English summary of these results" : "Enter valid debt inputs to enable summary copy";
         setCopySummaryStatus("");
       }
 
@@ -3086,6 +3091,7 @@
         if (copyActionsHelp && isSampleMode) {
           copyActionsHelp.textContent = "Sample results are active. Replace sample cards before sharing a real payoff plan.";
         }
+        setCopySummaryAvailable(Boolean(lastResult));
         if (isSampleMode) {
           hideMobileSummary();
         } else if (lastResult) {
@@ -4723,6 +4729,15 @@
         return legacy;
       }
 
+      function payoffOptionTelemetryEnabled() {
+        try {
+          return PAYOFF_OPTION_TELEMETRY_ENABLED ||
+            localStorage.getItem("cpoc_payoff_option_telemetry_enabled") === "1";
+        } catch (error) {
+          return PAYOFF_OPTION_TELEMETRY_ENABLED;
+        }
+      }
+
       function postCalculationPayload(payload) {
         function post(body) {
           return fetch(SUPABASE_URL + '/rest/v1/calculations', {
@@ -4737,8 +4752,14 @@
           });
         }
 
-        return post(payload).then(function (response) {
-          if (response.ok || !payload.payoff_options) return response;
+        var canSendPayoffOptions = Boolean(payload.payoff_options) && payoffOptionTelemetryEnabled();
+        var body = canSendPayoffOptions ? payload : legacyCalculationPayload(payload);
+
+        return post(body).then(function (response) {
+          if (response.ok || !canSendPayoffOptions) return response;
+          try {
+            localStorage.removeItem("cpoc_payoff_option_telemetry_enabled");
+          } catch (error) {}
           return post(legacyCalculationPayload(payload));
         });
       }

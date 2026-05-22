@@ -164,6 +164,14 @@ Store payoff options without card or loan names:
 - counts for total payoff options, balance transfer options, and consolidation loan options
 
 If the database schema is not updated yet, the app should fail gracefully and keep the legacy calculation insert path working.
+The browser should avoid visible Supabase 400s when payoff-option telemetry columns are not available; new payoff-option telemetry can be feature-enabled after the Supabase schema/cache is confirmed live.
+
+## QA Requirements
+
+- Sample-mode share controls should be visibly disabled, not just blocked after click.
+- Sample-mode dismissal copy should not imply the sample data has become a real editable plan.
+- Keep the first viewport focused: one dominant sample-replacement action, concise privacy/telemetry copy, and no redundant sample messaging.
+- `/favicon.ico` should resolve successfully for browser polish.
 
 ## Monetization Direction
 
