@@ -512,6 +512,18 @@
       line-height: 1.38;
     }
 
+    .privacy-disclosure {
+      margin-top: 8px;
+      color: #7b8798;
+      font-size: .78rem;
+    }
+
+    .privacy-disclosure summary {
+      cursor: pointer;
+      color: var(--navy);
+      font-weight: 900;
+    }
+
     .entry-guide {
       margin: 8px 0 0;
       color: var(--navy);
@@ -882,7 +894,8 @@
       margin: 0 0 12px;
     }
 
-    .result-quick-actions a {
+    .result-quick-actions a,
+    .result-quick-actions button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -896,9 +909,10 @@
       font-size: .78rem;
       font-weight: 900;
       text-decoration: none;
+      cursor: pointer;
     }
 
-    .result-quick-actions a:first-child {
+    .result-quick-actions .primary-next {
       min-height: 42px;
       border-color: var(--green);
       background: var(--green);
@@ -907,9 +921,26 @@
     }
 
     .result-quick-actions a:hover,
-    .result-quick-actions a:focus-visible {
+    .result-quick-actions a:focus-visible,
+    .result-quick-actions button:hover,
+    .result-quick-actions button:focus-visible {
       border-color: var(--green);
       box-shadow: 0 0 0 3px rgba(32,141,84,0.1);
+    }
+
+    .estimate-details {
+      margin-top: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.45;
+    }
+
+    .estimate-details summary {
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 900;
     }
 
     .result-section {
@@ -1260,6 +1291,13 @@
 
     .payoff-options h3 {
       margin-bottom: 4px;
+    }
+
+    .payoff-options > summary {
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 900;
+      font-size: .95rem;
     }
 
     .option-disclaimer {
@@ -2306,10 +2344,13 @@
         <div class="section-head">
           <div>
             <h2>Your Cards</h2>
-            <p>Add each card's balance, APR, and current statement minimum to get a live payoff plan. The calculator fills a sample plan so you can see how it works first.</p>
+            <p>Enter balance, APR, and minimum payment for each card. The calculator fills a sample plan so you can see how it works first.</p>
             <p class="entry-guide">To get your first answer, enter three numbers per card: balance, APR, and minimum payment.</p>
-            <p class="privacy-note">Calculations run in your browser. Do not enter card numbers, logins, or account names; optional telemetry may include numeric inputs and results to improve the calculator. <a href="privacy.html">Privacy details</a></p>
-            <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send calculation telemetry</label>
+            <details class="privacy-disclosure">
+              <summary>Privacy and data</summary>
+              <p class="privacy-note">Calculations run in your browser. Do not enter card numbers, logins, or account names; optional telemetry may include numeric inputs and results to improve the calculator. <a href="privacy.html">Privacy details</a></p>
+              <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send calculation telemetry</label>
+            </details>
           </div>
           <div class="button-row">
             <button type="button" class="secondary" id="sampleButton">Load Sample</button>
@@ -2394,13 +2435,18 @@
             <p class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
-          <div class="field-stack">
-            <label for="targetMonth">Target Payoff Date</label>
-            <input id="targetMonth" aria-label="Target payoff date" type="month">
-            <p class="hint">Optional. Shows the monthly payment needed by that month.</p>
-          </div>
-
         </div>
+
+        <details id="targetDateOptions" class="advanced-options">
+          <summary>Want to be debt-free by a certain month?</summary>
+          <div class="settings-grid">
+            <div class="field-stack">
+              <label for="targetMonth">Target Payoff Date</label>
+              <input id="targetMonth" aria-label="Target payoff date" type="month">
+              <p class="hint">Optional: choose a month to estimate the payment needed.</p>
+            </div>
+          </div>
+        </details>
 
         <details id="advancedOptions" class="advanced-options">
           <summary>Advanced options ▼</summary>
@@ -2455,24 +2501,18 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only, not financial advice. Assumes APRs and minimums stay the same and excludes new purchases, late fees, and issuer payment changes.</p>
+          <p class="results-disclaimer">Estimates only. Assumes no new purchases and unchanged APRs/minimums.</p>
 
-          <details class="secondary-actions">
-            <summary>Share, export, or copy results</summary>
-            <div class="button-row result-actions">
-              <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
-              <button type="button" class="secondary" id="copyLinkButton" disabled aria-describedby="copyActionsHelp">Copy share link</button>
-              <button type="button" class="secondary" id="copySummaryButton" disabled aria-describedby="copyActionsHelp">Copy results summary</button>
-              <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
-            </div>
-            <p id="copyActionsHelp" class="copy-helper">Share and copy controls activate after valid results are shown.</p>
-            <p id="sampleShareNote" class="copy-helper hidden">Sample results are shown. Replace sample cards before sharing a real payoff plan.</p>
-          </details>
+          <div class="result-quick-actions" aria-label="Suggested next actions">
+            <button type="button" class="primary-next" id="boostExtraButton">Try $50 more</button>
+            <a href="#comparisonSection">Compare methods</a>
+            <a href="#calculatorForm">Edit cards</a>
+          </div>
 
           <div class="result-quick-actions" aria-label="Result shortcuts">
+            <a href="#monthPlan">See first payment</a>
             <a href="#comparisonSection">Compare methods</a>
-            <a href="#monthPlan">Month 1 plan</a>
-            <a href="#methodology">Methodology</a>
+            <a href="#methodology">How this is calculated</a>
           </div>
 
           <div class="result-section">
@@ -2489,8 +2529,17 @@
               <div class="metric"><span>First Payoff Target</span><strong id="firstTarget">-</strong></div>
               <div class="metric"><span>Total Paid</span><strong id="totalPaid">$0</strong></div>
             </div>
-            <p class="minimum-note">Estimated minimums use the greater of your entered minimum, $25, or 1% of balance plus monthly interest.</p>
-            <p class="cost-note">Total paid includes the starting balances plus estimated interest; total interest is the financing cost inside that total.</p>
+            <details class="estimate-details">
+              <summary>How this estimate works</summary>
+              <p class="minimum-note">Estimated minimums use the greater of your entered minimum, $25, or 1% of balance plus monthly interest.</p>
+              <p class="cost-note">Total paid includes starting balances plus estimated interest; total interest is the financing cost inside that total.</p>
+              <div class="assumptions-list" aria-label="Calculation assumptions">
+                <span>No new purchases</span>
+                <span>APR unchanged</span>
+                <span>Minimum rules estimated</span>
+                <span>Payments monthly</span>
+              </div>
+            </details>
 
             <div id="targetResult" class="target-card hidden"></div>
             <div id="savingsResult" class="savings-card hidden"></div>
@@ -2521,13 +2570,21 @@
             <p class="scroll-hint">Scroll sideways to compare the full month-one table.</p>
           </div>
 
-          <div id="payoffOptions" class="payoff-options result-section">
-            <div class="section-head">
-              <div>
-                <h3>Optional Scenarios</h3>
-                <p>Compare balance transfer or consolidation loan assumptions only after reviewing your current payoff plan.</p>
-              </div>
+          <details class="secondary-actions">
+            <summary>Share, export, or copy results</summary>
+            <div class="button-row result-actions">
+              <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
+              <button type="button" class="secondary" id="copyLinkButton" disabled aria-describedby="copyActionsHelp">Copy share link</button>
+              <button type="button" class="secondary" id="copySummaryButton" disabled aria-describedby="copyActionsHelp">Copy results summary</button>
+              <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
             </div>
+            <p id="copyActionsHelp" class="copy-helper">Share and copy controls activate after valid results are shown.</p>
+            <p id="sampleShareNote" class="copy-helper hidden">Sample results are shown. Replace sample cards before sharing a real payoff plan.</p>
+          </details>
+
+          <details id="payoffOptions" class="payoff-options result-section">
+            <summary>Compare balance transfer or consolidation scenarios</summary>
+            <p class="hint">Optional: model new-credit scenarios only after reviewing your current payoff plan.</p>
             <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
             <details id="payoffOptionControls" class="option-controls">
               <summary>Add or edit optional scenario assumptions</summary>
@@ -2539,15 +2596,7 @@
             </details>
             <div id="payoffOptionRows" class="option-card-grid"></div>
             <p id="payoffOptionNote" class="option-note"></p>
-          </div>
-        </div>
-        <div class="assumptions-note">Estimates assume fixed APR, no new charges, and payments made on the same day each month. Actual payoff may vary based on issuer minimum rules, fees, and payment timing.
-          <div class="assumptions-list" aria-label="Calculation assumptions">
-            <span>No new purchases</span>
-            <span>APR unchanged</span>
-            <span>Minimum rules estimated</span>
-            <span>Payments monthly</span>
-          </div>
+          </details>
         </div>
       </section>
     </section>
@@ -2840,6 +2889,7 @@
       var sampleEnterCardsButton = document.getElementById("sampleEnterCardsButton");
       var keepSampleButton = document.getElementById("keepSampleButton");
       var dismissHint = document.getElementById("dismissHint");
+      var boostExtraButton = document.getElementById("boostExtraButton");
       var methodDescription = document.getElementById("methodDescription");
       var customOrderPanel = document.getElementById("customOrderPanel");
       var customOrderList = document.getElementById("customOrderList");
@@ -2865,7 +2915,7 @@
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
-        scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
+        scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
         mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump
       ];
@@ -3315,10 +3365,11 @@
       function setSampleMode(enabled) {
         isSampleMode = Boolean(enabled);
         document.body.classList.toggle("sample-mode", isSampleMode);
-        [sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, mobileSampleBadge].forEach(function (element) {
+        [sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, mobileSampleBadge].forEach(function (element) {
           if (!element) return;
           element.classList.toggle("hidden", !isSampleMode);
         });
+        if (sampleChartBadge) sampleChartBadge.classList.add("hidden");
         if (copyActionsHelp && isSampleMode) {
           copyActionsHelp.textContent = "Sample results are active. Replace sample cards before sharing a real payoff plan.";
         }
@@ -4742,7 +4793,7 @@
         if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
         var resultsRect = resultsPanel ? resultsPanel.getBoundingClientRect() : null;
         var optionsRect = payoffOptions ? payoffOptions.getBoundingClientRect() : null;
-        if (optionsRect && optionsRect.top < window.innerHeight * 0.72 && optionsRect.bottom > 90) {
+        if (payoffOptions && payoffOptions.open && optionsRect && optionsRect.top < window.innerHeight * 0.72 && optionsRect.bottom > 90) {
           mobileSummaryLink.textContent = "Edit options ↓";
           mobileSummaryLink.setAttribute("href", "#payoffOptions");
           return;
@@ -5452,6 +5503,21 @@
       bind(resultEnterCardsButton, "click", replaceSampleWithCards);
       bind(sampleEnterCardsButton, "click", replaceSampleWithCards);
       bind(keepSampleButton, "click", confirmSampleData);
+      bind(boostExtraButton, "click", function () {
+        if (isSampleMode) {
+          showSampleActionRequired("Replace sample cards before trying a higher extra payment on your own plan.");
+          return;
+        }
+        var current = Number(extraInput.value || 0);
+        extraInput.value = String(Math.max(0, (Number.isFinite(current) ? current : 0) + 50));
+        if (methodInput.value === "minimum") methodInput.value = "avalanche";
+        update();
+        try {
+          extraInput.focus({ preventScroll: true });
+        } catch (error) {
+          extraInput.focus();
+        }
+      });
       syncTelemetryOptOutControl();
       bind(telemetryOptOut, "change", function () {
         setTelemetryOptOut(telemetryOptOut.checked);
