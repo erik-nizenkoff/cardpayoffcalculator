@@ -684,6 +684,12 @@
       margin-top: 18px;
     }
 
+    .payoff-settings-grid .field-stack > label {
+      display: flex;
+      align-items: flex-end;
+      min-height: 2.85em;
+    }
+
     .custom-order-panel {
       margin-top: 14px;
       border: 1px solid var(--line);
@@ -2526,7 +2532,7 @@
           </div>
         </div>
 
-        <div class="settings-grid" aria-label="Payoff settings">
+        <div class="settings-grid payoff-settings-grid" aria-label="Payoff settings">
           <div class="field-stack">
             <label for="method">Payoff strategy</label>
             <select id="method" aria-label="Payoff strategy">
