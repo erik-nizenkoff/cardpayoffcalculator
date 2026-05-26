@@ -2478,6 +2478,12 @@
           </div>
 
           <div class="field-stack">
+            <label for="startMonth">Start Month</label>
+            <input id="startMonth" aria-label="Start month" type="month">
+            <p class="hint">Defaults to this month.</p>
+          </div>
+
+          <div class="field-stack">
             <label for="paymentMode">Payment input</label>
             <select id="paymentMode" aria-label="Payment input type">
               <option value="extra">Extra above minimums</option>
@@ -2491,12 +2497,6 @@
             <input id="extraPayment" aria-label="Monthly payment amount" type="number" inputmode="decimal" min="0" step="25" value="250">
             <span class="field-error hidden" data-error-for="extraPayment"></span>
             <p id="paymentInputHint" class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
-          </div>
-
-          <div class="field-stack">
-            <label for="startMonth">Start Month</label>
-            <input id="startMonth" aria-label="Start month" type="month">
-            <p class="hint">Defaults to this month.</p>
           </div>
 
         </div>
