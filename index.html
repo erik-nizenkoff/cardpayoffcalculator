@@ -3036,6 +3036,14 @@
         return monthFormatter.format(date);
       }
 
+      function chartAxisMonthLabel(pointIndex) {
+        return addMonths(startInput.value, Math.max(0, Number(pointIndex || 0)));
+      }
+
+      function resultMonthLabel(monthNumber) {
+        return addMonths(startInput.value, Math.max(0, Number(monthNumber || 1) - 1));
+      }
+
       function monthsBetweenInclusive(startMonth, targetMonth) {
         if (!startMonth || !targetMonth) return null;
         var start = startMonth.split("-").map(Number);
@@ -3674,10 +3682,15 @@
         }).join("");
       }
 
-      function targetSort(method) {
+      function targetSort(method, order) {
+        var selectedOrder = Array.isArray(order) ? order : customOrder;
         return function (a, b) {
           if (method === "custom") {
-            return customOrderPosition(a.id) - customOrderPosition(b.id) || a.name.localeCompare(b.name);
+            var aIndex = selectedOrder.indexOf(a.id);
+            var bIndex = selectedOrder.indexOf(b.id);
+            var aRank = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+            var bRank = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+            return aRank - bRank || a.name.localeCompare(b.name);
           }
           if (method === "snowball") {
             return a.balance - b.balance || b.apr - a.apr || a.name.localeCompare(b.name);
@@ -3686,8 +3699,8 @@
         };
       }
 
-      function firstTarget(debts, method) {
-        var active = activeDebts(debts).slice().sort(targetSort(method));
+      function firstTarget(debts, method, order) {
+        var active = activeDebts(debts).slice().sort(targetSort(method, order));
         return active[0] ? active[0].name : "";
       }
 
@@ -3702,6 +3715,7 @@
       function simulate(inputCards, options, inputLoans) {
         var opts = options || {};
         var method = opts.method || "avalanche";
+        var selectedCustomOrder = Array.isArray(opts.customOrder) ? opts.customOrder.map(String) : customOrder.slice();
         var cards = normalizeCards(inputCards);
         var loans = normalizeLoans(inputLoans || []);
         var allDebts = cards.concat(loans);
@@ -3773,7 +3787,7 @@
 
           var remainingExtra = extraPayment;
           while (remainingExtra > EPSILON && activeDebts(allDebts).length) {
-            var target = activeDebts(allDebts).slice().sort(targetSort(method))[0];
+            var target = activeDebts(allDebts).slice().sort(targetSort(method, selectedCustomOrder))[0];
             var extra = Math.min(target.balance, remainingExtra);
             var targetIndex = allDebts.indexOf(target);
             target.balance = roundCents(target.balance - extra);
@@ -3804,7 +3818,7 @@
             interest: monthInterest,
             principal: principal,
             endingBalance: endingBalance,
-            target: targets[0] || firstTarget(allDebts, method),
+            target: targets[0] || firstTarget(allDebts, method, selectedCustomOrder),
             balances: allDebts.map(function (d) { return roundCents(Math.max(0, d.balance)); }),
             debtNames: allDebts.map(function (d) { return d.name; }),
             payments: payments,
@@ -3836,28 +3850,29 @@
 
       function requiredPaymentForTarget(cards, loans, method, targetMonths) {
         if (!targetMonths || targetMonths <= 0) return null;
+        var selectedCustomOrder = customOrder.slice();
         var minimum = startingMinimumTotal(cards, loans);
         var balances = normalizeCards(cards).concat(normalizeLoans(loans)).reduce(function (sum, d) { return sum + d.startingBalance; }, 0);
         var low = minimum;
         var high = Math.max(minimum + 100, balances + minimum);
         var i;
         for (i = 0; i < 24; i += 1) {
-          var test = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum) }, loans);
+          var test = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum), customOrder: selectedCustomOrder }, loans);
           if (!test.capped && test.months <= targetMonths) break;
           high *= 1.7;
         }
-        var feasible = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum) }, loans);
+        var feasible = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum), customOrder: selectedCustomOrder }, loans);
         if (feasible.capped || feasible.months > targetMonths) return null;
 
         for (i = 0; i < 42; i += 1) {
           var mid = (low + high) / 2;
-          var result = simulate(cards, { method: method, extraPayment: Math.max(0, mid - minimum) }, loans);
+          var result = simulate(cards, { method: method, extraPayment: Math.max(0, mid - minimum), customOrder: selectedCustomOrder }, loans);
           if (!result.capped && result.months <= targetMonths) high = mid;
           else low = mid;
         }
 
         var payment = roundCents(high);
-        var finalResult = simulate(cards, { method: method, extraPayment: Math.max(0, payment - minimum) }, loans);
+        var finalResult = simulate(cards, { method: method, extraPayment: Math.max(0, payment - minimum), customOrder: selectedCustomOrder }, loans);
         return {
           monthlyPayment: payment,
           extraPayment: roundCents(Math.max(0, payment - minimum)),
@@ -4485,7 +4500,7 @@
         }
       }
 
-      function chartPad() { return { top: 24, right: 20, bottom: 48, left: 68 }; }
+      function chartPad() { return { top: 24, right: 20, bottom: 68, left: 68 }; }
 
       function setCanvasSize(canvas, heightPx) {
         var rect = canvas.parentElement.getBoundingClientRect();
@@ -4561,6 +4576,7 @@
           midBal + "|" +
           (result.timeline[result.timeline.length - 1] ? result.timeline[result.timeline.length - 1].endingBalance : "") + "|" +
           (isSampleMode ? "sample" : "real") + "|" +
+          startInput.value + "|" +
           currentWidth;
         if (sig === comboCanvas._lastSig) {
           return;
@@ -4621,7 +4637,7 @@
         }
 
         // X gridlines + labels
-        var xStep = niceTickStep(months, 7);
+        var xStep = Math.max(1, niceTickStep(months, 7));
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         for (var mo = 0; mo <= months; mo += xStep) {
@@ -4630,7 +4646,12 @@
           ctx.lineWidth = 0.5;
           ctx.beginPath(); ctx.moveTo(xp, pad.top); ctx.lineTo(xp, pad.top + innerH); ctx.stroke();
           ctx.fillStyle = "#667085";
-          ctx.fillText("Mo " + mo, xp, pad.top + innerH + 6);
+          ctx.save();
+          ctx.translate(xp, pad.top + innerH + 12);
+          ctx.rotate(-Math.PI / 6);
+          ctx.textAlign = "right";
+          ctx.fillText(chartAxisMonthLabel(mo), 0, 0);
+          ctx.restore();
         }
 
         // Axes
@@ -4727,7 +4748,7 @@
         comboTooltip.classList.remove("hidden");
         comboTooltip.style.left = Math.min(mouseX + 12, rect.width - 160) + "px";
         comboTooltip.style.top = "8px";
-        var lines = ["Month " + row.month + ": " + money(row.endingBalance) + " total"];
+        var lines = [resultMonthLabel(row.month) + ": " + money(row.endingBalance) + " total"];
         if (row.balances) {
           data.result.debtNames.forEach(function (name, di) {
             var bal = row.balances[di] != null ? row.balances[di] : 0;
@@ -5252,7 +5273,7 @@
         resultsContent.classList.remove("hidden");
 
         if (method === "minimum") extra = 0;
-        var result = simulate(cards, { method: method, extraPayment: extra }, loans);
+        var result = simulate(cards, { method: method, extraPayment: extra, customOrder: customOrder.slice() }, loans);
         var baseline = simulate(cards, { method: "minimum", extraPayment: 0 }, loans);
         lastResult = result;
         setCopySummaryAvailable(true);
