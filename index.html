@@ -1334,13 +1334,6 @@
       margin-bottom: 4px;
     }
 
-    .payoff-options > summary {
-      cursor: pointer;
-      color: var(--ink);
-      font-weight: 900;
-      font-size: .95rem;
-    }
-
     .option-disclaimer {
       margin: 8px 0 12px;
       border-left: 3px solid #f6c177;
@@ -1356,12 +1349,6 @@
       border-radius: 8px;
       background: var(--soft);
       padding: 10px 12px;
-    }
-
-    .option-controls summary {
-      cursor: pointer;
-      color: var(--ink);
-      font-weight: 900;
     }
 
     .option-settings-grid {
@@ -2511,6 +2498,21 @@
           </div>
         </div>
 
+        <div id="payoffOptions" class="payoff-options" aria-labelledby="payoffOptionsHeading">
+          <h3 id="payoffOptionsHeading">Compare balance transfer or consolidation scenarios</h3>
+          <p class="hint">Already considering a transfer or loan? Compare it here.</p>
+          <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
+          <div id="payoffOptionControls" class="option-controls">
+            <div id="optionScenarioList" class="option-settings-grid"></div>
+            <div class="option-actions">
+              <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
+              <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
+            </div>
+          </div>
+          <div id="payoffOptionRows" class="option-card-grid"></div>
+          <p id="payoffOptionNote" class="option-note"></p>
+        </div>
+
         <div id="customOrderPanel" class="custom-order-panel hidden">
           <h3>Custom Payoff Order</h3>
           <p class="hint">Extra payment goes to the first active debt in this list, then continues down the order.</p>
@@ -2630,21 +2632,6 @@
             <p id="sampleShareNote" class="copy-helper hidden">Sample results are shown. Replace sample cards before sharing a real payoff plan.</p>
           </details>
 
-          <details id="payoffOptions" class="payoff-options result-section">
-            <summary>Compare balance transfer or consolidation scenarios</summary>
-            <p class="hint">Already considering a transfer or loan? Compare it here.</p>
-            <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
-            <details id="payoffOptionControls" class="option-controls">
-              <summary>Add or edit optional scenario assumptions</summary>
-              <div id="optionScenarioList" class="option-settings-grid"></div>
-              <div class="option-actions">
-                <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
-                <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
-              </div>
-            </details>
-            <div id="payoffOptionRows" class="option-card-grid"></div>
-            <p id="payoffOptionNote" class="option-note"></p>
-          </details>
         </div>
       </section>
     </section>
@@ -4917,7 +4904,7 @@
         if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
         var resultsRect = resultsPanel ? resultsPanel.getBoundingClientRect() : null;
         var optionsRect = payoffOptions ? payoffOptions.getBoundingClientRect() : null;
-        if (payoffOptions && payoffOptions.open && optionsRect && optionsRect.top < window.innerHeight * 0.72 && optionsRect.bottom > 90) {
+        if (payoffOptions && optionsRect && optionsRect.top < window.innerHeight * 0.72 && optionsRect.bottom > 90) {
           mobileSummaryLink.textContent = "Edit options ↓";
           mobileSummaryLink.setAttribute("href", "#payoffOptions");
           return;
