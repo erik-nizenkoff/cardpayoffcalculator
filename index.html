@@ -3051,6 +3051,7 @@
       var scheduleRenderGeneration = 0;
       var updateTimer = null;
       var printPreviousShowAll = false;
+      var printSchedulePrepared = false;
       var lastResult = null;
       var copyStatusTimer = null;
       var lastCards = [];
@@ -4711,6 +4712,12 @@
             "</tr>";
         }
 
+        function renderRowsSynchronously(targetRows) {
+          scheduleRows.innerHTML = targetRows.map(scheduleRowHtml).join("");
+          scheduleNote.textContent = scheduleStatus(targetRows.length);
+          scheduleLoading.classList.add("hidden");
+        }
+
         function scheduleStatus(count) {
           var note = "Showing " + count + " of " + result.timeline.length + " months.";
           if (showAllSchedule && result.timeline.length > 240) {
@@ -4727,9 +4734,7 @@
         }
 
         if (!showAllSchedule || rows.length <= initialScheduleMonths) {
-          scheduleRows.innerHTML = rows.map(scheduleRowHtml).join("");
-          scheduleNote.textContent = scheduleStatus(rows.length);
-          scheduleLoading.classList.add("hidden");
+          renderRowsSynchronously(rows);
           return;
         }
 
@@ -4760,6 +4765,34 @@
         } else {
           window.setTimeout(renderBatch, 0);
         }
+      }
+
+      function renderFullScheduleForPrint() {
+        if (!lastResult) return;
+        scheduleRenderGeneration += 1;
+        showAllSchedule = true;
+        var rows = lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240));
+        scheduleRows.innerHTML = rows.map(function (row) {
+          return "<tr>" +
+            "<td>" + row.month + "</td>" +
+            "<td>" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
+            "<td>" + moneyCents(row.payment) + "</td>" +
+            "<td>" + moneyCents(row.interest) + "</td>" +
+            "<td>" + moneyCents(row.principal) + "</td>" +
+            "<td>" + moneyCents(row.endingBalance) + "</td>" +
+            "<td>" + escapeHtml(row.target || "-") + "</td>" +
+            "</tr>";
+        }).join("");
+        scheduleNote.textContent = "Showing " + rows.length + " of " + lastResult.timeline.length + " months.";
+        scheduleLoading.classList.add("hidden");
+      }
+
+      function prepareScheduleForPrint() {
+        if (!printSchedulePrepared) {
+          printPreviousShowAll = showAllSchedule;
+          printSchedulePrepared = true;
+        }
+        renderFullScheduleForPrint();
       }
 
       // ── Charts ───────────────────────────────────────────────────────────
@@ -5905,6 +5938,7 @@
       });
 
       bind(printButton, "click", function () {
+        prepareScheduleForPrint();
         window.print();
       });
 
@@ -5913,13 +5947,12 @@
       syncPaymentInputCopy();
 
       window.addEventListener("beforeprint", function () {
-        printPreviousShowAll = showAllSchedule;
-        showAllSchedule = true;
-        if (lastResult) renderSchedule(lastResult);
+        prepareScheduleForPrint();
       });
 
       window.addEventListener("afterprint", function () {
         showAllSchedule = printPreviousShowAll;
+        printSchedulePrepared = false;
         if (lastResult) renderSchedule(lastResult);
       });
 
