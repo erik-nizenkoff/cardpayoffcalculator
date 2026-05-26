@@ -505,18 +505,18 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
-      padding: 0;
+      padding: 11px;
       margin: 10px 0 12px;
     }
 
-    .secondary-actions summary {
-      padding: 9px 11px;
-      font-size: .84rem;
+    .secondary-actions h3 {
+      margin: 0 0 4px;
+      color: var(--ink);
+      font-size: .95rem;
     }
 
     .secondary-actions .result-actions {
-      padding: 0 11px 11px;
-      margin: 0;
+      margin: 10px 0 8px;
     }
 
     .copy-status {
@@ -1638,19 +1638,7 @@
       margin-bottom: 12px;
     }
 
-    .schedule-summary {
-      cursor: pointer;
-      color: var(--ink);
-      font-weight: 900;
-      list-style-position: inside;
-    }
-
-    .schedule-summary h2 {
-      display: inline;
-      margin-right: 8px;
-    }
-
-    .schedule-summary span {
+    .schedule-note {
       color: var(--muted);
       font-size: .9rem;
       font-weight: 700;
@@ -2706,8 +2694,8 @@
             <p class="scroll-hint">Scroll sideways to compare the full month-one table.</p>
           </div>
 
-          <details class="secondary-actions">
-            <summary>Share, export, or copy results</summary>
+          <div class="secondary-actions">
+            <h3>Share, export, or copy results</h3>
             <div class="button-row result-actions">
               <button type="button" class="secondary" id="printButton">Print / Save as PDF</button>
               <button type="button" class="secondary" id="copyLinkButton" disabled aria-describedby="copyActionsHelp">Copy share link</button>
@@ -2716,7 +2704,7 @@
             </div>
             <p id="copyActionsHelp" class="copy-helper">Share and copy controls activate after valid results are shown.</p>
             <p id="sampleShareNote" class="copy-helper hidden">Sample results are shown. Replace sample cards before sharing a real payoff plan.</p>
-          </details>
+          </div>
 
         </div>
       </section>
@@ -2766,35 +2754,40 @@
       </div>
     </section>
 
-    <details class="panel schedule-panel" id="schedulePanel">
-      <summary class="schedule-summary"><h2>Month-by-Month Schedule</h2><span id="scheduleNote">First 24 months shown by default.</span></summary>
-      <div class="schedule-body">
-      <div class="schedule-head">
+    <section class="panel schedule-panel" id="schedulePanel">
+      <div class="section-head">
         <div>
-          <p>Detailed payment, interest, principal, and ending balance by month.</p>
+          <h2>Month-by-Month Schedule</h2>
+          <span id="scheduleNote" class="schedule-note">First 12 months shown by default.</span>
         </div>
-        <button type="button" class="secondary" id="toggleSchedule">Show All</button>
       </div>
-      <div class="table-scroll">
-        <table class="schedule-table">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th>Date</th>
-              <th>Payment</th>
-              <th>Interest</th>
-              <th>Principal</th>
-              <th>Ending Balance</th>
-              <th>Extra Target</th>
-            </tr>
-          </thead>
-          <tbody id="scheduleRows"></tbody>
-        </table>
+      <div class="schedule-body">
+        <div class="schedule-head">
+          <div>
+            <p>Detailed payment, interest, principal, and ending balance by month.</p>
+          </div>
+          <button type="button" class="secondary" id="toggleSchedule">Show All</button>
+        </div>
+        <div class="table-scroll">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Date</th>
+                <th>Payment</th>
+                <th>Interest</th>
+                <th>Principal</th>
+                <th>Ending Balance</th>
+                <th>Extra Target</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleRows"></tbody>
+          </table>
+        </div>
+        <p class="scroll-hint">Scroll sideways to view the full schedule.</p>
+        <p id="scheduleLoading" class="hint hidden" aria-live="polite">Loading...</p>
       </div>
-      <p class="scroll-hint">Scroll sideways to view the full schedule.</p>
-      <p id="scheduleLoading" class="hint hidden" aria-live="polite">Loading...</p>
-      </div>
-    </details>
+    </section>
 
     <section class="content-grid">
       <div class="panel content-section">
@@ -4702,7 +4695,8 @@
 
       function renderSchedule(result) {
         var generation = ++scheduleRenderGeneration;
-        var maxDisplayRows = showAllSchedule ? Math.min(result.timeline.length, 240) : Math.min(result.timeline.length, 24);
+        var initialScheduleMonths = 12;
+        var maxDisplayRows = showAllSchedule ? Math.min(result.timeline.length, 240) : Math.min(result.timeline.length, initialScheduleMonths);
         var rows = result.timeline.slice(0, maxDisplayRows);
 
         function scheduleRowHtml(row) {
@@ -4725,14 +4719,14 @@
           return note;
         }
 
-        if (result.timeline.length > 24) {
+        if (result.timeline.length > initialScheduleMonths) {
           toggleSchedule.classList.remove("hidden");
-          toggleSchedule.textContent = showAllSchedule ? "Show First 24" : "Show All";
+          toggleSchedule.textContent = showAllSchedule ? "Show First 12" : "Show All";
         } else {
           toggleSchedule.classList.add("hidden");
         }
 
-        if (!showAllSchedule || rows.length <= 24) {
+        if (!showAllSchedule || rows.length <= initialScheduleMonths) {
           scheduleRows.innerHTML = rows.map(scheduleRowHtml).join("");
           scheduleNote.textContent = scheduleStatus(rows.length);
           scheduleLoading.classList.add("hidden");
