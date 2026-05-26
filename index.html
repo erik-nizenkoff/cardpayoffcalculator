@@ -2462,6 +2462,12 @@
             <p id="paymentInputHint" class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
+          <div class="field-stack">
+            <label for="startMonth">Start Month</label>
+            <input id="startMonth" aria-label="Start month" type="month">
+            <p class="hint">Defaults to this month.</p>
+          </div>
+
         </div>
 
         <details id="targetDateOptions" class="advanced-options">
@@ -2475,16 +2481,6 @@
             <div id="targetInlineResult" class="target-inline-card hidden" aria-live="polite"></div>
           </div>
         </details>
-
-        <div id="advancedOptions" class="advanced-options">
-          <div class="settings-grid">
-            <div class="field-stack">
-              <label for="startMonth">Start Month</label>
-              <input id="startMonth" aria-label="Start month" type="month">
-              <p class="hint">Defaults to this month.</p>
-            </div>
-          </div>
-        </div>
 
         <div id="customOrderPanel" class="custom-order-panel hidden">
           <h3>Custom Payoff Order</h3>
