@@ -310,15 +310,37 @@
       table-layout: fixed;
     }
 
+    .loan-section .table-scroll {
+      overflow-x: visible;
+    }
+
+    .loan-table {
+      min-width: 0;
+      table-layout: fixed;
+    }
+
     .card-table th:nth-child(1) { width: 30%; }
     .card-table th:nth-child(2) { width: 17%; }
     .card-table th:nth-child(3) { width: 24%; }
     .card-table th:nth-child(4) { width: 22%; }
     .card-table th:nth-child(5) { width: 7%; }
 
+    .loan-table th:nth-child(1) { width: 22%; }
+    .loan-table th:nth-child(2) { width: 16%; }
+    .loan-table th:nth-child(3) { width: 15%; }
+    .loan-table th:nth-child(4) { width: 20%; }
+    .loan-table th:nth-child(5) { width: 20%; }
+    .loan-table th:nth-child(6) { width: 7%; }
+
     .card-table th,
     .card-table td {
       padding: 8px 7px;
+    }
+
+    .loan-table th,
+    .loan-table td {
+      padding: 8px 6px;
+      overflow-wrap: anywhere;
     }
 
     .card-table td {
@@ -355,6 +377,12 @@
     }
 
     .card-table input {
+      min-height: 36px;
+      padding: 6px 7px;
+    }
+
+    .loan-table input {
+      min-width: 0;
       min-height: 36px;
       padding: 6px 7px;
     }
