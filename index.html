@@ -4347,55 +4347,58 @@
 
       function readPayoffOptionScenarios(averageApr, cardTotal) {
         if (!optionScenarioList) return [];
-        var balanceTransfers = [];
-        var consolidationLoans = [];
+        var entries = [];
+        var balanceTransferCount = 0;
         var consolidationCount = 0;
         Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset")).forEach(function (scenario) {
           var type = scenario.dataset.optionType;
           if (type === "balance-transfer") {
-            balanceTransfers.push({
+            balanceTransferCount += 1;
+            var introApr = optionNumberValue(getOptionField(scenario, "introApr"), 0, 0, MAX_APR);
+            entries.push({
               type: type,
-              name: "Balance transfer " + (balanceTransfers.length + 1),
+              name: "Balance transfer " + balanceTransferCount,
               amount: optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal),
               feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
-              introApr: optionNumberValue(getOptionField(scenario, "introApr"), 0, 0, MAX_APR),
+              introApr: introApr,
               introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
-              postApr: optionNumberValue(getOptionField(scenario, "postApr"), averageApr, 0, MAX_APR)
+              postApr: optionNumberValue(getOptionField(scenario, "postApr"), averageApr, 0, MAX_APR),
+              sortRate: introApr
             });
             return;
           }
           consolidationCount += 1;
-          consolidationLoans.push({
+          var apr = optionNumberValue(getOptionField(scenario, "apr"), 12.99, 0, MAX_APR);
+          entries.push({
             type: "consolidation-loan",
             name: "Consolidation loan" + (consolidationCount > 1 ? " " + consolidationCount : ""),
             amount: optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal),
-            apr: optionNumberValue(getOptionField(scenario, "apr"), 12.99, 0, MAX_APR),
+            apr: apr,
             term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
-            feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20)
+            feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
+            sortRate: apr
           });
         });
-        var scenarios = [];
-        if (balanceTransfers.length) {
-          scenarios.push({
-            type: "balance-transfer",
-            name: balanceTransfers.length > 1 ? "Combined balance transfers" : "Balance transfer",
-            amount: Math.min(cardTotal, roundCents(balanceTransfers.reduce(function (total, entry) {
-              return total + entry.amount;
-            }, 0))),
-            entries: balanceTransfers
-          });
-        }
-        if (consolidationLoans.length) {
-          scenarios.push({
-            type: "consolidation-loan",
-            name: consolidationLoans.length > 1 ? "Combined consolidation loans" : "Consolidation loan",
-            amount: Math.min(cardTotal, roundCents(consolidationLoans.reduce(function (total, entry) {
-              return total + entry.amount;
-            }, 0))),
-            entries: consolidationLoans
-          });
-        }
-        return scenarios;
+        if (!entries.length) return [];
+        var totalAvailable = roundCents(entries.reduce(function (total, entry) {
+          return total + entry.amount;
+        }, 0));
+        entries.sort(function (a, b) {
+          return a.sortRate - b.sortRate || a.feeRate - b.feeRate || a.amount - b.amount;
+        });
+        var hasBalanceTransfers = entries.some(function (entry) { return entry.type === "balance-transfer"; });
+        var hasConsolidationLoans = entries.some(function (entry) { return entry.type === "consolidation-loan"; });
+        var scenarioName = hasBalanceTransfers && hasConsolidationLoans
+          ? "Combined balance transfer and loan offers"
+          : hasBalanceTransfers ? "Combined balance transfers" : "Combined consolidation loans";
+        return [{
+          type: "combined-new-credit",
+          name: scenarioName,
+          amount: Math.min(cardTotal, totalAvailable),
+          totalAvailable: totalAvailable,
+          extraAvailable: Math.max(0, roundCents(totalAvailable - cardTotal)),
+          entries: entries
+        }];
       }
 
       function renderPayoffOptionRow(row, bestCost) {
@@ -4416,6 +4419,8 @@
           risk = "Approval and transfer limit are not guaranteed. Fees, lower approved limits, post-promo APR, missed payments, or new purchases can make the modeled cost worse.";
         } else if (row.type === "consolidation-loan") {
           risk = "Approval, APR, amount, fees, and term are not guaranteed. A longer term can reduce monthly pressure while keeping debt around longer.";
+        } else if (row.type === "combined-new-credit") {
+          risk = "Approval, transfer limits, loan amounts, APRs, fees, and terms are not guaranteed. New purchases or missed payments can make debt worse.";
         } else {
           risk = "Current-plan baseline assumes no new credit product and no new charges.";
         }
@@ -4476,80 +4481,60 @@
             return;
           }
 
-          if (scenario.type === "balance-transfer") {
-            var amountLeft = refinanced.amount;
-            var btFee = 0;
-            var btTerms = [];
-            var btCards = (scenario.entries || []).map(function (entry, entryIndex) {
-              if (amountLeft <= EPSILON) return null;
-              var entryAmount = Math.min(entry.amount, amountLeft);
-              amountLeft = roundCents(amountLeft - entryAmount);
-              if (entryAmount <= EPSILON) return null;
-              var entryFee = roundCents(entryAmount * entry.feeRate / 100);
-              btFee = roundCents(btFee + entryFee);
-              btTerms.push(money(entryAmount) + " at " + formatPercent(entry.feeRate) + "% fee, " + formatPercent(entry.introApr) + "% intro APR for " + entry.introMonths + " months, then " + formatPercent(entry.postApr) + "% APR");
-              return {
+          var amountLeft = refinanced.amount;
+          var optionFees = 0;
+          var optionTerms = [];
+          var btCards = [];
+          var optionLoans = [];
+          var earliestPromoEnd = null;
+          (scenario.entries || []).forEach(function (entry, entryIndex) {
+            if (amountLeft <= EPSILON) return;
+            var entryAmount = Math.min(entry.amount, amountLeft);
+            amountLeft = roundCents(amountLeft - entryAmount);
+            if (entryAmount <= EPSILON) return;
+            var entryFee = roundCents(entryAmount * entry.feeRate / 100);
+            optionFees = roundCents(optionFees + entryFee);
+            if (entry.type === "balance-transfer") {
+              btCards.push({
                 id: "option-balance-transfer-" + index + "-" + entryIndex,
-                name: (scenario.entries.length > 1 ? entry.name : scenario.name) + " card",
+                name: entry.name + " card",
                 balance: roundCents(entryAmount + entryFee),
                 apr: entry.postApr,
                 minimum: 25,
                 introApr: entry.introApr,
                 introMonths: entry.introMonths
-              };
-            }).filter(Boolean);
-            var btResult = simulateWithMonthlyBudget(refinanced.remainingCards.concat(btCards), loans, currentMonthlyBudget);
-            var earliestPromoEnd = btCards.length ? Math.min.apply(null, btCards.map(function (card) { return card.introMonths; })) : 0;
-            rows.push({
-              type: scenario.type,
-              name: scenario.name,
-              amount: refinanced.amount,
-              result: btResult,
-              totalCost: roundCents(btResult.totalInterest + btFee),
-              currentCost: currentCost,
-              assumptions: "Combines " + btCards.length + " balance transfer " + (btCards.length === 1 ? "offer" : "offers") + ": " + btTerms.join("; ") + ".",
-              watchout: btResult.months > earliestPromoEnd
-                ? "At least one promo can expire before payoff; post-promo APR may apply."
-                : "Paid before the earliest promo expires in this model."
-            });
-            return;
-          }
-
-          var loanAmountLeft = refinanced.amount;
-          var loanFee = 0;
-          var loanTerms = [];
-          var optionLoans = (scenario.entries || []).map(function (entry, entryIndex) {
-            if (loanAmountLeft <= EPSILON) return null;
-            var entryAmount = Math.min(entry.amount, loanAmountLeft);
-            loanAmountLeft = roundCents(loanAmountLeft - entryAmount);
-            if (entryAmount <= EPSILON) return null;
-            var entryFee = roundCents(entryAmount * entry.feeRate / 100);
-            loanFee = roundCents(loanFee + entryFee);
+              });
+              earliestPromoEnd = earliestPromoEnd == null ? entry.introMonths : Math.min(earliestPromoEnd, entry.introMonths);
+              optionTerms.push(entry.name + ": " + money(entryAmount) + " at " + formatPercent(entry.feeRate) + "% fee, " + formatPercent(entry.introApr) + "% intro APR for " + entry.introMonths + " months, then " + formatPercent(entry.postApr) + "% APR");
+              return;
+            }
             var entryBalance = roundCents(entryAmount + entryFee);
-            var entryPayment = loanPaymentForTerm(entryBalance, entry.apr, entry.term);
-            loanTerms.push(money(entryAmount) + " at " + formatPercent(entry.apr) + "% APR for " + entry.term + " months with " + formatPercent(entry.feeRate) + "% fee");
-            return {
+            optionLoans.push({
               id: "option-consolidation-loan-" + index + "-" + entryIndex,
-              name: scenario.entries.length > 1 ? entry.name : scenario.name,
+              name: entry.name,
               balance: entryBalance,
               rate: entry.apr,
-              payment: entryPayment,
+              payment: loanPaymentForTerm(entryBalance, entry.apr, entry.term),
               term: entry.term
-            };
-          }).filter(Boolean);
-          var consolidationLoans = (loans || []).concat(optionLoans);
-          var consolidationResult = simulateWithMonthlyBudget(refinanced.remainingCards, consolidationLoans, currentMonthlyBudget);
+            });
+            optionTerms.push(entry.name + ": " + money(entryAmount) + " at " + formatPercent(entry.apr) + "% APR for " + entry.term + " months with " + formatPercent(entry.feeRate) + "% fee");
+          });
+          var combinedResult = simulateWithMonthlyBudget(refinanced.remainingCards.concat(btCards), (loans || []).concat(optionLoans), currentMonthlyBudget);
+          var unusedText = scenario.extraAvailable > EPSILON
+            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so lower-interest offers were applied first."
+            : "";
+          var promoText = earliestPromoEnd != null && combinedResult.months > earliestPromoEnd
+            ? " At least one balance-transfer promo can expire before payoff; post-promo APR may apply."
+            : "";
           rows.push({
             type: scenario.type,
             name: scenario.name,
             amount: refinanced.amount,
-            result: consolidationResult,
-            totalCost: roundCents(consolidationResult.totalInterest + loanFee),
+            result: combinedResult,
+            totalCost: roundCents(combinedResult.totalInterest + optionFees),
             currentCost: currentCost,
-            assumptions: "Combines " + optionLoans.length + " consolidation loan " + (optionLoans.length === 1 ? "offer" : "offers") + ": " + loanTerms.join("; ") + ".",
-            watchout: consolidationResult.monthlyPayment > currentMonthlyBudget + EPSILON
-              ? "Required payment is higher than current plan."
-              : "Fixed term; compare fees and APR before applying."
+            assumptions: "Applies offers by lowest entered APR first: " + optionTerms.join("; ") + ".",
+            watchout: (combinedResult.monthlyPayment > currentMonthlyBudget + EPSILON ? "Required payment is higher than current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
           });
         });
 
@@ -4559,7 +4544,7 @@
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
         payoffOptionNote.textContent = scenarios.length
-          ? "Default amounts use the full current credit card balance. Partial amounts apply to highest-APR card balances first. Existing installment loans stay in the plan. Fees are counted in Interest + Fees. Treat the lowest modeled cost as a planning comparison, not a product recommendation."
+          ? "Default amounts use the full current credit card balance. Offers are applied by lowest entered APR first when available transfer/loan capacity exceeds current card balances. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
@@ -5278,6 +5263,7 @@
             amount: scenario.amount,
             entries: (scenario.entries || []).map(function (entry) {
               return {
+                type: entry.type,
                 amount: entry.amount,
                 feeRate: entry.feeRate,
                 introApr: entry.introApr,
@@ -5372,8 +5358,12 @@
           }).filter(function (a) { return a > 0; });
           var avgApr = allAprs.length ? Math.round((allAprs.reduce(function (s, a) { return s + a; }, 0) / allAprs.length) * 100) / 100 : 0;
           var payoffOptionData = trackingPayoffOptions(cards);
-          var balanceTransferOptionCount = payoffOptionData.filter(function (option) { return option.type === "balance-transfer"; }).length;
-          var consolidationLoanOptionCount = payoffOptionData.filter(function (option) { return option.type === "consolidation-loan"; }).length;
+          var balanceTransferOptionCount = payoffOptionData.reduce(function (count, option) {
+            return count + (option.entries || []).filter(function (entry) { return entry.type === "balance-transfer"; }).length;
+          }, 0);
+          var consolidationLoanOptionCount = payoffOptionData.reduce(function (count, option) {
+            return count + (option.entries || []).filter(function (entry) { return entry.type === "consolidation-loan"; }).length;
+          }, 0);
 
           var payload = {
             uid: uid,
