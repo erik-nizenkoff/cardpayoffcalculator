@@ -1102,7 +1102,6 @@
       margin-top: 24px;
     }
 
-    .loan-section summary,
     .advanced-options summary,
     .comparison-section summary {
       cursor: pointer;
@@ -1110,20 +1109,11 @@
       font-weight: 900;
     }
 
-    .loan-section summary {
-      font-size: .92rem;
-      color: var(--muted);
-    }
-
     .advanced-options h3 {
       margin: 0;
       color: var(--ink);
       font-size: .95rem;
       font-weight: 900;
-    }
-
-    .loan-section[open] summary {
-      color: var(--ink);
     }
 
     .advanced-options .settings-grid {
@@ -2414,11 +2404,10 @@
           <span id="rowLimitNote" class="hint">Use the minimum shown on your latest statement. Up to 20 cards; $0 balances are ignored.</span>
         </div>
 
-        <details id="loanSection" class="loan-section">
-          <summary>Installment loans (optional)</summary>
+        <div id="loanSection" class="loan-section" aria-labelledby="loanSectionHeading">
           <div class="subsection-head">
             <div>
-              <h2>Installment loans (optional)</h2>
+              <h2 id="loanSectionHeading">Installment loans (optional)</h2>
               <p>Add fixed-payment debts such as personal, auto, or student loans.</p>
             </div>
             <button type="button" class="secondary" id="addLoanButton">Add Loan</button>
@@ -2439,7 +2428,7 @@
               <tbody id="loanRows"></tbody>
             </table>
           </div>
-        </details>
+        </div>
 
         <div class="settings-grid" aria-label="Payoff settings">
           <div class="field-stack">
