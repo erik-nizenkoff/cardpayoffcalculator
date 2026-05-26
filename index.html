@@ -3196,6 +3196,7 @@
           updateMobileSummary(lastResult);
           updateMobilePayoffJump(true, "View payoff plan");
         }
+        if (lastResult) drawCharts(lastResult);
       }
 
       function confirmSampleData() {
@@ -4274,6 +4275,25 @@
         ctx.fill();
       }
 
+      function drawSampleChartWatermark(ctx, W, H, pad) {
+        if (!isSampleMode) return;
+        var centerX = pad.left + (W - pad.left - pad.right) / 2;
+        var centerY = pad.top + (H - pad.top - pad.bottom) / 2;
+        var fontSize = Math.max(34, Math.min(72, (W - pad.left - pad.right) / 8.5));
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(-Math.PI / 9);
+        ctx.font = "900 " + fontSize + "px Inter, system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(15, 36, 68, 0.13)";
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
+        ctx.lineWidth = Math.max(3, fontSize / 14);
+        ctx.strokeText("Sample Data", 0, 0);
+        ctx.fillText("Sample Data", 0, 0);
+        ctx.restore();
+      }
+
       function drawComboChart(result) {
         if (!comboCanvas || !comboCanvas.getContext) return;
         if (!result || !result.timeline || result.timeline.length === 0) return;
@@ -4284,6 +4304,7 @@
           (result.timeline[0] ? result.timeline[0].endingBalance : "") + "|" +
           midBal + "|" +
           (result.timeline[result.timeline.length - 1] ? result.timeline[result.timeline.length - 1].endingBalance : "") + "|" +
+          (isSampleMode ? "sample" : "real") + "|" +
           currentWidth;
         if (sig === comboCanvas._lastSig) {
           return;
@@ -4401,6 +4422,8 @@
         ctx.lineJoin = "round";
         ctx.setLineDash([]);
         ctx.stroke();
+
+        drawSampleChartWatermark(ctx, W, H, pad);
 
         ctx.restore();
 
