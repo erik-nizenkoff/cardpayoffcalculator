@@ -604,6 +604,18 @@
       transform: none;
     }
 
+    .plan-mode-status {
+      margin: 8px 0 0;
+      border: 1px solid #bfe7cf;
+      border-radius: 7px;
+      background: #f1fbf5;
+      color: #22543d;
+      padding: 8px 10px;
+      font-size: .82rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
     .hint {
       margin: 5px 0 0;
       color: var(--muted);
@@ -698,6 +710,21 @@
       color: var(--ink);
       padding: 8px 10px;
       transition: border-color 0.15s;
+    }
+
+    .field-error {
+      display: block;
+      margin-top: 5px;
+      color: var(--red);
+      font-size: .74rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    input[aria-invalid="true"],
+    select[aria-invalid="true"] {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(178, 59, 59, .12);
     }
 
     .notice {
@@ -906,6 +933,13 @@
       line-height: 1.45;
     }
 
+    .cost-note {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
     .decision-snapshot {
       margin-top: 12px;
       border-top: 1px solid var(--line);
@@ -966,6 +1000,14 @@
       color: #173d70;
       font-size: .88rem;
       line-height: 1.5;
+    }
+
+    .current-plan-summary {
+      margin: 8px 0 0;
+      color: #dbeafe;
+      font-size: .92rem;
+      font-weight: 800;
+      line-height: 1.45;
     }
 
     .first-run-hint {
@@ -1167,6 +1209,23 @@
       line-height: 1.45;
     }
 
+    .assumptions-list {
+      display: flex;
+      gap: 6px 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .assumptions-list span {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 4px 8px;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 800;
+    }
+
     .target-card,
     .savings-card {
       margin-top: 12px;
@@ -1285,12 +1344,10 @@
     .option-badge {
       display: inline-flex;
       margin-bottom: 7px;
-      border-radius: 999px;
-      background: #e8f2ff;
-      color: #173d70;
-      padding: 4px 8px;
+      color: var(--muted);
       font-size: .72rem;
-      font-weight: 900;
+      font-weight: 800;
+      line-height: 1.35;
     }
 
     .option-card h4 {
@@ -1385,6 +1442,17 @@
       padding: 7px 9px;
       font-size: .82rem;
       box-shadow: 0 8px 24px rgba(15, 36, 68, .14);
+    }
+
+    .chart-takeaway {
+      margin: 10px 0 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--soft);
+      padding: 9px 10px;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.45;
     }
 
     .chart-legend {
@@ -1867,6 +1935,11 @@
         font-weight: 800;
       }
 
+      .mobile-card-row.just-updated .card-summary-line {
+        border-color: #bfe7cf;
+        background: #f1fbf5;
+      }
+
       .card-row-toggle {
         display: none;
         align-items: center;
@@ -2251,6 +2324,7 @@
             <button type="button" class="secondary quiet-button" id="keepSampleButton">Keep viewing sample</button>
           </div>
         </div>
+        <div id="planModeStatus" class="plan-mode-status hidden" aria-live="polite"></div>
         <a id="mobilePayoffJump" class="mobile-payoff-jump hidden" href="#resultsPanel">View sample payoff plan</a>
 
         <div class="table-scroll">
@@ -2267,7 +2341,7 @@
             <tbody id="cardRows"></tbody>
           </table>
         </div>
-        <p class="field-helper">Use nicknames only - account names are not needed. Enter balances and current minimums in dollars. APR and promo APR fields are annual percentages.</p>
+        <p class="field-helper">Examples: balance 8,500, APR 22.99, minimum 170. Use nicknames only - account names are not needed. No % sign needed for APR fields.</p>
 
         <div class="button-row">
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
@@ -2316,6 +2390,7 @@
           <div class="field-stack">
             <label for="extraPayment">Extra Monthly Payment ($)</label>
             <input id="extraPayment" aria-label="Extra monthly payment" type="number" inputmode="decimal" min="0" step="25" value="250">
+            <span class="field-error hidden" data-error-for="extraPayment"></span>
             <p class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
@@ -2374,6 +2449,7 @@
             <span class="hero-label">Debt-Free Date</span>
             <strong id="payoffDate" class="hero-date">-</strong>
             <p id="payoffSuggestion" class="payoff-suggestion hidden">Increase your extra payment to find a payoff path.</p>
+            <p id="currentPlanSummary" class="current-plan-summary hidden"></p>
             <div class="hero-interest">
               <span class="hero-label">Total Interest</span>
               <strong id="totalInterest">$0</strong>
@@ -2414,6 +2490,7 @@
               <div class="metric"><span>Total Paid</span><strong id="totalPaid">$0</strong></div>
             </div>
             <p class="minimum-note">Estimated minimums use the greater of your entered minimum, $25, or 1% of balance plus monthly interest.</p>
+            <p class="cost-note">Total paid includes the starting balances plus estimated interest; total interest is the financing cost inside that total.</p>
 
             <div id="targetResult" class="target-card hidden"></div>
             <div id="savingsResult" class="savings-card hidden"></div>
@@ -2464,7 +2541,14 @@
             <p id="payoffOptionNote" class="option-note"></p>
           </div>
         </div>
-        <div class="assumptions-note">Estimates assume fixed APR, no new charges, and payments made on the same day each month. Actual payoff may vary based on issuer minimum rules, fees, and payment timing.</div>
+        <div class="assumptions-note">Estimates assume fixed APR, no new charges, and payments made on the same day each month. Actual payoff may vary based on issuer minimum rules, fees, and payment timing.
+          <div class="assumptions-list" aria-label="Calculation assumptions">
+            <span>No new purchases</span>
+            <span>APR unchanged</span>
+            <span>Minimum rules estimated</span>
+            <span>Payments monthly</span>
+          </div>
+        </div>
       </section>
     </section>
 
@@ -2481,6 +2565,7 @@
         <p id="comboChartDescription" class="sr-only">The chart visualizes each debt balance over time as stacked bars and overlays the total remaining balance as a line. The detailed payoff schedule below provides the same information in table form.</p>
         <div id="comboTooltip" class="chart-tooltip hidden"></div>
       </div>
+      <p id="chartTakeaway" class="chart-takeaway hidden"></p>
       <div id="chartLegend" class="chart-legend" style="margin-top:10px"></div>
     </section>
 
@@ -2721,6 +2806,7 @@
       var totalMinimumsEl = document.getElementById("totalMinimums");
       var payoffDateEl = document.getElementById("payoffDate");
       var payoffSuggestion = document.getElementById("payoffSuggestion");
+      var currentPlanSummary = document.getElementById("currentPlanSummary");
       var payoffMonthsEl = document.getElementById("payoffMonths");
       var totalInterestEl = document.getElementById("totalInterest");
       var monthlyPaymentEl = document.getElementById("monthlyPayment");
@@ -2748,6 +2834,7 @@
       var scheduleLoading = document.getElementById("scheduleLoading");
       var firstRunHint = document.getElementById("firstRunHint");
       var sampleDataBanner = document.getElementById("sampleDataBanner");
+      var planModeStatus = document.getElementById("planModeStatus");
       var enterCardsButton = document.getElementById("enterCardsButton");
       var resultEnterCardsButton = document.getElementById("resultEnterCardsButton");
       var sampleEnterCardsButton = document.getElementById("sampleEnterCardsButton");
@@ -2773,12 +2860,12 @@
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
         clearAllButton, loadExampleButton, formError, methodInput, extraInput, startInput,
         targetInput, telemetryOptOut, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
-        payoffDateEl, payoffSuggestion, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
+        payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
-        scheduleLoading, firstRunHint, sampleDataBanner, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
+        scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
         mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump
       ];
@@ -2946,6 +3033,47 @@
         if (input) input.setAttribute("aria-label", label);
       }
 
+      function fieldErrorId(row, field) {
+        return (row.dataset.id || "row") + "-" + field + "-error";
+      }
+
+      function clearFieldErrors() {
+        document.querySelectorAll("[aria-invalid='true']").forEach(function (input) {
+          input.removeAttribute("aria-invalid");
+          input.removeAttribute("aria-describedby");
+        });
+        document.querySelectorAll(".field-error").forEach(function (error) {
+          error.textContent = "";
+          error.classList.add("hidden");
+        });
+      }
+
+      function setFieldError(row, field, message) {
+        if (!row) return;
+        var input = row.querySelector('[data-field="' + field + '"]');
+        var error = row.querySelector('[data-error-for="' + field + '"]');
+        if (!input || !error) return;
+        var id = fieldErrorId(row, field);
+        error.id = id;
+        error.textContent = message;
+        error.classList.remove("hidden");
+        input.setAttribute("aria-invalid", "true");
+        input.setAttribute("aria-describedby", id);
+      }
+
+      function setControlError(input, field, message) {
+        if (!input) return;
+        var parent = input.closest(".field-stack") || input.parentElement;
+        var error = parent ? parent.querySelector('[data-error-for="' + field + '"]') : null;
+        if (!error) return;
+        var id = input.id ? input.id + "-error" : field + "-error";
+        error.id = id;
+        error.textContent = message;
+        error.classList.remove("hidden");
+        input.setAttribute("aria-invalid", "true");
+        input.setAttribute("aria-describedby", id);
+      }
+
       function updateCardSummary(row) {
         var name = getField(row, "name") || "Card";
         var balance = Number(getField(row, "balance"));
@@ -2986,11 +3114,11 @@
         tr.innerHTML =
           '<td class="card-summary-cell" colspan="5"><button type="button" class="card-summary-line" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false"><span class="card-summary-text"></span><span class="row-expand-hint">Tap to edit</span><span class="row-chevron">›</span></button></td>' +
           '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
-          '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="24.99"><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">Add promo APR</button>' +
-          '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"></label>' +
-          '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"></label></div></td>' +
-          '<td class="amount-cell minimum-cell card-row-detail" data-label="Statement Minimum ($)"><input data-field="minimum" aria-label="Current statement minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="75"></td>' +
+          '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="8,500"><span class="field-error hidden" data-error-for="balance"></span></td>' +
+          '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR, no percent sign needed" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="22.99"><span class="field-error hidden" data-error-for="apr"></span><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">Add promo APR</button>' +
+          '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR, no percent sign needed" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"><span class="field-error hidden" data-error-for="introApr"></span></label>' +
+          '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"><span class="field-error hidden" data-error-for="introMonths"></span></label></div></td>' +
+          '<td class="amount-cell minimum-cell card-row-detail" data-label="Statement Minimum ($)"><input data-field="minimum" aria-label="Current statement minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="170"><span class="field-error hidden" data-error-for="minimum"></span></td>' +
           '<td class="remove-cell card-row-detail" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
@@ -3035,10 +3163,10 @@
         tr.dataset.id = id;
         tr.innerHTML =
           '<td class="name-cell" data-label="Loan Name"><input data-field="name" aria-label="Loan name" value="' + escapeHtml(data.name || "") + '" placeholder="Auto Loan"></td>' +
-          '<td class="amount-cell" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="0"></td>' +
-          '<td class="amount-cell" data-label="Interest Rate (%)"><input data-field="rate" aria-label="Interest rate" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.rate != null ? data.rate : "") + '" placeholder="6.5"></td>' +
-          '<td class="amount-cell" data-label="Fixed Monthly Payment ($)"><input data-field="payment" aria-label="Fixed monthly payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.payment != null ? data.payment : "") + '" placeholder="300"></td>' +
-          '<td class="amount-cell" data-label="Remaining Term (months, optional)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48 (optional)"></td>' +
+          '<td class="amount-cell" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="12,000"><span class="field-error hidden" data-error-for="balance"></span></td>' +
+          '<td class="amount-cell" data-label="Interest Rate (%)"><input data-field="rate" aria-label="Interest rate, no percent sign needed" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.rate != null ? data.rate : "") + '" placeholder="6.5"><span class="field-error hidden" data-error-for="rate"></span></td>' +
+          '<td class="amount-cell" data-label="Fixed Monthly Payment ($)"><input data-field="payment" aria-label="Fixed monthly payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.payment != null ? data.payment : "") + '" placeholder="300"><span class="field-error hidden" data-error-for="payment"></span></td>' +
+          '<td class="amount-cell" data-label="Remaining Term (months, optional)"><input data-field="term" aria-label="Remaining term in months" type="number" min="1" step="1" inputmode="numeric" value="' + (data.term != null ? data.term : "") + '" placeholder="48 (optional)"><span class="field-error hidden" data-error-for="term"></span></td>' +
           '<td class="remove-cell" data-label=""><button type="button" class="icon-button danger" data-action="remove-loan" aria-label="Remove loan" title="Remove loan">×</button></td>';
         loanRows.appendChild(tr);
         tr.addEventListener("input", function () {
@@ -3065,6 +3193,7 @@
           });
           var loan = {
             id: row.dataset.id,
+            _row: row,
             name: nameVal || "Loan " + (index + 1),
             balance: balanceVal === "" ? NaN : Number(balanceVal),
             rate: rateVal === "" ? NaN : Number(rateVal),
@@ -3101,6 +3230,7 @@
           });
           return {
             id: row.dataset.id,
+            _row: row,
             name: nameVal || "Card " + (index + 1),
             balance: balanceVal === "" ? NaN : Number(balanceVal),
             apr: aprVal === "" ? NaN : Number(aprVal),
@@ -3148,6 +3278,10 @@
         scheduleLoading.classList.add("hidden");
         methodRecommendation.classList.add("hidden");
         methodRecommendation.textContent = "";
+        if (currentPlanSummary) {
+          currentPlanSummary.classList.add("hidden");
+          currentPlanSummary.textContent = "";
+        }
         renderCriticalWarnings([]);
         renderWarnings([]);
         clearCharts();
@@ -3202,6 +3336,30 @@
       function confirmSampleData() {
         dismissFirstRunHint();
         setSampleMode(true);
+      }
+
+      function setPlanModeStatus(message) {
+        if (!planModeStatus) return;
+        planModeStatus.textContent = message || "";
+        planModeStatus.classList.toggle("hidden", !message);
+      }
+
+      function markRowUpdated(row) {
+        if (!row) return;
+        row.classList.add("just-updated");
+        var hint = row.querySelector(".row-expand-hint");
+        if (hint) hint.textContent = "Updated";
+        setTimeout(function () {
+          row.classList.remove("just-updated");
+          updateCardSummary(row);
+        }, 1100);
+      }
+
+      function exitSampleForOwnPlan(row) {
+        if (!isSampleMode) return;
+        setSampleMode(false);
+        setPlanModeStatus("You're now editing your own plan. Results will update from the values you enter.");
+        markRowUpdated(row);
       }
 
       function setCopySummaryStatus(message) {
@@ -3309,12 +3467,27 @@
         if (!cards.length && !(loans || []).length) return "Enter at least one credit card or loan.";
         for (var i = 0; i < cards.length; i += 1) {
           var card = cards[i];
-          if (!Number.isFinite(card.balance) || card.balance <= 0) return card.name + ": enter a balance above $0.";
-          if (!Number.isFinite(card.apr) || card.apr < 0 || card.apr > MAX_APR) return card.name + ": enter an APR from 0% to 79.99%.";
-          if (!Number.isFinite(card.minimum) || card.minimum <= 0) return card.name + ": enter a minimum payment above $0.";
+          if (!Number.isFinite(card.balance) || card.balance <= 0) {
+            setFieldError(card._row, "balance", "Enter a balance above $0.");
+            return card.name + ": enter a balance above $0.";
+          }
+          if (!Number.isFinite(card.apr) || card.apr < 0 || card.apr > MAX_APR) {
+            setFieldError(card._row, "apr", "Enter an APR from 0 to 79.99. No % sign needed.");
+            return card.name + ": enter an APR from 0% to 79.99%.";
+          }
+          if (!Number.isFinite(card.minimum) || card.minimum <= 0) {
+            setFieldError(card._row, "minimum", "Enter the statement minimum above $0.");
+            return card.name + ": enter a minimum payment above $0.";
+          }
           if (card.introApr !== null || card.introMonths !== null) {
-            if (!Number.isFinite(card.introApr) || card.introApr < 0 || card.introApr > MAX_APR) return card.name + ": enter an intro APR from 0% to 79.99%.";
-            if (!Number.isInteger(card.introMonths) || card.introMonths < MIN_INTRO_MONTHS || card.introMonths > MAX_INTRO_MONTHS) return card.name + ": enter intro months from 1 to 120.";
+            if (!Number.isFinite(card.introApr) || card.introApr < 0 || card.introApr > MAX_APR) {
+              setFieldError(card._row, "introApr", "Enter an intro APR from 0 to 79.99.");
+              return card.name + ": enter an intro APR from 0% to 79.99%.";
+            }
+            if (!Number.isInteger(card.introMonths) || card.introMonths < MIN_INTRO_MONTHS || card.introMonths > MAX_INTRO_MONTHS) {
+              setFieldError(card._row, "introMonths", "Enter promo months from 1 to 120.");
+              return card.name + ": enter intro months from 1 to 120.";
+            }
           }
         }
         return "";
@@ -3323,10 +3496,22 @@
       function validateLoans(loans) {
         for (var i = 0; i < loans.length; i += 1) {
           var loan = loans[i];
-          if (!Number.isFinite(loan.rate) || loan.rate < 0 || loan.rate > MAX_APR) return loan.name + ": enter an interest rate from 0% to 79.99%.";
-          if (!Number.isFinite(loan.payment) || loan.payment <= 0) return loan.name + ": enter a fixed monthly payment above $0";
-          if (!Number.isFinite(loan.balance) || loan.balance <= 0) return loan.name + ": enter a balance above $0";
-          if (loan.term != null && (!Number.isFinite(loan.term) || loan.term < 1)) return loan.name + ": enter a remaining term of at least 1 month.";
+          if (!Number.isFinite(loan.rate) || loan.rate < 0 || loan.rate > MAX_APR) {
+            setFieldError(loan._row, "rate", "Enter a rate from 0 to 79.99.");
+            return loan.name + ": enter an interest rate from 0% to 79.99%.";
+          }
+          if (!Number.isFinite(loan.payment) || loan.payment <= 0) {
+            setFieldError(loan._row, "payment", "Enter a payment above $0.");
+            return loan.name + ": enter a fixed monthly payment above $0";
+          }
+          if (!Number.isFinite(loan.balance) || loan.balance <= 0) {
+            setFieldError(loan._row, "balance", "Enter a balance above $0.");
+            return loan.name + ": enter a balance above $0";
+          }
+          if (loan.term != null && (!Number.isFinite(loan.term) || loan.term < 1)) {
+            setFieldError(loan._row, "term", "Enter at least 1 month.");
+            return loan.name + ": enter a remaining term of at least 1 month.";
+          }
         }
         return "";
       }
@@ -3720,7 +3905,24 @@
           return;
         }
 
-        targetResult.innerHTML = "To be debt-free by <strong>" + escapeHtml(addMonths(startInput.value, targetMonths - 1)) + "</strong>, estimated payment needed: <strong>" + money(required.monthlyPayment) + "/mo</strong> (" + money(required.extraPayment) + " above starting minimums).";
+        var targetDate = escapeHtml(addMonths(startInput.value, targetMonths - 1));
+        if (lastResult && !lastResult.capped && lastResult.months <= targetMonths) {
+          targetResult.innerHTML = "Your current plan reaches <strong>" + targetDate + "</strong> or sooner. Estimated payment needed by that date: <strong>" + money(required.monthlyPayment) + "/mo</strong>.";
+          return;
+        }
+        var missMonths = lastResult && !lastResult.capped ? lastResult.months - targetMonths : null;
+        var missText = missMonths && missMonths > 0 ? "Your current plan misses this target by about <strong>" + duration(missMonths, false) + "</strong>. " : "";
+        targetResult.innerHTML = missText + "To be debt-free by <strong>" + targetDate + "</strong>, estimated payment needed: <strong>" + money(required.monthlyPayment) + "/mo</strong> (" + money(required.extraPayment) + " above starting minimums).";
+      }
+
+      function renderCurrentPlanSummary(result) {
+        if (!currentPlanSummary || !result || !result.timeline.length) return;
+        var firstTarget = result.timeline[0].target || "your first target";
+        var extraText = result.method === "minimum"
+          ? "With minimum-only payments"
+          : "With " + money(result.extraPayment) + " extra using " + methodLabel(result.method).toLowerCase();
+        currentPlanSummary.textContent = extraText + ", this plan targets " + firstTarget + " first.";
+        currentPlanSummary.classList.remove("hidden");
       }
 
       function renderSavings(selected, baseline, extraPayment) {
@@ -4019,7 +4221,7 @@
           risk = "Current-plan baseline assumes no new credit product and no new charges.";
         }
         return '<div class="option-card ' + (isLowest ? "modeled-lowest" : "") + '">' +
-          (isLowest ? '<span class="option-badge">Lowest modeled estimate under these assumptions</span>' : "") +
+          '<span class="option-badge">Math model only' + (isLowest ? " - lowest estimate in this comparison" : "") + '</span>' +
           "<h4>" + escapeHtml(row.name) + "</h4>" +
           (assumptions ? '<p class="option-assumptions">' + escapeHtml(assumptions) + "</p>" : "") +
           (row.amount != null ? '<div class="summary-line"><span>Amount moved</span><strong>' + money(row.amount) + "</strong></div>" : "") +
@@ -4217,6 +4419,7 @@
       var comboCanvas = document.getElementById("comboChart");
       var comboTooltip = document.getElementById("comboTooltip");
       var chartLegend = document.getElementById("chartLegend");
+      var chartTakeaway = document.getElementById("chartTakeaway");
 
       function clearCharts() {
         if (comboCanvas && comboCanvas.getContext) {
@@ -4227,6 +4430,10 @@
         }
         if (comboTooltip) comboTooltip.classList.add("hidden");
         if (chartLegend) chartLegend.innerHTML = "";
+        if (chartTakeaway) {
+          chartTakeaway.classList.add("hidden");
+          chartTakeaway.textContent = "";
+        }
       }
 
       function chartPad() { return { top: 24, right: 20, bottom: 48, left: 68 }; }
@@ -4493,6 +4700,20 @@
 
       function drawCharts(result) {
         drawComboChart(result);
+        renderChartTakeaway(result);
+      }
+
+      function renderChartTakeaway(result) {
+        if (!chartTakeaway || !result || !result.timeline || !result.timeline.length) return;
+        var firstPayoff = (result.summaries || []).filter(function (summary) {
+          return summary.payoffMonth !== null;
+        }).sort(function (a, b) {
+          return a.payoffMonth - b.payoffMonth;
+        })[0];
+        var payoffDate = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
+        var firstText = firstPayoff ? firstPayoff.name + " is first paid off around " + addMonths(startInput.value, firstPayoff.payoffMonth) : "No individual payoff appears in the modeled window";
+        chartTakeaway.textContent = "Chart takeaway: balance starts at " + money(result.startingBalance) + ", reaches " + (result.capped ? "the 50-year model limit" : "$0 by " + payoffDate) + ", and " + firstText + ".";
+        chartTakeaway.classList.remove("hidden");
       }
 
       window.addEventListener("resize", function () {
@@ -4944,6 +5165,7 @@
 
       function update(options) {
         options = options || {};
+        clearFieldErrors();
         var cards = readCards();
         var loans = readLoans();
         var onlyZeroBalances = !cards.length && !loans.length && hasOnlyZeroBalanceEntries();
@@ -4951,7 +5173,10 @@
         if (!error && !onlyZeroBalances) error = validateLoans(loans);
         var method = methodInput.value;
         var extraValue = Number(extraInput.value || 0);
-        if (!error && !onlyZeroBalances && (!Number.isFinite(extraValue) || extraValue < 0)) error = "Enter an extra payment of $0 or more.";
+        if (!error && !onlyZeroBalances && (!Number.isFinite(extraValue) || extraValue < 0)) {
+          setControlError(extraInput, "extraPayment", "Enter $0 or more.");
+          error = "Enter an extra payment of $0 or more.";
+        }
         var extra = Math.max(0, extraValue);
 
         methodDescription.textContent = methodHelp(method);
@@ -4998,6 +5223,7 @@
         monthlyPaymentEl.textContent = money(result.monthlyPayment);
         totalPaidEl.textContent = money(result.totalPaid);
         firstTargetEl.textContent = result.timeline[0] ? (result.timeline[0].target || "-") : "-";
+        renderCurrentPlanSummary(result);
         updateMobileSummary(result);
 
         var warnings = result.warnings.slice();
@@ -5027,6 +5253,7 @@
       function loadSample(options) {
         var settings = options || {};
         setSampleMode(true);
+        setPlanModeStatus("");
         cardRows.innerHTML = "";
         loanRows.innerHTML = "";
         nextId = 1;
@@ -5063,6 +5290,7 @@
       function loadBlankEntry(options) {
         var settings = options || {};
         setSampleMode(false);
+        setPlanModeStatus(settings.status || "");
         cardRows.innerHTML = "";
         loanRows.innerHTML = "";
         nextId = 1;
@@ -5085,13 +5313,15 @@
         }
       }
 
-      bind(cardRows, "input", function () {
-        if (isSampleMode) setSampleMode(false);
+      bind(cardRows, "input", function (event) {
+        var editedRow = event.target ? event.target.closest("tr") : null;
+        if (isSampleMode) exitSampleForOwnPlan(editedRow);
+        else markRowUpdated(editedRow);
         if (!sampleDataBanner.classList.contains("hidden")) sampleDataBanner.classList.add("hidden");
         scheduleUpdate();
       });
       bind(optionScenarioList, "input", function (event) {
-        if (isSampleMode) setSampleMode(false);
+        exitSampleForOwnPlan(null);
         if (event.target && event.target.dataset && event.target.dataset.optionField === "amount") {
           event.target.dataset.optionAutoDefault = "false";
         }
@@ -5137,7 +5367,7 @@
 
         var button = event.target.closest("button[data-action='remove']");
         if (button) {
-          if (isSampleMode) setSampleMode(false);
+          exitSampleForOwnPlan(button.closest("tr"));
           var row = button.closest("tr");
           if (row && cardRows.children.length > 1) {
             customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
@@ -5163,13 +5393,13 @@
       });
 
       bind(loanRows, "input", function () {
-        if (isSampleMode) setSampleMode(false);
+        exitSampleForOwnPlan(null);
         scheduleUpdate();
       });
       bind(loanRows, "click", function (event) {
         var button = event.target.closest("button[data-action='remove-loan']");
         if (!button) return;
-        if (isSampleMode) setSampleMode(false);
+        exitSampleForOwnPlan(null);
         var row = button.closest("tr");
         if (row) {
           customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
@@ -5195,13 +5425,13 @@
       });
 
       bind(addCardButton, "click", function () {
-        if (isSampleMode) setSampleMode(false);
+        exitSampleForOwnPlan(null);
         addCardRow(null, { expandOnMobile: true });
         update();
       });
 
       bind(addLoanButton, "click", function () {
-        if (isSampleMode) setSampleMode(false);
+        exitSampleForOwnPlan(null);
         addLoanRow();
         update();
       });
@@ -5214,7 +5444,7 @@
       });
 
       function replaceSampleWithCards() {
-        loadBlankEntry({ focus: true, focusField: "name" });
+        loadBlankEntry({ focus: true, focusField: "name", status: "You're entering your own cards now. Add balance, APR, and minimum payment to see your payoff plan." });
         if (calculatorForm) calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
@@ -5258,7 +5488,7 @@
 
       [methodInput, extraInput, startInput, targetInput].forEach(function (input) {
         bind(input, "input", function () {
-          if (isSampleMode) setSampleMode(false);
+          exitSampleForOwnPlan(null);
           scheduleUpdate();
         });
         bind(input, "change", update);
