@@ -2447,10 +2447,19 @@
           </div>
 
           <div class="field-stack">
-            <label for="extraPayment">Extra Monthly Payment ($)</label>
-            <input id="extraPayment" aria-label="Extra monthly payment" type="number" inputmode="decimal" min="0" step="25" value="250">
+            <label for="paymentMode">Payment input</label>
+            <select id="paymentMode" aria-label="Payment input type">
+              <option value="extra">Extra above minimums</option>
+              <option value="total">Total monthly payoff budget</option>
+            </select>
+            <p class="hint">Choose whether the amount below is extra money or your full monthly debt budget.</p>
+          </div>
+
+          <div class="field-stack">
+            <label id="paymentAmountLabel" for="extraPayment">Extra Monthly Payment ($)</label>
+            <input id="extraPayment" aria-label="Monthly payment amount" type="number" inputmode="decimal" min="0" step="25" value="250">
             <span class="field-error hidden" data-error-for="extraPayment"></span>
-            <p class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
+            <p id="paymentInputHint" class="hint">Applied after all active debts receive their required minimum or fixed payment.</p>
           </div>
 
         </div>
@@ -2853,7 +2862,10 @@
       var loadExampleButton = document.getElementById("loadExampleButton");
       var formError = document.getElementById("formError");
       var methodInput = document.getElementById("method");
+      var paymentModeInput = document.getElementById("paymentMode");
       var extraInput = document.getElementById("extraPayment");
+      var paymentAmountLabel = document.getElementById("paymentAmountLabel");
+      var paymentInputHint = document.getElementById("paymentInputHint");
       var startInput = document.getElementById("startMonth");
       var targetInput = document.getElementById("targetMonth");
       var telemetryOptOut = document.getElementById("telemetryOptOut");
@@ -2923,7 +2935,7 @@
 
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
-        clearAllButton, loadExampleButton, formError, methodInput, extraInput, startInput,
+        clearAllButton, loadExampleButton, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
         targetInput, telemetryOptOut, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, targetInlineResult, savingsResult, methodRecommendation,
@@ -3041,6 +3053,25 @@
       function syncTelemetryOptOutControl() {
         if (!telemetryOptOut) return;
         telemetryOptOut.checked = telemetryDisabled();
+      }
+
+      function syncPaymentInputCopy() {
+        var totalMode = paymentModeInput && paymentModeInput.value === "total";
+        if (paymentAmountLabel) {
+          paymentAmountLabel.textContent = totalMode ? "Total Monthly Debt Payoff Budget ($)" : "Extra Monthly Payment ($)";
+        }
+        if (extraInput) {
+          extraInput.setAttribute("aria-label", totalMode ? "Total monthly debt payoff budget" : "Extra monthly payment");
+        }
+        if (paymentInputHint) {
+          paymentInputHint.textContent = totalMode
+            ? "This is your full monthly payoff budget, including all required minimum or fixed payments."
+            : "Applied after all active debts receive their required minimum or fixed payment.";
+        }
+      }
+
+      function paymentMode() {
+        return paymentModeInput && paymentModeInput.value === "total" ? "total" : "extra";
       }
 
       document.querySelectorAll(".table-scroll").forEach(function (region, index) {
@@ -3463,13 +3494,17 @@
         var payoffDate = result.capped ? "50+ years (calculator limit reached)" : addMonths(startInput.value, result.months - 1);
         var selectedMethod = methodInput.options[methodInput.selectedIndex];
         var methodLabel = selectedMethod ? selectedMethod.textContent : methodInput.value;
-        var extraPayment = methodInput.value === "minimum" ? 0 : Math.max(0, Number(extraInput.value || 0));
+        var enteredPayment = Math.max(0, Number(extraInput.value || 0));
+        var paymentLine = paymentMode() === "total"
+          ? "Total monthly payoff budget: " + money(enteredPayment)
+          : "Extra monthly payment: " + money(methodInput.value === "minimum" ? 0 : enteredPayment);
         return [
           "Card Payoff Calculator summary",
           isSampleMode ? "Sample data: replace sample cards before treating this as your own plan." : null,
           "Payoff method: " + methodLabel,
           "Starting balance: " + money(result.startingBalance),
-          "Extra monthly payment: " + money(extraPayment),
+          paymentLine,
+          "Extra above minimums: " + money(result.extraPayment),
           "Debt-free date: " + payoffDate,
           "Total interest: " + money(result.totalInterest),
           "Monthly payment: " + money(result.monthlyPayment),
@@ -3523,8 +3558,10 @@
           return;
         }
         var method = methodInput.value;
-        var extra = method === "minimum" ? 0 : Math.max(0, Number(extraInput.value || 0));
-        updateSharedUrl(readCards(), readLoans(), method, extra);
+        var cards = readCards();
+        var loans = readLoans();
+        var payment = currentPaymentInput(cards, loans, method);
+        updateSharedUrl(cards, loans, method, payment.extraPayment, payment.mode, payment.enteredAmount);
         var shareUrl = window.location.href;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareUrl).then(function () {
@@ -3730,6 +3767,20 @@
           var interest = monthlyInterestForDebt(debt, 1);
           return sum + calculatedMinimum(debt, interest);
         }, 0));
+      }
+
+      function currentPaymentInput(cards, loans, method) {
+        var enteredAmount = Math.max(0, Number(extraInput.value || 0));
+        var minimum = startingMinimumTotal(cards, loans || []);
+        var mode = paymentMode();
+        var extraPayment = mode === "total" ? Math.max(0, roundCents(enteredAmount - minimum)) : enteredAmount;
+        if (method === "minimum") extraPayment = 0;
+        return {
+          mode: mode,
+          enteredAmount: roundCents(enteredAmount),
+          minimum: minimum,
+          extraPayment: roundCents(extraPayment)
+        };
       }
 
       function simulate(inputCards, options, inputLoans) {
@@ -5014,7 +5065,7 @@
           .filter(Boolean);
       }
 
-      function updateSharedUrl(cards, loans, method, extraPayment) {
+      function updateSharedUrl(cards, loans, method, extraPayment, mode, enteredAmount) {
         try {
           if (!window.history || !window.history.replaceState || !window.URL) return;
           var url = new URL(window.location.href);
@@ -5022,6 +5073,8 @@
             v: 1,
             method: method,
             extraPayment: cleanSharedNumber(extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0,
+            paymentMode: mode === "total" ? "total" : "extra",
+            paymentAmount: cleanSharedNumber(enteredAmount, 0, Number.MAX_SAFE_INTEGER),
             startMonth: isValidMonthValue(startInput.value) ? startInput.value : "",
             targetMonth: isValidMonthValue(targetInput.value) ? targetInput.value : "",
             cards: cards.map(sharedCard),
@@ -5120,7 +5173,9 @@
           });
         }
         methodInput.value = ["avalanche", "snowball", "minimum", "custom"].indexOf(state.method) !== -1 ? state.method : "avalanche";
-        extraInput.value = cleanSharedNumber(state.extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0;
+        paymentModeInput.value = state.paymentMode === "total" ? "total" : "extra";
+        extraInput.value = cleanSharedNumber(state.paymentAmount != null ? state.paymentAmount : state.extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0;
+        syncPaymentInputCopy();
         startInput.value = isValidMonthValue(state.startMonth) ? state.startMonth : currentMonthValue();
         targetInput.value = isValidMonthValue(state.targetMonth) ? state.targetMonth : "";
         if (Array.isArray(state.customOrder)) {
@@ -5275,9 +5330,8 @@
         var extraValue = Number(extraInput.value || 0);
         if (!error && !onlyZeroBalances && (!Number.isFinite(extraValue) || extraValue < 0)) {
           setControlError(extraInput, "extraPayment", "Enter $0 or more.");
-          error = "Enter an extra payment of $0 or more.";
+          error = "Enter a payment amount of $0 or more.";
         }
-        var extra = Math.max(0, extraValue);
 
         methodDescription.textContent = methodHelp(method);
         renderCustomOrderPanel(cards, loans, method);
@@ -5302,7 +5356,14 @@
         emptyResults.classList.add("hidden");
         resultsContent.classList.remove("hidden");
 
-        if (method === "minimum") extra = 0;
+        var payment = currentPaymentInput(cards, loans, method);
+        if (payment.mode === "total" && method !== "minimum" && payment.enteredAmount + EPSILON < payment.minimum) {
+          setControlError(extraInput, "extraPayment", "Budget must be at least " + money(payment.minimum) + " to cover starting minimums.");
+          setError("Total monthly payoff budget must be at least " + money(payment.minimum) + " to cover starting minimums.");
+          hideCalculatedResults(DEFAULT_EMPTY_MESSAGE);
+          return;
+        }
+        var extra = payment.extraPayment;
         var result = simulate(cards, { method: method, extraPayment: extra, customOrder: customOrder.slice() }, loans);
         var baseline = simulate(cards, { method: "minimum", extraPayment: 0 }, loans);
         lastResult = result;
@@ -5332,17 +5393,17 @@
         }
         renderCriticalWarnings(result.criticalWarnings || []);
         renderWarnings(warnings);
-        var comparisonResults = renderComparison(cards, loans, Number(extraInput.value || 0), result, baseline);
+        var comparisonResults = renderComparison(cards, loans, extra, result, baseline);
         renderDecisionSnapshot(comparisonResults, result);
-        renderMethodRecommendation(cards, loans, Number(extraInput.value || 0), comparisonResults);
+        renderMethodRecommendation(cards, loans, extra, comparisonResults);
         renderPayoffOptions(cards, loans, result);
         renderTarget(cards, loans, method);
-        renderSavings(result, baseline, Number(extraInput.value || 0));
+        renderSavings(result, baseline, extra);
         renderMonthPlan(result);
         renderSchedule(result);
         drawCharts(result);
         if (!options.skipUrlUpdate) {
-          updateSharedUrl(cards, loans, method, extra);
+          updateSharedUrl(cards, loans, method, extra, payment.mode, payment.enteredAmount);
         }
         renderResultExplainer(cards, loans, result, baseline, extra);
         if (!options.skipTracking && !isSampleMode) {
@@ -5366,7 +5427,9 @@
           { name: "Sample Mastercard", balance: 3200, apr: 19.99, minimum: 64 }
         ].forEach(addCardRow);
         methodInput.value = "avalanche";
+        paymentModeInput.value = "extra";
         extraInput.value = "250";
+        syncPaymentInputCopy();
         startInput.value = currentMonthValue();
         targetInput.value = "";
         resetDefaultOptionScenarios();
@@ -5399,7 +5462,9 @@
         showAllSchedule = false;
         addCardRow({ name: "", balance: "", apr: "", minimum: "" }, { expandOnMobile: true });
         methodInput.value = "avalanche";
+        paymentModeInput.value = "extra";
         extraInput.value = "0";
+        syncPaymentInputCopy();
         startInput.value = currentMonthValue();
         targetInput.value = "";
         resetDefaultOptionScenarios();
@@ -5560,6 +5625,7 @@
         var current = Number(extraInput.value || 0);
         extraInput.value = String(Math.max(0, (Number.isFinite(current) ? current : 0) + 50));
         if (methodInput.value === "minimum") methodInput.value = "avalanche";
+        syncPaymentInputCopy();
         update();
         try {
           extraInput.focus({ preventScroll: true });
@@ -5601,12 +5667,16 @@
         if (calculatorForm) calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
       });
 
-      [methodInput, extraInput, startInput, targetInput].forEach(function (input) {
+      [methodInput, paymentModeInput, extraInput, startInput, targetInput].forEach(function (input) {
         bind(input, "input", function () {
           exitSampleForOwnPlan(null);
+          if (input === paymentModeInput) syncPaymentInputCopy();
           scheduleUpdate();
         });
-        bind(input, "change", update);
+        bind(input, "change", function () {
+          if (input === paymentModeInput) syncPaymentInputCopy();
+          update();
+        });
       });
 
       bind(dismissHint, "click", dismissFirstRunHint);
@@ -5622,6 +5692,7 @@
 
       bind(copyLinkButton, "click", copyShareLink);
       bind(copySummaryButton, "click", copyResultsSummary);
+      syncPaymentInputCopy();
       document.querySelectorAll('a[href="#comparisonSection"]').forEach(function (link) {
         bind(link, "click", function () {
           if (comparisonSection) comparisonSection.open = true;
