@@ -512,6 +512,14 @@
       line-height: 1.38;
     }
 
+    .entry-guide {
+      margin: 8px 0 0;
+      color: var(--navy);
+      font-size: .86rem;
+      font-weight: 800;
+      line-height: 1.42;
+    }
+
     .telemetry-toggle {
       display: inline-flex;
       align-items: center;
@@ -772,6 +780,13 @@
       margin-top: 8px;
     }
 
+    .sample-result-actions .sample-primary-action {
+      min-height: 40px;
+      padding: 9px 12px;
+      font-size: .84rem;
+      box-shadow: 0 8px 18px rgba(39,103,73,0.2);
+    }
+
     .hero-label {
       display: block;
       color: rgba(255,255,255,0.7);
@@ -939,6 +954,7 @@
       text-align: center;
       margin: -8px 0 12px;
       letter-spacing: 0;
+      line-height: 1.45;
     }
 
     .result-explainer {
@@ -2217,8 +2233,9 @@
         <div class="section-head">
           <div>
             <h2>Your Cards</h2>
-            <p>Add balances, APRs, and current statement minimum payments. The calculator fills a useful sample to start.</p>
-            <p class="privacy-note">No card numbers or logins. Numeric inputs and results may be used for product telemetry. <a href="privacy.html">Privacy details</a></p>
+            <p>Add each card's balance, APR, and current statement minimum to get a live payoff plan. The calculator fills a sample plan so you can see how it works first.</p>
+            <p class="entry-guide">To get your first answer, enter three numbers per card: balance, APR, and minimum payment.</p>
+            <p class="privacy-note">Calculations run in your browser. Do not enter card numbers, logins, or account names; optional telemetry may include numeric inputs and results to improve the calculator. <a href="privacy.html">Privacy details</a></p>
             <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send calculation telemetry</label>
           </div>
           <div class="button-row">
@@ -2228,7 +2245,7 @@
         </div>
 
         <div id="sampleDataBanner" class="sample-data-banner hidden">
-          <span><strong>Sample data loaded.</strong> Replace it with your cards to get your real payoff plan.</span>
+          <span><strong>Sample plan only.</strong> These are example cards, not your payoff plan. Replace them with your cards when you are ready.</span>
           <div class="button-row">
             <button type="button" class="sample-primary-action" id="sampleEnterCardsButton">Replace sample with my cards</button>
             <button type="button" class="secondary quiet-button" id="keepSampleButton">Keep viewing sample</button>
@@ -2293,6 +2310,7 @@
               <option value="minimum">Minimum Only</option>
               <option value="custom">Custom order</option>
             </select>
+            <p class="hint">Avalanche usually saves the most interest. Snowball may create faster early wins by clearing smaller balances first.</p>
           </div>
 
           <div class="field-stack">
@@ -2333,9 +2351,9 @@
           <div>
             <h2>Your Payoff Plan</h2>
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
-            <p id="sampleResultBadge" class="sample-inline-note hidden">Sample plan shown - replace the sample cards for your real payoff plan.</p>
+            <p id="sampleResultBadge" class="sample-inline-note hidden">Sample plan only - replace the example cards before treating these results as yours.</p>
             <div id="sampleResultActions" class="sample-result-actions hidden">
-              <button type="button" class="secondary" id="resultEnterCardsButton">Replace sample with my cards</button>
+              <button type="button" class="sample-primary-action" id="resultEnterCardsButton">Replace sample with my cards</button>
             </div>
           </div>
         </div>
@@ -2344,7 +2362,7 @@
 
         <div id="resultsContent">
           <div id="firstRunHint" class="first-run-hint hidden">
-            <span><strong>Sample data shown.</strong> Replace cards above for a real payoff plan.</span>
+            <span><strong>Sample plan only.</strong> Replace the example cards above for your real payoff plan.</span>
             <div class="first-run-actions">
               <button type="button" class="secondary" id="enterCardsButton">Edit cards</button>
               <button type="button" class="dismiss-button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
@@ -2361,7 +2379,7 @@
               <strong id="totalInterest">$0</strong>
             </div>
           </div>
-          <p class="results-disclaimer">Estimates only · Not financial advice</p>
+          <p class="results-disclaimer">Estimates only, not financial advice. Assumes APRs and minimums stay the same and excludes new purchases, late fees, and issuer payment changes.</p>
 
           <details class="secondary-actions">
             <summary>Share, export, or copy results</summary>
