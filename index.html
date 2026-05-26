@@ -1343,6 +1343,18 @@
       line-height: 1.45;
     }
 
+    .option-capacity-notice {
+      margin: 10px 0 0;
+      border: 1px solid #f6c177;
+      border-radius: 8px;
+      background: #fff8ed;
+      color: #7b341e;
+      padding: 10px 12px;
+      font-size: .84rem;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
     .option-controls {
       margin: 12px 0;
       border: 1px solid var(--line);
@@ -2522,6 +2534,7 @@
               <button type="button" class="secondary" data-action="add-balance-transfer">Add Balance Transfer</button>
               <button type="button" class="secondary" data-action="add-consolidation-loan">Add Consolidation Loan</button>
             </div>
+            <p id="optionCapacityNotice" class="option-capacity-notice hidden" aria-live="polite"></p>
           </div>
           <div id="payoffOptionRows" class="option-card-grid"></div>
           <p id="payoffOptionNote" class="option-note"></p>
@@ -2919,6 +2932,7 @@
       var resultExplainer = document.getElementById("resultExplainer");
       var payoffOptions = document.getElementById("payoffOptions");
       var optionScenarioList = document.getElementById("optionScenarioList");
+      var optionCapacityNotice = document.getElementById("optionCapacityNotice");
       var payoffOptionRows = document.getElementById("payoffOptionRows");
       var payoffOptionNote = document.getElementById("payoffOptionNote");
       var criticalWarningsEl = document.getElementById("criticalWarnings");
@@ -2964,7 +2978,7 @@
         targetInput, telemetryOptOut, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, targetInlineResult, savingsResult, methodRecommendation,
-        resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
+        resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
@@ -3403,6 +3417,10 @@
         decisionSnapshot.classList.add("hidden");
         if (payoffOptionRows) payoffOptionRows.innerHTML = "";
         if (payoffOptionNote) payoffOptionNote.textContent = "";
+        if (optionCapacityNotice) {
+          optionCapacityNotice.classList.add("hidden");
+          optionCapacityNotice.textContent = "";
+        }
         scheduleRows.innerHTML = "";
         scheduleLoading.classList.add("hidden");
         methodRecommendation.classList.add("hidden");
@@ -4444,6 +4462,8 @@
         if (cardTotal <= EPSILON) {
           payoffOptionRows.innerHTML = '<div class="option-card"><p class="option-watchout">Add at least one credit card balance to model balance transfers or consolidation loans.</p></div>';
           payoffOptionNote.textContent = "";
+          optionCapacityNotice.classList.add("hidden");
+          optionCapacityNotice.textContent = "";
           return;
         }
 
@@ -4453,9 +4473,19 @@
         syncDefaultOptionAmountFields(cardTotal);
         var scenarios = readPayoffOptionScenarios(averageApr, cardTotal);
         if (!scenarios.length) {
+          optionCapacityNotice.classList.add("hidden");
+          optionCapacityNotice.textContent = "";
           payoffOptionRows.innerHTML = '<div class="option-card"><h4>No optional scenarios added</h4><p class="option-watchout">Add a balance transfer or consolidation loan only if you want to model a new-credit scenario against the current plan.</p></div>';
           payoffOptionNote.textContent = "Scenario amount defaults will use your current credit card balance when you add an option.";
           return;
+        }
+        var combinedScenario = scenarios[0];
+        if (combinedScenario.extraAvailable > EPSILON) {
+          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies lower-interest offers first.";
+          optionCapacityNotice.classList.remove("hidden");
+        } else {
+          optionCapacityNotice.classList.add("hidden");
+          optionCapacityNotice.textContent = "";
         }
 
         var rows = [
