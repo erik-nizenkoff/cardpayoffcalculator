@@ -2456,7 +2456,7 @@
         <div class="section-head">
           <div>
             <h2>Your Cards</h2>
-            <p>Enter balance, APR, and minimum payment for each card. The calculator fills a sample plan so you can see how it works first.</p>
+            <p>Start with your own card details, or load an example if you want to see how the calculator works.</p>
             <p class="entry-guide">To get your first answer, enter three numbers per card: balance, APR, and minimum payment.</p>
             <details class="privacy-disclosure">
               <summary>Privacy and data</summary>
@@ -2465,8 +2465,8 @@
             </details>
           </div>
           <div class="button-row">
-            <button type="button" id="clearAllButton">Start with my cards</button>
-            <button type="button" class="secondary" id="sampleButton">View example</button>
+            <button type="button" class="secondary" id="clearAllButton">Start with my cards</button>
+            <button type="button" id="sampleButton">View example</button>
           </div>
         </div>
 
@@ -5932,7 +5932,7 @@
       startInput.value = currentMonthValue();
       resetDefaultOptionScenarios();
       if (!loadSharedState()) {
-        loadSample({ skipUrlUpdate: true });
+        loadBlankEntry({ keepUrl: true });
       }
     })();
   </script>
