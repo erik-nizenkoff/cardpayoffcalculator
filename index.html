@@ -1355,6 +1355,63 @@
       line-height: 1.45;
     }
 
+    .option-summary {
+      margin: 12px 0;
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f7fbff;
+      padding: 12px;
+    }
+
+    .option-summary h4 {
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-size: .95rem;
+    }
+
+    .option-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .option-summary-metric {
+      border: 1px solid #d6e8ff;
+      border-radius: 7px;
+      background: #fff;
+      padding: 8px;
+    }
+
+    .option-summary-metric span {
+      display: block;
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.25;
+    }
+
+    .option-summary-metric strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink);
+      font-size: .95rem;
+    }
+
+    .allocation-table {
+      width: 100%;
+      min-width: 0;
+      table-layout: fixed;
+      font-size: .8rem;
+    }
+
+    .allocation-table th,
+    .allocation-table td {
+      padding: 7px 6px;
+      overflow-wrap: anywhere;
+    }
+
     .option-controls {
       margin: 12px 0;
       border: 1px solid var(--line);
@@ -1886,6 +1943,7 @@
       .metric-grid,
       .example-results,
       .option-settings-grid,
+      .option-summary-grid,
       .result-quick-actions {
         grid-template-columns: 1fr;
       }
@@ -2495,9 +2553,9 @@
           </div>
 
           <div class="field-stack">
-            <label for="paymentMode">Payment input</label>
-            <select id="paymentMode" aria-label="Payment input type">
-              <option value="extra">Extra above minimums</option>
+            <label for="paymentMode">How do you want to enter your payment?</label>
+            <select id="paymentMode" aria-label="How do you want to enter your payment?">
+              <option value="extra">Extra payment above minimums</option>
               <option value="total">Total monthly payoff budget</option>
             </select>
             <p class="hint">Choose whether the amount below is extra money or your full monthly debt budget.</p>
@@ -2513,20 +2571,20 @@
         </div>
 
         <div id="targetDateOptions" class="advanced-options" aria-labelledby="targetDateHeading">
-          <h3 id="targetDateHeading">Want to be debt-free by a certain month?</h3>
+          <h3 id="targetDateHeading">Target payoff date optional</h3>
           <div class="settings-grid">
             <div class="field-stack">
               <label for="targetMonth">Target Payoff Date</label>
               <input id="targetMonth" aria-label="Target payoff date" type="month">
-              <p class="hint">Optional: choose a month to estimate the payment needed.</p>
+              <p class="hint">Choose a month to see the monthly payment required.</p>
             </div>
             <div id="targetInlineResult" class="target-inline-card hidden" aria-live="polite"></div>
           </div>
         </div>
 
         <div id="payoffOptions" class="payoff-options" aria-labelledby="payoffOptionsHeading">
-          <h3 id="payoffOptionsHeading">Compare balance transfer or consolidation scenarios</h3>
-          <p class="hint">Already considering a transfer or loan? Compare it here.</p>
+          <h3 id="payoffOptionsHeading">Optional: Compare balance transfer or loan offers</h3>
+          <p class="hint">Enter offers you are considering. The calculator combines them, uses the lowest-interest options first, and only applies enough to cover your current credit card debt.</p>
           <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
           <div id="payoffOptionControls" class="option-controls">
             <div id="optionScenarioList" class="option-settings-grid"></div>
@@ -2536,6 +2594,7 @@
             </div>
             <p id="optionCapacityNotice" class="option-capacity-notice hidden" aria-live="polite"></p>
           </div>
+          <div id="optionUsageSummary" class="option-summary hidden" aria-live="polite"></div>
           <div id="payoffOptionRows" class="option-card-grid"></div>
           <p id="payoffOptionNote" class="option-note"></p>
         </div>
@@ -2933,6 +2992,7 @@
       var payoffOptions = document.getElementById("payoffOptions");
       var optionScenarioList = document.getElementById("optionScenarioList");
       var optionCapacityNotice = document.getElementById("optionCapacityNotice");
+      var optionUsageSummary = document.getElementById("optionUsageSummary");
       var payoffOptionRows = document.getElementById("payoffOptionRows");
       var payoffOptionNote = document.getElementById("payoffOptionNote");
       var criticalWarningsEl = document.getElementById("criticalWarnings");
@@ -2978,7 +3038,7 @@
         targetInput, telemetryOptOut, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
         totalPaidEl, firstTargetEl, targetResult, targetInlineResult, savingsResult, methodRecommendation,
-        resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, payoffOptionRows, payoffOptionNote,
+        resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
@@ -3420,6 +3480,10 @@
         if (optionCapacityNotice) {
           optionCapacityNotice.classList.add("hidden");
           optionCapacityNotice.textContent = "";
+        }
+        if (optionUsageSummary) {
+          optionUsageSummary.classList.add("hidden");
+          optionUsageSummary.innerHTML = "";
         }
         scheduleRows.innerHTML = "";
         scheduleLoading.classList.add("hidden");
@@ -4301,7 +4365,11 @@
       }
 
       function optionScenarioTitle(type) {
-        return type === "balance-transfer" ? "Balance Transfer" : "Consolidation Loan";
+        if (!optionScenarioList) return type === "balance-transfer" ? "Balance transfer offer" : "Consolidation loan offer";
+        var count = Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset")).filter(function (scenario) {
+          return scenario.dataset.optionType === type;
+        }).length + 1;
+        return type === "balance-transfer" ? "Balance transfer offer " + count : "Consolidation loan offer " + count;
       }
 
       function optionScenarioInputHtml(label, field, value, attrs, placeholder) {
@@ -4322,22 +4390,23 @@
         var inputs = "";
         var help = "";
         if (type === "balance-transfer") {
-          inputs = optionScenarioInputHtml("Transfer Amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
+          inputs = optionScenarioInputHtml("Available transfer limit ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
             optionScenarioInputHtml("Transfer Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "") +
             optionScenarioInputHtml("Intro APR (%)", "introApr", values.introApr != null ? values.introApr : 0, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
             optionScenarioInputHtml("Promo Term (months)", "introMonths", values.introMonths != null ? values.introMonths : 18, 'type="number" min="1" max="120" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Post-Promo APR (%)", "postApr", values.postApr != null ? formatPercent(values.postApr) : currentAverageCardApr(), 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "");
           help = "Enter the balance transfer offer terms: fee, intro APR, promo term, and APR after the promo ends.";
         } else {
-          inputs = optionScenarioInputHtml("Loan Amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
+          inputs = optionScenarioInputHtml("Available loan amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
             optionScenarioInputHtml("Loan APR (%)", "apr", values.apr != null ? values.apr : 12.99, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
             optionScenarioInputHtml("Loan Term (months)", "term", values.term != null ? values.term : 36, 'type="number" min="1" max="360" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Origination Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "");
           help = "Enter the consolidation loan offer terms: amount, APR, loan term, and origination fee.";
         }
 
-        scenario.innerHTML = '<div class="option-fieldset-head"><strong>' + optionScenarioTitle(type) + '</strong>' +
-          '<button type="button" class="icon-button danger" data-action="remove-option-scenario" aria-label="Remove ' + optionScenarioTitle(type) + '" title="Remove option">×</button></div>' +
+        var title = optionScenarioTitle(type);
+        scenario.innerHTML = '<div class="option-fieldset-head"><strong>' + escapeHtml(title) + '</strong>' +
+          '<button type="button" class="icon-button danger" data-action="remove-option-scenario" aria-label="Remove ' + escapeHtml(title) + '" title="Remove option">×</button></div>' +
           '<p class="option-scenario-help">' + escapeHtml(help) + '</p>' +
           '<div class="option-inputs">' + inputs + '</div>';
         optionScenarioList.appendChild(scenario);
@@ -4456,6 +4525,35 @@
           "</div>";
       }
 
+      function renderOptionUsageSummary(scenario, allocation, result, cardTotal) {
+        if (!optionUsageSummary || !scenario || !allocation) return;
+        var summaryRows = allocation.map(function (entry) {
+          return "<tr>" +
+            "<td>" + escapeHtml(entry.name) + "</td>" +
+            "<td>" + money(entry.enteredAmount) + "</td>" +
+            "<td>" + money(entry.usedAmount) + "</td>" +
+            "<td>" + money(entry.unusedAmount) + "</td>" +
+            "<td>" + formatPercent(entry.sortRate) + "%</td>" +
+            "</tr>";
+        }).join("");
+        var payoffText = result
+          ? (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1)))
+          : "-";
+        optionUsageSummary.innerHTML =
+          "<h4>How offers are used</h4>" +
+          '<div class="option-summary-grid">' +
+            '<div class="option-summary-metric"><span>Offer capacity</span><strong>' + money(scenario.totalAvailable) + "</strong></div>" +
+            '<div class="option-summary-metric"><span>Eligible card debt</span><strong>' + money(cardTotal) + "</strong></div>" +
+            '<div class="option-summary-metric"><span>Amount used</span><strong>' + money(scenario.amount) + "</strong></div>" +
+            '<div class="option-summary-metric"><span>Unused capacity</span><strong>' + money(scenario.extraAvailable) + "</strong></div>" +
+          "</div>" +
+          '<p class="option-scenario-help">Combined scenario: ' + money(scenario.amount) + " moved, " + money(scenario.extraAvailable) + " unused, estimated payoff " + payoffText + ".</p>" +
+          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>APR used for order</th></tr></thead><tbody>' +
+          summaryRows +
+          "</tbody></table></div>";
+        optionUsageSummary.classList.remove("hidden");
+      }
+
       function renderPayoffOptions(cards, loans, currentResult) {
         if (!payoffOptionRows || !payoffOptionNote) return;
         var cardTotal = roundCents(sumCardBalances(cards));
@@ -4464,6 +4562,8 @@
           payoffOptionNote.textContent = "";
           optionCapacityNotice.classList.add("hidden");
           optionCapacityNotice.textContent = "";
+          optionUsageSummary.classList.add("hidden");
+          optionUsageSummary.innerHTML = "";
           return;
         }
 
@@ -4475,6 +4575,8 @@
         if (!scenarios.length) {
           optionCapacityNotice.classList.add("hidden");
           optionCapacityNotice.textContent = "";
+          optionUsageSummary.classList.add("hidden");
+          optionUsageSummary.innerHTML = "";
           payoffOptionRows.innerHTML = '<div class="option-card"><h4>No optional scenarios added</h4><p class="option-watchout">Add a balance transfer or consolidation loan only if you want to model a new-credit scenario against the current plan.</p></div>';
           payoffOptionNote.textContent = "Scenario amount defaults will use your current credit card balance when you add an option.";
           return;
@@ -4487,6 +4589,8 @@
           optionCapacityNotice.classList.add("hidden");
           optionCapacityNotice.textContent = "";
         }
+        optionUsageSummary.classList.add("hidden");
+        optionUsageSummary.innerHTML = "";
 
         var rows = [
           {
@@ -4516,11 +4620,28 @@
           var optionTerms = [];
           var btCards = [];
           var optionLoans = [];
+          var allocation = [];
           var earliestPromoEnd = null;
           (scenario.entries || []).forEach(function (entry, entryIndex) {
-            if (amountLeft <= EPSILON) return;
+            if (amountLeft <= EPSILON) {
+              allocation.push({
+                name: entry.name,
+                enteredAmount: entry.amount,
+                usedAmount: 0,
+                unusedAmount: entry.amount,
+                sortRate: entry.sortRate
+              });
+              return;
+            }
             var entryAmount = Math.min(entry.amount, amountLeft);
             amountLeft = roundCents(amountLeft - entryAmount);
+            allocation.push({
+              name: entry.name,
+              enteredAmount: entry.amount,
+              usedAmount: entryAmount,
+              unusedAmount: roundCents(entry.amount - entryAmount),
+              sortRate: entry.sortRate
+            });
             if (entryAmount <= EPSILON) return;
             var entryFee = roundCents(entryAmount * entry.feeRate / 100);
             optionFees = roundCents(optionFees + entryFee);
@@ -4566,6 +4687,7 @@
             assumptions: "Applies offers by lowest entered APR first: " + optionTerms.join("; ") + ".",
             watchout: (combinedResult.monthlyPayment > currentMonthlyBudget + EPSILON ? "Required payment is higher than current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
           });
+          renderOptionUsageSummary(scenario, allocation, combinedResult, cardTotal);
         });
 
         var availableRows = rows.filter(function (row) { return !row.result.capped; });
