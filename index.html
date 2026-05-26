@@ -1270,6 +1270,24 @@
       color: #173d70;
     }
 
+    .target-inline-card {
+      align-self: end;
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f1f7ff;
+      color: #173d70;
+      padding: 11px 12px;
+      font-size: .88rem;
+      line-height: 1.45;
+    }
+
+    .target-inline-card strong {
+      display: block;
+      margin-top: 2px;
+      color: inherit;
+      font-size: 1.12rem;
+    }
+
     .savings-card {
       border: 1px solid #bfe7cf;
       background: #f1fbf5;
@@ -2390,10 +2408,10 @@
         </div>
 
         <details id="loanSection" class="loan-section">
-          <summary>More debt types (optional)</summary>
+          <summary>Installment loans (optional)</summary>
           <div class="subsection-head">
             <div>
-              <h2>Installment Loans (optional)</h2>
+              <h2>Installment loans (optional)</h2>
               <p>Add fixed-payment debts such as personal, auto, or student loans.</p>
             </div>
             <button type="button" class="secondary" id="addLoanButton">Add Loan</button>
@@ -2445,6 +2463,7 @@
               <input id="targetMonth" aria-label="Target payoff date" type="month">
               <p class="hint">Optional: choose a month to estimate the payment needed.</p>
             </div>
+            <div id="targetInlineResult" class="target-inline-card hidden" aria-live="polite"></div>
           </div>
         </details>
 
@@ -2857,6 +2876,7 @@
       var totalPaidEl = document.getElementById("totalPaid");
       var firstTargetEl = document.getElementById("firstTarget");
       var targetResult = document.getElementById("targetResult");
+      var targetInlineResult = document.getElementById("targetInlineResult");
       var savingsResult = document.getElementById("savingsResult");
       var methodRecommendation = document.getElementById("methodRecommendation");
       var resultExplainer = document.getElementById("resultExplainer");
@@ -2906,7 +2926,7 @@
         clearAllButton, loadExampleButton, formError, methodInput, extraInput, startInput,
         targetInput, telemetryOptOut, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestEl, monthlyPaymentEl,
-        totalPaidEl, firstTargetEl, targetResult, savingsResult, methodRecommendation,
+        totalPaidEl, firstTargetEl, targetResult, targetInlineResult, savingsResult, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
@@ -3941,21 +3961,29 @@
 
       function renderTarget(cards, loans, method) {
         var targetMonths = monthsBetweenInclusive(startInput.value, targetInput.value);
+        function setInlineTarget(message) {
+          if (!targetInlineResult) return;
+          targetInlineResult.innerHTML = message || "";
+          targetInlineResult.classList.toggle("hidden", !message);
+        }
         if (!targetInput.value) {
           targetResult.classList.add("hidden");
           targetResult.innerHTML = "";
+          setInlineTarget("");
           return;
         }
 
         if (!targetMonths) {
           targetResult.classList.remove("hidden");
           targetResult.textContent = "Target date must be in the future";
+          setInlineTarget("Choose a future month to calculate the required payment.");
           return;
         }
 
         if (targetMonths === 1) {
           targetResult.classList.remove("hidden");
           targetResult.textContent = "Target date must be at least one month in the future.";
+          setInlineTarget("Choose a target at least one month out.");
           return;
         }
 
@@ -3963,10 +3991,12 @@
         targetResult.classList.remove("hidden");
         if (!required) {
           targetResult.textContent = "No feasible target-date payment found inside the 50-year model.";
+          setInlineTarget("No feasible required payment found in the 50-year model.");
           return;
         }
 
         var targetDate = escapeHtml(addMonths(startInput.value, targetMonths - 1));
+        setInlineTarget("Required monthly payment<strong>" + money(required.monthlyPayment) + "/mo</strong>");
         if (lastResult && !lastResult.capped && lastResult.months <= targetMonths) {
           targetResult.innerHTML = "Your current plan reaches <strong>" + targetDate + "</strong> or sooner. Estimated payment needed by that date: <strong>" + money(required.monthlyPayment) + "/mo</strong>.";
           return;
