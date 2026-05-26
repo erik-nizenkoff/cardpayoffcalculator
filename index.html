@@ -1372,6 +1372,20 @@
       font-weight: 900;
     }
 
+    .option-fieldset-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .option-scenario-help {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.4;
+    }
+
     .option-inputs {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4288,21 +4302,25 @@
         scenario.dataset.optionId = "option-" + optionScenarioNextId++;
 
         var inputs = "";
+        var help = "";
         if (type === "balance-transfer") {
           inputs = optionScenarioInputHtml("Transfer Amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
             optionScenarioInputHtml("Transfer Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "") +
             optionScenarioInputHtml("Intro APR (%)", "introApr", values.introApr != null ? values.introApr : 0, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
-            optionScenarioInputHtml("Promo Months", "introMonths", values.introMonths != null ? values.introMonths : 18, 'type="number" min="1" max="120" step="1" inputmode="numeric"', "") +
+            optionScenarioInputHtml("Promo Term (months)", "introMonths", values.introMonths != null ? values.introMonths : 18, 'type="number" min="1" max="120" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Post-Promo APR (%)", "postApr", values.postApr != null ? formatPercent(values.postApr) : currentAverageCardApr(), 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "");
+          help = "Enter the balance transfer offer terms: fee, intro APR, promo term, and APR after the promo ends.";
         } else {
           inputs = optionScenarioInputHtml("Loan Amount ($)", "amount", values.amount != null ? values.amount : currentDefaultOptionAmount(), 'type="number" min="0" step="1" inputmode="decimal" data-option-auto-default="' + (values.amount == null ? "true" : "false") + '"', "Full balance") +
             optionScenarioInputHtml("Loan APR (%)", "apr", values.apr != null ? values.apr : 12.99, 'type="number" min="0" max="79.99" step="0.01" inputmode="decimal"', "") +
-            optionScenarioInputHtml("Term Months", "term", values.term != null ? values.term : 36, 'type="number" min="1" max="360" step="1" inputmode="numeric"', "") +
+            optionScenarioInputHtml("Loan Term (months)", "term", values.term != null ? values.term : 36, 'type="number" min="1" max="360" step="1" inputmode="numeric"', "") +
             optionScenarioInputHtml("Origination Fee (%)", "fee", values.fee != null ? values.fee : 3, 'type="number" min="0" max="20" step="0.1" inputmode="decimal"', "");
+          help = "Enter the consolidation loan offer terms: amount, APR, loan term, and origination fee.";
         }
 
         scenario.innerHTML = '<div class="option-fieldset-head"><strong>' + optionScenarioTitle(type) + '</strong>' +
           '<button type="button" class="icon-button danger" data-action="remove-option-scenario" aria-label="Remove ' + optionScenarioTitle(type) + '" title="Remove option">×</button></div>' +
+          '<p class="option-scenario-help">' + escapeHtml(help) + '</p>' +
           '<div class="option-inputs">' + inputs + '</div>';
         optionScenarioList.appendChild(scenario);
       }
