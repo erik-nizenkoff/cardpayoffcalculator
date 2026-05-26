@@ -1130,8 +1130,7 @@
       margin-top: 24px;
     }
 
-    .advanced-options summary,
-    .comparison-section summary {
+    .advanced-options summary {
       cursor: pointer;
       color: var(--ink);
       font-weight: 900;
@@ -2669,8 +2668,7 @@
     </section>
 
     <section class="panel compare-panel">
-      <details id="comparisonSection" class="comparison-section">
-        <summary>Compare all payoff methods</summary>
+      <div id="comparisonSection" class="comparison-section">
         <div class="section-head">
           <div>
             <h2>Payoff Method Comparison</h2>
@@ -2693,7 +2691,7 @@
           </table>
         </div>
         <p class="scroll-hint">Scroll sideways to compare all methods.</p>
-      </details>
+      </div>
     </section>
 
     <details class="panel schedule-panel" id="schedulePanel">
@@ -5716,11 +5714,6 @@
       bind(copyLinkButton, "click", copyShareLink);
       bind(copySummaryButton, "click", copyResultsSummary);
       syncPaymentInputCopy();
-      document.querySelectorAll('a[href="#comparisonSection"]').forEach(function (link) {
-        bind(link, "click", function () {
-          if (comparisonSection) comparisonSection.open = true;
-        });
-      });
 
       window.addEventListener("beforeprint", function () {
         printPreviousShowAll = showAllSchedule;
