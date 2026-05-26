@@ -889,7 +889,7 @@
 
     .result-quick-actions {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
       margin: 0 0 12px;
     }
@@ -2353,15 +2353,15 @@
             </details>
           </div>
           <div class="button-row">
-            <button type="button" class="secondary" id="sampleButton">Load Sample</button>
-            <button type="button" class="secondary" id="clearAllButton">Clear all</button>
+            <button type="button" id="clearAllButton">Start with my cards</button>
+            <button type="button" class="secondary" id="sampleButton">View example</button>
           </div>
         </div>
 
         <div id="sampleDataBanner" class="sample-data-banner hidden">
-          <span><strong>Sample plan only.</strong> These are example cards, not your payoff plan. Replace them with your cards when you are ready.</span>
+          <span><strong>Sample plan only.</strong> Replace with your cards for a real payoff plan.</span>
           <div class="button-row">
-            <button type="button" class="sample-primary-action" id="sampleEnterCardsButton">Replace sample with my cards</button>
+            <button type="button" class="sample-primary-action" id="sampleEnterCardsButton">Start with my cards</button>
             <button type="button" class="secondary quiet-button" id="keepSampleButton">Keep viewing sample</button>
           </div>
         </div>
@@ -2418,14 +2418,14 @@
 
         <div class="settings-grid" aria-label="Payoff settings">
           <div class="field-stack">
-            <label for="method">Payoff Method</label>
-            <select id="method" aria-label="Payoff method">
-              <option value="avalanche">Avalanche: highest APR first</option>
-              <option value="snowball">Snowball: smallest balance first</option>
-              <option value="minimum">Minimum Only</option>
-              <option value="custom">Custom order</option>
+            <label for="method">Payoff strategy</label>
+            <select id="method" aria-label="Payoff strategy">
+              <option value="avalanche">Avalanche - usually lowest interest</option>
+              <option value="snowball">Snowball - pay small balances first</option>
+              <option value="minimum">Minimum only - slowest baseline</option>
+              <option value="custom">Custom order - choose your target order</option>
             </select>
-            <p class="hint">Avalanche usually saves the most interest. Snowball may create faster early wins by clearing smaller balances first.</p>
+            <p class="hint">Avalanche is selected because it usually saves the most interest.</p>
           </div>
 
           <div class="field-stack">
@@ -2472,9 +2472,9 @@
           <div>
             <h2>Your Payoff Plan</h2>
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
-            <p id="sampleResultBadge" class="sample-inline-note hidden">Sample plan only - replace the example cards before treating these results as yours.</p>
+            <p id="sampleResultBadge" class="sample-inline-note hidden">Sample</p>
             <div id="sampleResultActions" class="sample-result-actions hidden">
-              <button type="button" class="sample-primary-action" id="resultEnterCardsButton">Replace sample with my cards</button>
+              <button type="button" class="sample-primary-action" id="resultEnterCardsButton">Use my cards</button>
             </div>
           </div>
         </div>
@@ -2483,7 +2483,7 @@
 
         <div id="resultsContent">
           <div id="firstRunHint" class="first-run-hint hidden">
-            <span><strong>Sample plan only.</strong> Replace the example cards above for your real payoff plan.</span>
+            <span><strong>Sample plan only.</strong> Use your cards for a real payoff plan.</span>
             <div class="first-run-actions">
               <button type="button" class="secondary" id="enterCardsButton">Edit cards</button>
               <button type="button" class="dismiss-button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
@@ -2505,14 +2505,9 @@
 
           <div class="result-quick-actions" aria-label="Suggested next actions">
             <button type="button" class="primary-next" id="boostExtraButton">Try $50 more</button>
-            <a href="#comparisonSection">Compare methods</a>
-            <a href="#calculatorForm">Edit cards</a>
-          </div>
-
-          <div class="result-quick-actions" aria-label="Result shortcuts">
             <a href="#monthPlan">See first payment</a>
             <a href="#comparisonSection">Compare methods</a>
-            <a href="#methodology">How this is calculated</a>
+            <a href="#calculatorForm">Edit cards</a>
           </div>
 
           <div class="result-section">
@@ -2584,7 +2579,7 @@
 
           <details id="payoffOptions" class="payoff-options result-section">
             <summary>Compare balance transfer or consolidation scenarios</summary>
-            <p class="hint">Optional: model new-credit scenarios only after reviewing your current payoff plan.</p>
+            <p class="hint">Already considering a transfer or loan? Compare it here.</p>
             <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
             <details id="payoffOptionControls" class="option-controls">
               <summary>Add or edit optional scenario assumptions</summary>
@@ -3064,18 +3059,18 @@
         return {
           avalanche: "Avalanche",
           snowball: "Snowball",
-          minimum: "Minimum Only",
-          custom: "Custom Order"
+          minimum: "Minimum only",
+          custom: "Custom order"
         }[method] || "Avalanche";
       }
 
       function methodHelp(method) {
         return {
-          avalanche: "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.",
-          snowball: "Here's what it takes to get debt-free. Snowball sends extra payment to the smallest balance first.",
-          minimum: "Here's what it takes to get debt-free. Minimum only uses the calculated minimum payment for each card.",
-          custom: "Here's what it takes to get debt-free. Custom order sends extra payment down your chosen debt list."
-        }[method] || "Here's what it takes to get debt-free. Avalanche sends extra payment to the highest APR card first.";
+          avalanche: "Here's what it takes to get debt-free. Avalanche is the default because it usually lowers total interest.",
+          snowball: "Here's what it takes to get debt-free. Snowball focuses on small balances first for faster early wins.",
+          minimum: "Here's what it takes to get debt-free. Minimum only is the slow baseline with no extra payment.",
+          custom: "Here's what it takes to get debt-free. Custom order follows the target list you choose."
+        }[method] || "Here's what it takes to get debt-free. Avalanche is the default because it usually lowers total interest.";
       }
 
       function setFieldLabel(row, field, label) {
@@ -3409,7 +3404,7 @@
       function exitSampleForOwnPlan(row) {
         if (!isSampleMode) return;
         setSampleMode(false);
-        setPlanModeStatus("You're now editing your own plan. Results will update from the values you enter.");
+        setPlanModeStatus("You're editing the example cards. For a clean plan, use Start with my cards.");
         markRowUpdated(row);
       }
 
@@ -3972,7 +3967,10 @@
         var extraText = result.method === "minimum"
           ? "With minimum-only payments"
           : "With " + money(result.extraPayment) + " extra using " + methodLabel(result.method).toLowerCase();
-        currentPlanSummary.textContent = extraText + ", this plan targets " + firstTarget + " first.";
+        var nextText = result.method === "minimum"
+          ? "Next: try an extra monthly payment to see how much time and interest it saves."
+          : "Next: try adding $50/month to see whether the payoff date improves enough.";
+        currentPlanSummary.textContent = extraText + ", this plan targets " + firstTarget + " first. " + nextText;
         currentPlanSummary.classList.remove("hidden");
       }
 
