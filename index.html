@@ -1115,6 +1115,13 @@
       color: var(--muted);
     }
 
+    .advanced-options h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: .95rem;
+      font-weight: 900;
+    }
+
     .loan-section[open] summary {
       color: var(--ink);
     }
@@ -2470,8 +2477,8 @@
 
         </div>
 
-        <details id="targetDateOptions" class="advanced-options">
-          <summary>Want to be debt-free by a certain month?</summary>
+        <div id="targetDateOptions" class="advanced-options" aria-labelledby="targetDateHeading">
+          <h3 id="targetDateHeading">Want to be debt-free by a certain month?</h3>
           <div class="settings-grid">
             <div class="field-stack">
               <label for="targetMonth">Target Payoff Date</label>
@@ -2480,7 +2487,7 @@
             </div>
             <div id="targetInlineResult" class="target-inline-card hidden" aria-live="polite"></div>
           </div>
-        </details>
+        </div>
 
         <div id="customOrderPanel" class="custom-order-panel hidden">
           <h3>Custom Payoff Order</h3>
