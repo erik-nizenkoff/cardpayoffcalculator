@@ -5534,13 +5534,9 @@
         if (button) {
           exitSampleForOwnPlan(button.closest("tr"));
           var row = button.closest("tr");
-          if (row && cardRows.children.length > 1) {
+          if (row) {
             customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
             row.remove();
-          } else if (row) {
-            customOrder = customOrder.filter(function (id) { return id !== row.dataset.id; });
-            row.querySelectorAll("input").forEach(function (input) { input.value = ""; });
-            updateCardSummary(row);
           }
           updateAddButton();
           update();
