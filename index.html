@@ -4323,6 +4323,7 @@
           '<p class="option-scenario-help">' + escapeHtml(help) + '</p>' +
           '<div class="option-inputs">' + inputs + '</div>';
         optionScenarioList.appendChild(scenario);
+        return scenario;
       }
 
       function resetDefaultOptionScenarios() {
@@ -5526,20 +5527,26 @@
         if (!button) return;
         if (button.dataset.action === "add-balance-transfer") {
           if (isSampleMode) {
-            showSampleActionRequired("Replace sample cards before adding payoff options.");
-            return;
+            exitSampleForOwnPlan(null);
           }
-          addOptionScenario("balance-transfer");
+          var balanceTransferScenario = addOptionScenario("balance-transfer");
           update();
+          if (balanceTransferScenario) {
+            var balanceTransferInput = balanceTransferScenario.querySelector("input");
+            if (balanceTransferInput) balanceTransferInput.focus();
+          }
           return;
         }
         if (button.dataset.action === "add-consolidation-loan") {
           if (isSampleMode) {
-            showSampleActionRequired("Replace sample cards before adding payoff options.");
-            return;
+            exitSampleForOwnPlan(null);
           }
-          addOptionScenario("consolidation-loan");
+          var consolidationScenario = addOptionScenario("consolidation-loan");
           update();
+          if (consolidationScenario) {
+            var consolidationInput = consolidationScenario.querySelector("input");
+            if (consolidationInput) consolidationInput.focus();
+          }
           return;
         }
         if (button.dataset.action === "remove-option-scenario") {
