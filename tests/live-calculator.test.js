@@ -210,6 +210,34 @@ const scoredScenario = live.scorePayoffScenarioEntries({
 }, actualPaymentCards, [], actualPaymentPlan, "avalanche", []);
 assert.equal(scoredScenario.entries[0].name, "Low-rate loan", "offer allocation applies the lower actual-cost offer first");
 
+const currentActualPaymentResult = live.simulateWithPaymentPlan(actualPaymentCards, [], actualPaymentPlan, "avalanche", []);
+const smallLowRateLoan = {
+  type: "consolidation-loan",
+  name: "Small low-rate loan",
+  amount: 1000,
+  apr: 4,
+  term: 120,
+  feeRate: 0,
+  sortRate: 0,
+  modeledCostScore: 0
+};
+const largeOkayTransfer = {
+  type: "balance-transfer",
+  name: "Large okay transfer",
+  amount: 10000,
+  introApr: 12,
+  introMonths: 120,
+  postApr: 12,
+  feeRate: 0,
+  sortRate: 0,
+  modeledCostScore: 0
+};
+const mixedCapacityScenario = live.scorePayoffScenarioEntries({
+  entries: [Object.assign({}, largeOkayTransfer), Object.assign({}, smallLowRateLoan)]
+}, actualPaymentCards, [], actualPaymentPlan, "avalanche", [], currentActualPaymentResult);
+assert.equal(mixedCapacityScenario.entries[0].name, "Small low-rate loan", "mixed-capacity offer allocation uses modeled savings per dollar");
+assert(mixedCapacityScenario.entries[0].modeledSavingsPerDollar > mixedCapacityScenario.entries[1].modeledSavingsPerDollar, "smaller better offer has higher modeled savings per dollar");
+
 assert.equal(
   live.optionDifferenceText({
     currentCapped: true,
@@ -229,6 +257,12 @@ assert.equal(
   ),
   "Not comparable: one plan does not pay off within 50 years.",
   "method comparison avoids precise savings against capped plans"
+);
+
+assert.equal(
+  live.comparisonInterestText({ capped: true, totalInterest: 16310000000 }),
+  "Still accruing after 50 years",
+  "capped comparison rows do not show partial 50-year interest as payoff interest"
 );
 
 assert(
