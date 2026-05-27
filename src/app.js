@@ -99,6 +99,17 @@
       var mobileMonthlyPayment = document.getElementById("mobileMonthlyPayment");
       var mobileSummaryLink = document.getElementById("mobileSummaryLink");
       var mobilePayoffJump = document.getElementById("mobilePayoffJump");
+      var reportIssueButton = document.getElementById("reportIssueButton");
+      var aboutReportIssueButton = document.getElementById("aboutReportIssueButton");
+      var feedbackDialog = document.getElementById("feedbackDialog");
+      var feedbackForm = document.getElementById("feedbackForm");
+      var feedbackType = document.getElementById("feedbackType");
+      var feedbackMessage = document.getElementById("feedbackMessage");
+      var feedbackEmail = document.getElementById("feedbackEmail");
+      var feedbackStatus = document.getElementById("feedbackStatus");
+      var feedbackSubmitButton = document.getElementById("feedbackSubmitButton");
+      var feedbackCancelButton = document.getElementById("feedbackCancelButton");
+      var feedbackCancelSecondaryButton = document.getElementById("feedbackCancelSecondaryButton");
 
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
@@ -111,7 +122,9 @@
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
-        mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump
+        mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump,
+        reportIssueButton, feedbackDialog, feedbackForm, feedbackType, feedbackMessage, feedbackEmail, feedbackStatus, feedbackSubmitButton,
+        feedbackCancelButton, feedbackCancelSecondaryButton
       ];
 
       if (requiredElements.some(function (element) { return !element; })) {
@@ -221,6 +234,11 @@
         });
       }
 
+      function bindDeferredFeedbackLauncher() {
+        aboutReportIssueButton = document.getElementById("aboutReportIssueButton");
+        bind(aboutReportIssueButton, "click", openFeedbackDialog);
+      }
+
       function mountDeferredContent() {
         var mount = document.getElementById("deferredContentMount");
         var template = document.getElementById("deferredContentTemplate");
@@ -229,6 +247,7 @@
         mount.dataset.mounted = "true";
         enhanceScrollableTables(mount);
         bindLoadExampleButton();
+        bindDeferredFeedbackLauncher();
         if (window.location.hash && mount.querySelector(window.location.hash)) {
           mount.querySelector(window.location.hash).scrollIntoView();
         }
@@ -698,6 +717,164 @@
         if (calculatorForm && calculatorForm.scrollIntoView) {
           calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
         }
+      }
+
+      function setFeedbackStatus(message) {
+        if (feedbackStatus) feedbackStatus.textContent = message || "";
+      }
+
+      function setFeedbackFieldError(input, field, message) {
+        if (!input) return;
+        var wrapper = input.closest(".field-stack") || input.parentElement;
+        var error = wrapper ? wrapper.querySelector('[data-error-for="' + field + '"]') : null;
+        if (error) {
+          var id = input.id ? input.id + "-error" : field + "-error";
+          error.id = id;
+          error.textContent = message || "";
+          error.classList.toggle("hidden", !message);
+          if (message) {
+            input.setAttribute("aria-invalid", "true");
+            input.setAttribute("aria-describedby", id);
+          } else {
+            input.removeAttribute("aria-invalid");
+            input.removeAttribute("aria-describedby");
+          }
+        }
+      }
+
+      function clearFeedbackErrors() {
+        setFeedbackFieldError(feedbackMessage, "feedbackMessage", "");
+        setFeedbackFieldError(feedbackEmail, "feedbackEmail", "");
+        setFeedbackStatus("");
+      }
+
+      function openFeedbackDialog() {
+        clearFeedbackErrors();
+        if (feedbackDialog.showModal) {
+          feedbackDialog.showModal();
+        } else {
+          feedbackDialog.setAttribute("open", "");
+        }
+        setTimeout(function () {
+          if (feedbackMessage) feedbackMessage.focus();
+        }, 0);
+      }
+
+      function closeFeedbackDialog() {
+        clearFeedbackErrors();
+        if (feedbackDialog.close) {
+          feedbackDialog.close();
+        } else {
+          feedbackDialog.removeAttribute("open");
+        }
+      }
+
+      function feedbackResultSnapshot(result) {
+        if (!result) return {};
+        return {
+          method: result.method || methodInput.value,
+          capped: Boolean(result.capped),
+          months: result.months || null,
+          startingBalance: roundCents(result.startingBalance || 0),
+          startingMinimumTotal: roundCents(result.startingMinimumTotal || 0),
+          monthlyPayment: roundCents(result.monthlyPayment || 0),
+          totalInterest: roundCents(result.totalInterest || 0),
+          totalPaid: roundCents(result.totalPaid || 0),
+          firstTarget: result.timeline && result.timeline[0] ? result.timeline[0].target || null : null,
+          warnings: (result.warnings || []).slice(0, 6),
+          criticalWarnings: (result.criticalWarnings || []).slice(0, 6)
+        };
+      }
+
+      function currentFeedbackInputState(cards, loans) {
+        var method = methodInput.value;
+        var payment = {};
+        try {
+          payment = currentPaymentInput(cards, loans, method);
+        } catch (error) {
+          payment = {
+            mode: paymentMode(),
+            extraPayment: Math.max(0, Number(extraInput.value || 0)),
+            enteredAmount: Math.max(0, Number(extraInput.value || 0))
+          };
+        }
+        return trackingInputState(cards, loans, {
+          method: method,
+          extraPayment: payment.extraPayment,
+          targetDate: targetInput ? targetInput.value : null,
+          startMonth: startInput ? startInput.value : null,
+          paymentMode: payment.mode,
+          paymentAmount: payment.enteredAmount
+        });
+      }
+
+      function postFeedbackPayload(payload) {
+        return fetch(SUPABASE_URL + '/rest/v1/feedback_reports', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(payload)
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Feedback request failed");
+          return response;
+        });
+      }
+
+      function submitFeedbackReport(event) {
+        event.preventDefault();
+        clearFeedbackErrors();
+        var message = feedbackMessage.value.trim();
+        var email = feedbackEmail.value.trim();
+        if (message.length < 5) {
+          setFeedbackFieldError(feedbackMessage, "feedbackMessage", "Enter at least 5 characters.");
+          feedbackMessage.focus();
+          return;
+        }
+        if (email && !feedbackEmail.checkValidity()) {
+          setFeedbackFieldError(feedbackEmail, "feedbackEmail", "Enter a valid email address or leave it blank.");
+          feedbackEmail.focus();
+          return;
+        }
+
+        var cards = readCards();
+        var loans = readLoans();
+        var payload = {
+          uid: getUid(),
+          report_type: feedbackType.value || "issue",
+          message: message.slice(0, 4000),
+          email: email || null,
+          page_url: String(window.location.href || "").slice(0, 2048),
+          user_agent: String(navigator.userAgent || "").slice(0, 1024),
+          viewport: {
+            width: window.innerWidth || null,
+            height: window.innerHeight || null,
+            devicePixelRatio: window.devicePixelRatio || 1
+          },
+          input_state: currentFeedbackInputState(cards, loans),
+          result_summary: feedbackResultSnapshot(lastResult),
+          sample_mode: Boolean(isSampleMode),
+          telemetry_opted_out: telemetryDisabled()
+        };
+
+        feedbackSubmitButton.disabled = true;
+        setFeedbackStatus("Sending...");
+        postFeedbackPayload(payload).then(function () {
+          feedbackMessage.value = "";
+          feedbackEmail.value = "";
+          feedbackType.value = "issue";
+          setFeedbackStatus("Thanks, your report was sent.");
+          setTimeout(function () {
+            feedbackSubmitButton.disabled = false;
+            closeFeedbackDialog();
+          }, 900);
+        }).catch(function () {
+          feedbackSubmitButton.disabled = false;
+          setFeedbackStatus("Could not send right now. Please try again.");
+        });
       }
 
       function buildResultsSummary(result) {
@@ -3587,6 +3764,13 @@
 
       bind(copyLinkButton, "click", copyShareLink);
       bind(copySummaryButton, "click", copyResultsSummary);
+      bind(reportIssueButton, "click", openFeedbackDialog);
+      bind(feedbackForm, "submit", submitFeedbackReport);
+      bind(feedbackCancelButton, "click", closeFeedbackDialog);
+      bind(feedbackCancelSecondaryButton, "click", closeFeedbackDialog);
+      bind(feedbackDialog, "click", function (event) {
+        if (event.target === feedbackDialog) closeFeedbackDialog();
+      });
       syncPaymentInputCopy();
 
       window.addEventListener("beforeprint", function () {

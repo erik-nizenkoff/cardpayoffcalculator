@@ -1,6 +1,7 @@
 const { expect, test } = require("@playwright/test");
 
 const SUPABASE_CALCULATIONS_URL = "https://ofhgwcbcljlmvuqvwoax.supabase.co/rest/v1/calculations";
+const SUPABASE_FEEDBACK_URL = "https://ofhgwcbcljlmvuqvwoax.supabase.co/rest/v1/feedback_reports";
 
 function sharedStateUrl(state) {
   const encoded = Buffer.from(JSON.stringify(state), "utf8")
@@ -91,4 +92,45 @@ test("telemetry excludes debt nicknames and opt-out stops later sends", async ({
   await page.waitForTimeout(1000);
 
   expect(requests).toEqual([]);
+});
+
+test("feedback report posts comment with current diagnostic input snapshot", async ({ page }) => {
+  const requests = [];
+  await page.route(SUPABASE_FEEDBACK_URL, async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({ status: 201, body: "" });
+  });
+
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Card name" }).fill("Private Bank Card");
+  await page.getByRole("spinbutton", { name: "Private Bank Card balance" }).fill("8500");
+  await page.getByRole("spinbutton", { name: "Private Bank Card APR" }).fill("22.99");
+  await page.getByRole("spinbutton", { name: "Private Bank Card minimum payment" }).fill("170");
+  await expect(page.locator(".hero-label", { hasText: "Debt-Free Date" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Report an issue" }).first().click();
+  await expect(page.getByRole("dialog", { name: "Report an Issue" })).toBeVisible();
+  await page.getByLabel("Type").selectOption("suggestion");
+  await page.getByLabel("Issue or comment").fill("The payoff date looks worth double-checking.");
+  await page.getByLabel(/Email address/).fill("tester@example.com");
+  await page.getByRole("button", { name: "Submit report" }).click();
+
+  await expect.poll(() => requests.length).toBe(1);
+  expect(requests[0]).toMatchObject({
+    report_type: "suggestion",
+    message: "The payoff date looks worth double-checking.",
+    email: "tester@example.com"
+  });
+  expect(JSON.stringify(requests[0].input_state)).not.toContain("Private Bank Card");
+  expect(requests[0].input_state.cards[0]).toMatchObject({
+    id: "card-1",
+    index: 1,
+    balance: 8500,
+    apr: 22.99,
+    minimum: 170
+  });
+  expect(requests[0].result_summary).toMatchObject({
+    capped: false,
+    startingBalance: 8500
+  });
 });
