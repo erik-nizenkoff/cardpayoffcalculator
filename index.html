@@ -2467,7 +2467,7 @@
             <p class="entry-guide">To get your first answer, enter three numbers per card: balance, APR, and minimum payment.</p>
             <details class="privacy-disclosure">
               <summary>Privacy and data</summary>
-              <p class="privacy-note">Calculations run in your browser. Do not enter card numbers, logins, or account names; optional telemetry may include numeric inputs and results to improve the calculator. <a href="privacy.html">Privacy details</a></p>
+              <p class="privacy-note">Calculations run in your browser. Do not enter card numbers, logins, or account names; optional telemetry may include non-identifying inputs and results to improve the calculator. <a href="privacy.html">Privacy details</a></p>
               <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send calculation telemetry</label>
             </details>
           </div>
@@ -2928,7 +2928,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · Do not enter card numbers, account names, logins, or personal identifiers. Numeric inputs and anonymous usage events may be used to improve the tool. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · Do not enter card numbers, account names, logins, or personal identifiers. Non-identifying inputs and anonymous usage events may be used to improve the tool. · Not financial advice</div>
     </div>
   </footer>
 
@@ -2956,7 +2956,7 @@
       var EPSILON = 0.005;
       var SUPABASE_URL = 'https://ofhgwcbcljlmvuqvwoax.supabase.co';
       var SUPABASE_ANON_KEY = 'sb_publishable_TshGB0Mpxe2zjVOc9zeW_w_LzEi5j_S';
-      var PAYOFF_OPTION_TELEMETRY_ENABLED = false;
+      var PAYOFF_OPTION_TELEMETRY_ENABLED = true;
       var DEFAULT_EMPTY_MESSAGE = "Enter at least one card or loan with a balance, rate, and payment to see live results.";
       var ZERO_BALANCE_MESSAGE = "All entered balances are $0. You do not have any active debt to model.";
 
@@ -5476,10 +5476,50 @@
         });
       }
 
+      function trackingInputState(cards, loans, options) {
+        return {
+          version: 1,
+          method: options.method || "avalanche",
+          paymentMode: options.paymentMode === "total" ? "total" : "extra",
+          paymentAmount: cleanSharedNumber(options.paymentAmount, 0, Number.MAX_SAFE_INTEGER),
+          extraPayment: cleanSharedNumber(options.extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0,
+          startMonth: isValidMonthValue(options.startMonth) ? options.startMonth : "",
+          targetMonth: isValidMonthValue(options.targetDate) ? options.targetDate : "",
+          customOrder: customOrder.slice(0, 60),
+          cards: cards.map(function (card, index) {
+            var item = {
+              id: card.id || "card-" + (index + 1),
+              index: index + 1,
+              balance: card.balance,
+              apr: card.apr,
+              minimum: card.minimum
+            };
+            if (card.introApr != null && card.introMonths != null) {
+              item.introApr = card.introApr;
+              item.introMonths = card.introMonths;
+            }
+            return item;
+          }),
+          loans: (loans || []).map(function (loan, index) {
+            return {
+              id: loan.id || "loan-" + (index + 1),
+              index: index + 1,
+              balance: loan.balance,
+              apr: loan.apr != null ? loan.apr : loan.rate,
+              payment: loan.payment,
+              termMonths: loan.termMonths || loan.term || null,
+              type: loan.type || "loan"
+            };
+          }),
+          payoffOptions: trackingPayoffOptions(cards)
+        };
+      }
+
       function legacyCalculationPayload(payload) {
         var legacy = {};
         Object.keys(payload).forEach(function (key) {
           if ([
+            "input_state",
             "payoff_options",
             "num_payoff_options",
             "num_balance_transfer_options",
@@ -5518,7 +5558,21 @@
         var body = canSendPayoffOptions ? payload : legacyCalculationPayload(payload);
 
         return post(body).then(function (response) {
-          if (response.ok || !canSendPayoffOptions) return response;
+          if (response.ok) return response;
+          if (payload.input_state && canSendPayoffOptions) {
+            var withoutInputState = {};
+            Object.keys(payload).forEach(function (key) {
+              if (key !== "input_state") withoutInputState[key] = payload[key];
+            });
+            return post(withoutInputState).then(function (retryResponse) {
+              if (retryResponse.ok) return retryResponse;
+              try {
+                localStorage.removeItem("cpoc_payoff_option_telemetry_enabled");
+              } catch (error) {}
+              return post(legacyCalculationPayload(payload));
+            });
+          }
+          if (!canSendPayoffOptions) return response;
           try {
             localStorage.removeItem("cpoc_payoff_option_telemetry_enabled");
           } catch (error) {}
@@ -5576,6 +5630,7 @@
             avg_apr: avgApr,
             months_to_payoff: result.months || null,
             total_interest: result.totalInterest != null ? Math.round(result.totalInterest * 100) / 100 : null,
+            input_state: trackingInputState(cards, loans, options),
             payoff_options: payoffOptionData,
             num_payoff_options: payoffOptionData.length,
             num_balance_transfer_options: balanceTransferOptionCount,
@@ -5675,7 +5730,14 @@
         }
         renderResultExplainer(cards, loans, result, baseline, extra);
         if (!options.skipTracking && !isSampleMode) {
-          trackCalculation(cards, loans, { method: method, extraPayment: extra, targetDate: targetInput ? targetInput.value : null }, result);
+          trackCalculation(cards, loans, {
+            method: method,
+            extraPayment: extra,
+            targetDate: targetInput ? targetInput.value : null,
+            startMonth: startInput ? startInput.value : null,
+            paymentMode: payment.mode,
+            paymentAmount: payment.enteredAmount
+          }, result);
         }
       }
 

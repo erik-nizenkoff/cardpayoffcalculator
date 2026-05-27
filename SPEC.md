@@ -98,7 +98,7 @@ Recent UX QA fixes should remain part of the product baseline:
 - Telemetry wording near inputs should plainly mention numeric balances, APRs, minimums, settings, and results without turning privacy into a highlighted feature block.
 - Desktop card entry should stay compact enough that APR, promo APR, and current statement minimums are visible without unnecessary horizontal scanning.
 - Share/export/methodology actions should not compete with the primary result or edit-card flow.
-- Privacy copy should state that card numbers, account names, logins, and personal identifiers are not requested while numeric calculation inputs may be sent.
+- Privacy copy should state that card numbers, account names, logins, and personal identifiers are not requested while non-identifying calculation inputs may be sent.
 - Privacy copy near inputs should stay short enough to scan before entering data.
 - Minimum payment inputs should be labeled as current statement minimums.
 - Mobile card summaries should use stacked metadata and a simple Edit affordance.
@@ -151,14 +151,22 @@ Telemetry details for current launch state:
 
 - Plausible may record basic page-view usage when the page loads.
 - Supabase calculation telemetry should not be sent for the default sample load.
-- Supabase calculation telemetry may be sent after a user edits valid numeric calculator inputs or scenarios.
+- Supabase calculation telemetry may be sent after a user edits valid non-identifying calculator inputs or scenarios.
 - Users should have a low-friction way to opt out of calculator telemetry, and the app should respect browser Do Not Track where practical.
 - Privacy copy should state a fixed retention target for raw non-identifying calculator telemetry instead of saying no schedule exists.
 - Privacy page copy should state retention and deletion limits plainly and identify Vercel, Supabase, Plausible, and Google Fonts as service providers/processors where applicable.
 
 ## Calculation Data Payload
 
-The Supabase calculation row should include the payoff option scenario inputs so later analysis can understand whether users are modeling balance transfers or debt consolidation loans.
+The Supabase calculation row should include a non-identifying `input_state` JSON snapshot plus payoff option scenario inputs so later analysis can understand the inputs behind a calculation. Do not store card nicknames, loan names, account names, or other user-entered identifiers.
+
+Store the input snapshot without card or loan names:
+
+- payoff method, payment entry mode, entered payment amount, calculated extra payment, start month, and target month
+- custom payoff order ids
+- card balances, APRs, statement minimums, and promo APR/month fields
+- loan balances, APRs, payments, remaining terms, and debt type
+- optional balance-transfer and consolidation-loan scenario inputs
 
 Store payoff options without card or loan names:
 
