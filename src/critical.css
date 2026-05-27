@@ -679,6 +679,15 @@
       font-size: .84rem;
     }
 
+    .payment-drop-warning {
+      display: inline;
+      border-radius: 5px;
+      background: #fff8ed;
+      color: #7b341e;
+      padding: 1px 4px;
+      font-weight: 900;
+    }
+
     .core-path-note {
       margin: 6px 0 0;
       color: var(--navy);

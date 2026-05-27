@@ -327,9 +327,9 @@
           extraInput.setAttribute("aria-label", totalMode ? "Total monthly debt payoff budget" : "Extra monthly payment");
         }
         if (paymentInputHint) {
-          paymentInputHint.textContent = totalMode
+          paymentInputHint.innerHTML = totalMode
             ? "This is your full monthly payoff budget, including all required minimum or fixed payments."
-            : "Adds this amount on top of required payments. Your total monthly payment may drop as debts are paid off unless you choose a fixed budget.";
+            : 'Adds this amount on top of required payments. <strong class="payment-drop-warning">Your total monthly payment may drop as debts are paid off</strong> unless you choose a fixed budget.';
         }
       }
 
