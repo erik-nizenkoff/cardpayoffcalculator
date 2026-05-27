@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Credit Card Payoff Calculator — How Long to Pay Off Your Debt?</title>
-  <meta name="description" content="Use this free credit card payoff calculator to estimate your payoff date, total interest, required payment by a target date, and savings from extra monthly payments.">
+  <meta name="description" content="Use this free credit card payoff calculator to estimate your payoff date, total interest, required payment by a target month, and savings from extra monthly payments.">
   <link rel="canonical" href="https://cardpayoffcalculator.vercel.app/">
   <meta property="og:title" content="Credit Card Payoff Calculator">
   <meta property="og:description" content="Estimate when your credit card debt will be paid off, how much interest you will pay, and whether avalanche or snowball saves more.">
@@ -2398,10 +2398,10 @@
       },
       {
         "@type": "Question",
-        "name": "How do I calculate what payment I need to be debt-free by a specific date?",
+        "name": "How do I calculate what payment I need to be debt-free by a specific month?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Enter a target payoff month and compare the required payment result. The calculator searches for the smallest estimated monthly payment that pays all entered balances by that date."
+          "text": "Enter a target payoff month and compare the required payment result. The calculator searches for the smallest estimated monthly payment that pays all entered balances by that month."
         }
       },
       {
@@ -2430,7 +2430,7 @@
       {
         "@type": "HowToStep",
         "name": "Choose a payoff method",
-        "text": "Compare avalanche, snowball, or minimum-only payments."
+        "text": "Compare avalanche, snowball, or minimum payments only."
       },
       {
         "@type": "HowToStep",
@@ -2452,7 +2452,7 @@
       <div>
         <p class="eyebrow">Card Payoff Calculator</p>
         <h1>Credit Card Payoff Calculator</h1>
-        <p class="subtitle">Estimate your debt-free date, total interest, target-date payment, and savings from extra monthly payments across up to 20 credit cards and installment loans.</p>
+        <p class="subtitle">Estimate your debt-free date, total interest, target-month payment, and savings from extra monthly payments across up to 20 credit cards and installment loans.</p>
       </div>
     </div>
   </header>
@@ -2472,7 +2472,7 @@
             </details>
           </div>
           <div class="button-row">
-            <button type="button" class="secondary" id="clearAllButton">Start with my cards</button>
+            <button type="button" class="secondary" id="clearAllButton">Enter my cards</button>
             <button type="button" id="sampleButton">View example</button>
           </div>
         </div>
@@ -2480,7 +2480,7 @@
         <div id="sampleDataBanner" class="sample-data-banner hidden">
           <span><strong>Sample plan only.</strong> Replace with your cards for a real payoff plan.</span>
           <div class="button-row">
-            <button type="button" class="sample-primary-action" id="sampleEnterCardsButton">Start with my cards</button>
+            <button type="button" class="sample-primary-action" id="sampleEnterCardsButton">Enter my cards</button>
             <button type="button" class="secondary quiet-button" id="keepSampleButton">Keep viewing sample</button>
           </div>
         </div>
@@ -2491,21 +2491,21 @@
           <table class="card-table">
             <thead>
               <tr>
-                <th>Card Name</th>
+                <th>Card nickname</th>
                 <th>Balance ($)</th>
                 <th>APR (%)</th>
-                <th>Statement Minimum ($)</th>
+                <th>Statement minimum payment ($)</th>
                 <th><span class="sr-only">Remove card</span></th>
               </tr>
             </thead>
             <tbody id="cardRows"></tbody>
           </table>
         </div>
-        <p class="field-helper">Examples: balance 8,500, APR 22.99, minimum 170. Use nicknames only - account names are not needed. No % sign needed for APR fields.</p>
+        <p class="field-helper">Examples: balance 8,500, APR 22.99, minimum 170. Use nicknames only, such as Visa or Store Card. Do not enter card numbers or account names. No % sign needed for APR fields.</p>
 
         <div class="button-row">
           <button type="button" class="secondary" id="addCardButton">Add Card</button>
-          <span id="rowLimitNote" class="hint">Use the minimum shown on your latest statement. Up to 20 cards; $0 balances are ignored.</span>
+          <span id="rowLimitNote" class="hint">Enter the minimum from your latest statement. The calculator may estimate a higher minimum when issuer-style rules apply. Up to 20 debts; $0 balances are ignored.</span>
         </div>
 
         <div id="loanSection" class="loan-section" aria-labelledby="loanSectionHeading">
@@ -2537,7 +2537,7 @@
         <div class="subsection-head" aria-labelledby="payoffInputsHeading">
           <div>
             <h2 id="payoffInputsHeading">Payoff Inputs</h2>
-            <p>Choose the strategy, budget, start month, and optional target date for this plan.</p>
+            <p>Choose the strategy, budget, start month, and optional target month for this plan.</p>
           </div>
         </div>
 
@@ -2547,7 +2547,7 @@
             <select id="method" aria-label="Payoff strategy">
               <option value="avalanche">Avalanche - usually lowest interest</option>
               <option value="snowball">Snowball - pay small balances first</option>
-              <option value="minimum">Minimum only - slowest baseline</option>
+              <option value="minimum">Pay minimums only - no extra payment</option>
               <option value="custom">Custom order - choose your target order</option>
             </select>
             <p class="hint">Avalanche is selected because it usually saves the most interest.</p>
@@ -2578,12 +2578,12 @@
         </div>
 
         <div id="targetDateOptions" class="advanced-options" aria-labelledby="targetDateHeading">
-          <h3 id="targetDateHeading">Target payoff date optional</h3>
+          <h3 id="targetDateHeading">Optional target payoff month</h3>
           <div class="settings-grid">
             <div class="field-stack">
-              <label for="targetMonth">Target Payoff Date</label>
-              <input id="targetMonth" aria-label="Target payoff date" type="month">
-              <p class="hint">Choose a month to see the monthly payment required.</p>
+              <label for="targetMonth">Target payoff month</label>
+              <input id="targetMonth" aria-label="Target payoff month" type="month">
+              <p class="hint">Choose a month to estimate the required monthly payment.</p>
             </div>
             <div id="targetInlineResult" class="target-inline-card hidden" aria-live="polite"></div>
           </div>
@@ -2623,12 +2623,12 @@
             <p id="methodDescription">Here's what it takes to get debt-free.</p>
             <p id="sampleResultBadge" class="sample-inline-note hidden">Sample</p>
             <div id="sampleResultActions" class="sample-result-actions hidden">
-              <button type="button" class="sample-primary-action" id="resultEnterCardsButton">Use my cards</button>
+              <button type="button" class="sample-primary-action" id="resultEnterCardsButton">Enter my cards</button>
             </div>
           </div>
         </div>
 
-        <div id="emptyResults" class="results-empty hidden">Enter at least one card with a balance, APR, and minimum payment to see live results.</div>
+        <div id="emptyResults" class="results-empty hidden">Enter at least one card or loan with a balance, rate, and payment to see live results.</div>
 
         <div id="resultsContent">
           <div id="firstRunHint" class="first-run-hint hidden">
@@ -2653,7 +2653,7 @@
           <p class="results-disclaimer">Estimates only. Assumes no new purchases and unchanged APRs/minimums.</p>
 
           <div class="result-quick-actions" aria-label="Suggested next actions">
-            <button type="button" class="primary-next" id="boostExtraButton">Try $50 more</button>
+            <button type="button" class="primary-next" id="boostExtraButton">Add $50/mo</button>
             <a href="#monthPlan">See first payment</a>
             <a href="#comparisonSection">Compare methods</a>
             <a href="#calculatorForm">Edit cards</a>
@@ -2702,7 +2702,7 @@
                   <tr>
                     <th>Debt Name</th>
                     <th>This Month's Payment</th>
-                    <th>of which Interest</th>
+                    <th>Interest portion</th>
                     <th>Principal</th>
                     <th>Remaining Balance</th>
                   </tr>
@@ -2751,7 +2751,7 @@
         <div class="section-head">
           <div>
             <h2>Payoff Method Comparison</h2>
-            <p>Compare avalanche, snowball, and minimum-only using the same card inputs.</p>
+            <p>Compare avalanche, snowball, and minimum payments only using the same debt inputs.</p>
           </div>
         </div>
         <div class="table-scroll">
@@ -2763,7 +2763,7 @@
                 <th>Months</th>
                 <th>Total Interest</th>
                 <th>Monthly Payment</th>
-                <th>First Card Paid</th>
+                <th>First debt paid</th>
               </tr>
             </thead>
             <tbody id="comparisonRows"></tbody>
@@ -2812,14 +2812,14 @@
       <div class="panel content-section">
         <h2>Methodology</h2>
         <p>Each month, the calculator computes interest for every active debt using APR divided by 12. It then uses the greater of the issuer-style minimum estimate, the entered minimum payment, or $25, capped at the amount needed to pay the debt off that month.</p>
-        <p>The issuer-style minimum estimate is current balance times 1% plus that month&apos;s interest. The payment first covers interest, then reduces principal. Avalanche applies extra money to the highest APR debt until it is paid, then cascades. Snowball applies extra money to the smallest balance until it is paid, then cascades. Minimum only applies no extra payment.</p>
+        <p>The issuer-style minimum estimate is current balance times 1% plus that month&apos;s interest. The payment first covers interest, then reduces principal. Avalanche applies extra money to the highest APR debt until it is paid, then cascades. Snowball applies extra money to the smallest balance until it is paid, then cascades. Paying minimums only applies no extra payment.</p>
         <p>The schedule stops when all balances reach $0 or after 600 months. Results are estimates and do not include new charges, fees, mid-cycle balance transfers, penalty APRs, payment timing differences, or issuer-specific minimum rules beyond the model above. Promotional/intro APRs are supported — enter them per card in the Intro APR fields.</p>
       </div>
 
       <div class="panel content-section">
         <h2>FAQ</h2>
         <details>
-          <summary>What payment do I need to be debt-free by a target date?</summary>
+          <summary>What payment do I need to be debt-free by a target month?</summary>
           <p>Enter a target payoff month. The calculator uses a binary search over monthly payment amounts and reports the smallest estimated payment that pays all entered debts by that month.</p>
         </details>
         <details>
@@ -2831,8 +2831,8 @@
           <p>Snowball pays every debt&apos;s minimum, then sends extra money to the smallest balance. It may cost more interest, but it can produce a faster first payoff.</p>
         </details>
         <details>
-          <summary>Why does minimum-only sometimes show a warning?</summary>
-          <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a revolving trap.</p>
+          <summary>Why do minimum payments sometimes show a warning?</summary>
+          <p>If a debt&apos;s minimum payment is less than or equal to the monthly interest charge, principal does not shrink. The calculator flags that as a minimum-payment warning.</p>
         </details>
         <details>
           <summary>Can I use this offline?</summary>
@@ -2880,9 +2880,9 @@
       <div class="example-results">
         <div class="example-result"><strong>Avalanche with $250 extra</strong>Paid off in 36 months, $4,234 total interest.</div>
         <div class="example-result"><strong>Snowball with $250 extra</strong>Paid off in 36 months, $4,475 total interest.</div>
-        <div class="example-result"><strong>Minimum only</strong>Paid off in 94 months, $12,348 total interest.</div>
+        <div class="example-result"><strong>Pay minimums only</strong>Paid off in 94 months, $12,348 total interest.</div>
       </div>
-      <p>For this sample, avalanche saves about $8,115 in interest and 58 months compared with minimum-only payments. Snowball finishes in the same 36 months but costs $241 more interest than avalanche.</p>
+      <p>For this sample, avalanche saves about $8,115 in interest and 58 months compared with paying minimums only. Snowball finishes in the same 36 months but costs $241 more interest than avalanche.</p>
       <p>Try it yourself — the sample data above is pre-loaded in the calculator.</p>
       <button type="button" id="loadExampleButton">Load this example →</button>
     </section>
@@ -2903,8 +2903,8 @@
       </div>
 
       <div id="target-date-payoff" class="panel content-section">
-        <h3>Paying Off by a Target Date</h3>
-        <p>A target payoff date calculation works backward from your desired debt-free month. The calculator tests monthly payment amounts until it finds the smallest payment that clears all entered balances by that date.</p>
+        <h3>Paying Off by a Target Month</h3>
+        <p>A target payoff month calculation works backward from your desired debt-free month. The calculator tests monthly payment amounts until it finds the smallest payment that clears all entered balances by that month.</p>
         <p>This is most useful when a bonus, refinance deadline, move, or personal milestone gives you a firm payoff window.</p>
         <a class="calculator-link" href="#calculatorForm">Try it in the calculator →</a>
       </div>
@@ -2957,7 +2957,7 @@
       var SUPABASE_URL = 'https://ofhgwcbcljlmvuqvwoax.supabase.co';
       var SUPABASE_ANON_KEY = 'sb_publishable_TshGB0Mpxe2zjVOc9zeW_w_LzEi5j_S';
       var PAYOFF_OPTION_TELEMETRY_ENABLED = false;
-      var DEFAULT_EMPTY_MESSAGE = "Enter at least one card with a balance, APR, and minimum payment to see live results.";
+      var DEFAULT_EMPTY_MESSAGE = "Enter at least one card or loan with a balance, rate, and payment to see live results.";
       var ZERO_BALANCE_MESSAGE = "All entered balances are $0. You do not have any active debt to model.";
 
       var cardRows = document.getElementById("cardRows");
@@ -3230,7 +3230,7 @@
         return {
           avalanche: "Avalanche",
           snowball: "Snowball",
-          minimum: "Minimum only",
+          minimum: "Pay minimums only",
           custom: "Custom order"
         }[method] || "Avalanche";
       }
@@ -3239,7 +3239,7 @@
         return {
           avalanche: "Here's what it takes to get debt-free. Avalanche is the default because it usually lowers total interest.",
           snowball: "Here's what it takes to get debt-free. Snowball focuses on small balances first for faster early wins.",
-          minimum: "Here's what it takes to get debt-free. Minimum only is the slow baseline with no extra payment.",
+          minimum: "Here's what it takes to get debt-free. Pay minimums only means no extra payment.",
           custom: "Here's what it takes to get debt-free. Custom order follows the target list you choose."
         }[method] || "Here's what it takes to get debt-free. Avalanche is the default because it usually lowers total interest.";
       }
@@ -3329,12 +3329,12 @@
         tr.dataset.id = id;
         tr.innerHTML =
           '<td class="card-summary-cell" colspan="5"><button type="button" class="card-summary-line" data-action="toggle-card-row" aria-label="Expand card details" aria-expanded="false"><span class="card-summary-text"></span><span class="row-expand-hint">Tap to edit</span><span class="row-chevron">›</span></button></td>' +
-          '<td class="name-cell card-row-detail" data-label="Card Name"><input data-field="name" aria-label="Card name" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
+          '<td class="name-cell card-row-detail" data-label="Card nickname"><input data-field="name" aria-label="Card nickname" value="' + escapeHtml(data.name || "") + '" placeholder="Visa"></td>' +
           '<td class="amount-cell card-row-detail" data-label="Balance ($)"><input data-field="balance" aria-label="Balance" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.balance != null ? data.balance : "") + '" placeholder="8,500"><span class="field-error hidden" data-error-for="balance"></span></td>' +
           '<td class="amount-cell apr-cell card-row-detail" data-label="APR (%)"><input data-field="apr" aria-label="APR, no percent sign needed" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.apr != null ? data.apr : "") + '" placeholder="22.99"><span class="field-error hidden" data-error-for="apr"></span><button type="button" class="inline-link" data-action="toggle-intro" aria-expanded="false">Add promo APR</button>' +
           '<div class="intro-fields hidden"><label>Intro APR (%)<input data-field="introApr" aria-label="Intro APR, no percent sign needed" type="number" min="0" max="79.99" step="0.01" inputmode="decimal" value="' + (data.introApr != null ? data.introApr : "") + '" placeholder="0"><span class="field-error hidden" data-error-for="introApr"></span></label>' +
           '<label>Months<input data-field="introMonths" aria-label="Intro promotional months" type="number" min="1" max="120" step="1" inputmode="numeric" value="' + (data.introMonths != null ? data.introMonths : "") + '" placeholder="12"><span class="field-error hidden" data-error-for="introMonths"></span></label></div></td>' +
-          '<td class="amount-cell minimum-cell card-row-detail" data-label="Statement Minimum ($)"><input data-field="minimum" aria-label="Current statement minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="170"><span class="field-error hidden" data-error-for="minimum"></span></td>' +
+          '<td class="amount-cell minimum-cell card-row-detail" data-label="Statement minimum payment ($)"><input data-field="minimum" aria-label="Statement minimum payment" type="number" min="0" step="0.01" inputmode="decimal" value="' + (data.minimum != null ? data.minimum : "") + '" placeholder="170"><span class="field-error hidden" data-error-for="minimum"></span></td>' +
           '<td class="remove-cell card-row-detail" data-label=""><button type="button" class="icon-button danger" data-action="remove" aria-label="Remove card" title="Remove card">×</button></td>';
         // If data has intro, expand it
         if (data.introApr != null || data.introMonths != null) {
@@ -3583,7 +3583,7 @@
       function exitSampleForOwnPlan(row) {
         if (!isSampleMode) return;
         setSampleMode(false);
-        setPlanModeStatus("You're editing the example cards. For a clean plan, use Start with my cards.");
+        setPlanModeStatus("You're editing the example cards. For a clean plan, choose Enter my cards.");
         markRowUpdated(row);
       }
 
@@ -4146,14 +4146,14 @@
 
         if (!targetMonths) {
           targetResult.classList.remove("hidden");
-          targetResult.textContent = "Target date must be in the future";
+          targetResult.textContent = "Target month must be in the future.";
           setInlineTarget("Choose a future month to calculate the required payment.");
           return;
         }
 
         if (targetMonths === 1) {
           targetResult.classList.remove("hidden");
-          targetResult.textContent = "Target date must be at least one month in the future.";
+          targetResult.textContent = "Target month must be at least one month in the future.";
           setInlineTarget("Choose a target at least one month out.");
           return;
         }
@@ -4161,15 +4161,15 @@
         var required = requiredPaymentForTarget(cards, loans, method === "minimum" ? "avalanche" : method, targetMonths);
         targetResult.classList.remove("hidden");
         if (!required) {
-          targetResult.textContent = "No feasible target-date payment found inside the 50-year model.";
-          setInlineTarget("No feasible required payment found in the 50-year model.");
+          targetResult.textContent = "The calculator could not find a monthly payment that reaches that target month within the 50-year limit.";
+          setInlineTarget("The calculator could not find a required payment within the 50-year limit.");
           return;
         }
 
         var targetDate = escapeHtml(addMonths(startInput.value, targetMonths - 1));
-        setInlineTarget("Required monthly payment<strong>" + money(required.monthlyPayment) + "/mo</strong>");
+        setInlineTarget("Required monthly payment: <strong>" + money(required.monthlyPayment) + "/mo</strong>");
         if (lastResult && !lastResult.capped && lastResult.months <= targetMonths) {
-          targetResult.innerHTML = "Your current plan reaches <strong>" + targetDate + "</strong> or sooner. Estimated payment needed by that date: <strong>" + money(required.monthlyPayment) + "/mo</strong>.";
+          targetResult.innerHTML = "Your current plan reaches <strong>" + targetDate + "</strong> or sooner. Estimated payment needed by that month: <strong>" + money(required.monthlyPayment) + "/mo</strong>.";
           return;
         }
         var missMonths = lastResult && !lastResult.capped ? lastResult.months - targetMonths : null;
@@ -4181,7 +4181,7 @@
         if (!currentPlanSummary || !result || !result.timeline.length) return;
         var firstTarget = result.timeline[0].target || "your first target";
         var extraText = result.method === "minimum"
-          ? "With minimum-only payments"
+          ? "With minimum payments only"
           : "With " + money(result.extraPayment) + " extra using " + methodLabel(result.method).toLowerCase();
         var nextText = result.method === "minimum"
           ? "Next: try an extra monthly payment to see how much time and interest it saves."
@@ -4206,7 +4206,7 @@
         var interestSaved = roundCents(baseline.totalInterest - selected.totalInterest);
         var monthsSaved = baseline.months - selected.months;
         savingsResult.classList.remove("hidden");
-        savingsResult.innerHTML = "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than minimum-only.";
+        savingsResult.innerHTML = "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than paying minimums only.";
       }
 
       function renderMonthPlan(result) {
@@ -4273,7 +4273,7 @@
         var bestInterest = finiteRows.length ? Math.min.apply(null, finiteRows.map(function (row) { return row.totalInterest; })) : null;
         decisionRows.innerHTML = rows.map(function (result) {
           var delta = roundCents(result.totalInterest - currentCost);
-          var deltaText = Math.abs(delta) <= EPSILON ? "Current" : (delta < 0 ? "Saves " + money(Math.abs(delta)) : "Costs +" + money(delta));
+          var deltaText = Math.abs(delta) <= EPSILON ? "Current" : (delta < 0 ? "Saves " + money(Math.abs(delta)) : "Costs " + money(delta) + " more");
           return '<div class="decision-row ' + (bestInterest !== null && result.totalInterest === bestInterest ? "best-row" : "") + '">' +
             '<strong>' + escapeHtml(methodLabel(result.method)) + '</strong>' +
             '<span>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + '</span>' +
@@ -4532,7 +4532,7 @@
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
           '<div class="summary-line"><span>Monthly payment</span><strong>' + money(result.monthlyPayment) + "</strong></div>" +
           '<div class="summary-line"><span>Interest + fees</span><strong>' + money(row.totalCost) + "</strong></div>" +
-          '<div class="summary-line"><span>Modeled difference vs current</span><strong>' + differenceText + "</strong></div>" +
+          '<div class="summary-line"><span>Estimated cost difference vs current plan</span><strong>' + differenceText + "</strong></div>" +
           '<p class="option-watchout">' + escapeHtml(row.watchout || "") + "</p>" +
           '<p class="option-risk">' + escapeHtml(risk) + "</p>" +
           "</div>";
