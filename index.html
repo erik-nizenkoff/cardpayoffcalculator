@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Credit Card Payoff Calculator — How Long to Pay Off Your Debt?</title>
-  <meta name="description" content="Use this free credit card payoff calculator to estimate your payoff date, total interest, required payment by a target month, and savings from extra monthly payments.">
+  <title>Credit Card and Debt Payoff Calculator — How Long to Pay Off Your Debt?</title>
+  <meta name="description" content="Use this free debt payoff calculator to estimate your payoff date, total interest, required payment by a target month, and savings from extra monthly payments.">
   <link rel="canonical" href="https://cardpayoffcalculator.vercel.app/">
-  <meta property="og:title" content="Credit Card Payoff Calculator">
+  <meta property="og:title" content="Credit Card and Debt Payoff Calculator">
   <meta property="og:description" content="Estimate when your credit card debt will be paid off, how much interest you will pay, and whether avalanche or snowball saves more.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cardpayoffcalculator.vercel.app/">
@@ -2451,7 +2451,7 @@
     <div class="shell header-grid">
       <div>
         <p class="eyebrow">Card Payoff Calculator</p>
-        <h1>Credit Card Payoff Calculator</h1>
+        <h1>Credit Card and Debt Payoff Calculator</h1>
         <p class="subtitle">Estimate your debt-free date, total interest, target-month payment, and savings from extra monthly payments across up to 20 credit cards and installment loans.</p>
       </div>
     </div>
@@ -2462,8 +2462,8 @@
       <form id="calculatorForm" class="panel input-panel">
         <div class="section-head">
           <div>
-            <h2>Your Cards</h2>
-            <p>Start with your own card details, or load an example if you want to see how the calculator works.</p>
+            <h2>Your debts</h2>
+            <p>Start with your own debt details, or load an example to see how the calculator works.</p>
             <p class="entry-guide">To get your first answer, enter three numbers per card: balance, APR, and minimum payment.</p>
             <details class="privacy-disclosure">
               <summary>Privacy and data</summary>
@@ -2478,7 +2478,7 @@
         </div>
 
         <div id="sampleDataBanner" class="sample-data-banner hidden">
-          <span><strong>Sample plan only.</strong> Replace with your cards for a real payoff plan.</span>
+          <span><strong>Sample plan only.</strong> Replace with your debts for a real payoff plan.</span>
           <div class="button-row">
             <button type="button" class="sample-primary-action" id="sampleEnterCardsButton">Enter my cards</button>
             <button type="button" class="secondary quiet-button" id="keepSampleButton">Keep viewing sample</button>
@@ -2536,7 +2536,7 @@
 
         <div class="subsection-head" aria-labelledby="payoffInputsHeading">
           <div>
-            <h2 id="payoffInputsHeading">Payoff Inputs</h2>
+            <h2 id="payoffInputsHeading">Payoff inputs</h2>
             <p>Choose the strategy, budget, start month, and optional target month for this plan.</p>
           </div>
         </div>
@@ -2591,7 +2591,7 @@
         </div>
 
         <div id="payoffOptions" class="payoff-options" aria-labelledby="payoffOptionsHeading">
-          <h3 id="payoffOptionsHeading">Optional: Compare balance transfer or loan offers</h3>
+          <h3 id="payoffOptionsHeading">Optional: Compare balance transfer or consolidation loan offers</h3>
           <p class="hint">Enter offers you are considering. The calculator combines them, uses the lowest-interest options first, and only applies enough to cover your current credit card debt.</p>
           <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
           <div id="payoffOptionControls" class="option-controls">
@@ -2632,9 +2632,9 @@
 
         <div id="resultsContent">
           <div id="firstRunHint" class="first-run-hint hidden">
-            <span><strong>Sample plan only.</strong> Use your cards for a real payoff plan.</span>
+            <span><strong>Sample plan only.</strong> Use your debts for a real payoff plan.</span>
             <div class="first-run-actions">
-              <button type="button" class="secondary" id="enterCardsButton">Edit cards</button>
+              <button type="button" class="secondary" id="enterCardsButton">Edit debts</button>
               <button type="button" class="dismiss-button" id="dismissHint" aria-label="Dismiss sample data hint">✕</button>
             </div>
           </div>
@@ -2656,7 +2656,7 @@
             <button type="button" class="primary-next" id="boostExtraButton">Add $50/mo</button>
             <a href="#monthPlan">See first payment</a>
             <a href="#comparisonSection">Compare methods</a>
-            <a href="#calculatorForm">Edit cards</a>
+            <a href="#calculatorForm">Edit debts</a>
           </div>
 
           <div class="result-section">
@@ -2670,7 +2670,7 @@
               <div class="metric"><span>Estimated Starting Minimums</span><strong id="totalMinimums">$0</strong></div>
               <div class="metric"><span>Months to Payoff</span><strong id="payoffMonths">-</strong></div>
               <div class="metric"><span>Monthly Payment</span><strong id="monthlyPayment">$0</strong></div>
-              <div class="metric"><span>First Payoff Target</span><strong id="firstTarget">-</strong></div>
+              <div class="metric"><span>First debt targeted</span><strong id="firstTarget">-</strong></div>
               <div class="metric"><span>Total Paid</span><strong id="totalPaid">$0</strong></div>
             </div>
             <details class="estimate-details">
@@ -2722,7 +2722,7 @@
               <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
             </div>
             <p id="copyActionsHelp" class="copy-helper">Share and copy controls activate after valid results are shown.</p>
-            <p id="sampleShareNote" class="copy-helper hidden">Sample results are shown. Replace sample cards before sharing a real payoff plan.</p>
+            <p id="sampleShareNote" class="copy-helper hidden">Sample plan only. Replace sample data before sharing a real payoff plan.</p>
           </div>
 
         </div>
@@ -2797,7 +2797,7 @@
                 <th>Interest</th>
                 <th>Principal</th>
                 <th>Ending Balance</th>
-                <th>Extra Target</th>
+                <th>Extra payment target</th>
               </tr>
             </thead>
             <tbody id="scheduleRows"></tbody>
@@ -2928,7 +2928,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · No card numbers, account names, logins, or personal identifiers. Numeric calculator inputs and anonymous usage events may be sent to Supabase and Plausible to improve this tool. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · Do not enter card numbers, account names, logins, or personal identifiers. Numeric inputs and anonymous usage events may be used to improve the tool. · Not financial advice</div>
     </div>
   </footer>
 
@@ -3526,13 +3526,13 @@
         if (copyLinkButton) copyLinkButton.disabled = !enabled;
         if (copySummaryButton) copySummaryButton.disabled = !enabled;
         var helper = isSampleMode
-          ? "Sample results are active. Replace sample cards before sharing or copying a real payoff plan."
+          ? "Sample plan only. Replace sample data before sharing or copying a real payoff plan."
           : enabled
           ? "Share links include the current numeric inputs; copy actions are ready."
           : "Share and copy controls activate after valid results are shown.";
         if (copyActionsHelp) copyActionsHelp.textContent = helper;
-        if (copyLinkButton) copyLinkButton.title = isSampleMode ? "Replace sample cards before sharing" : enabled ? "Copy a link to these calculator inputs" : "Enter valid debt inputs to enable share links";
-        if (copySummaryButton) copySummaryButton.title = isSampleMode ? "Replace sample cards before copying" : enabled ? "Copy a plain-English summary of these results" : "Enter valid debt inputs to enable summary copy";
+        if (copyLinkButton) copyLinkButton.title = isSampleMode ? "Replace sample data before sharing" : enabled ? "Copy a link to these calculator inputs" : "Enter valid debt inputs to enable share links";
+        if (copySummaryButton) copySummaryButton.title = isSampleMode ? "Replace sample data before copying" : enabled ? "Copy a plain-English summary of these results" : "Enter valid debt inputs to enable summary copy";
         setCopySummaryStatus("");
       }
 
@@ -3545,7 +3545,7 @@
         });
         if (sampleChartBadge) sampleChartBadge.classList.add("hidden");
         if (copyActionsHelp && isSampleMode) {
-          copyActionsHelp.textContent = "Sample results are active. Replace sample cards before sharing a real payoff plan.";
+          copyActionsHelp.textContent = "Sample plan only. Replace sample data before sharing a real payoff plan.";
         }
         setCopySummaryAvailable(Boolean(lastResult));
         if (isSampleMode) {
@@ -3602,7 +3602,7 @@
       function showSampleActionRequired(message) {
         showFirstRunHint();
         setSampleMode(true);
-        setCopySummaryStatus(message || "Replace sample cards before using this action.");
+        setCopySummaryStatus(message || "Replace sample data before using this action.");
         if (sampleDataBanner) sampleDataBanner.classList.remove("hidden");
         if (calculatorForm && calculatorForm.scrollIntoView) {
           calculatorForm.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -3620,7 +3620,7 @@
           : "Extra monthly payment: " + money(methodInput.value === "minimum" ? 0 : enteredPayment);
         return [
           "Card Payoff Calculator summary",
-          isSampleMode ? "Sample data: replace sample cards before treating this as your own plan." : null,
+          isSampleMode ? "Sample data: replace it before treating this as your own plan." : null,
           "Payoff method: " + methodLabel,
           "Starting balance: " + money(result.startingBalance),
           paymentLine,
@@ -3649,7 +3649,7 @@
 
       function copyResultsSummary() {
         if (isSampleMode) {
-          showSampleActionRequired("Replace sample cards before copying a real payoff summary.");
+          showSampleActionRequired("Replace sample data before copying a real payoff summary.");
           return;
         }
         var summary = buildResultsSummary(lastResult);
@@ -3670,7 +3670,7 @@
 
       function copyShareLink() {
         if (isSampleMode) {
-          showSampleActionRequired("Replace sample cards before sharing a real payoff plan.");
+          showSampleActionRequired("Replace sample data before sharing a real payoff plan.");
           return;
         }
         if (!lastResult) {
@@ -4528,7 +4528,7 @@
           '<span class="option-badge">Math model only' + (isLowest ? " - lowest estimate in this comparison" : "") + '</span>' +
           "<h4>" + escapeHtml(row.name) + "</h4>" +
           (assumptions ? '<p class="option-assumptions">' + escapeHtml(assumptions) + "</p>" : "") +
-          (row.amount != null ? '<div class="summary-line"><span>Amount moved</span><strong>' + money(row.amount) + "</strong></div>" : "") +
+          (row.amount != null ? '<div class="summary-line"><span>Debt covered</span><strong>' + money(row.amount) + "</strong></div>" : "") +
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
           '<div class="summary-line"><span>Monthly payment</span><strong>' + money(result.monthlyPayment) + "</strong></div>" +
           '<div class="summary-line"><span>Interest + fees</span><strong>' + money(row.totalCost) + "</strong></div>" +
@@ -5160,7 +5160,7 @@
           return;
         }
         if (resultsRect && resultsRect.top < 80 && resultsRect.bottom > 140) {
-          mobileSummaryLink.textContent = "Edit cards ↑";
+          mobileSummaryLink.textContent = "Edit debts ↑";
           mobileSummaryLink.setAttribute("href", "#calculatorForm");
           return;
         }
@@ -5889,7 +5889,7 @@
       bind(keepSampleButton, "click", confirmSampleData);
       bind(boostExtraButton, "click", function () {
         if (isSampleMode) {
-          showSampleActionRequired("Replace sample cards before trying a higher extra payment on your own plan.");
+          showSampleActionRequired("Replace sample data before trying a higher extra payment on your own plan.");
           return;
         }
         var current = Number(extraInput.value || 0);
