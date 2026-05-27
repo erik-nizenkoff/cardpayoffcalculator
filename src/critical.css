@@ -1837,6 +1837,16 @@
       font-size: .93rem;
     }
 
+    .schedule-mode-note {
+      margin: 7px 0 0;
+      border-left: 3px solid #bdd7ff;
+      color: #49627f;
+      padding: 2px 0 2px 10px;
+      font-size: .84rem;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
     .schedule-table tbody tr:nth-child(even) {
       background: #fbfdff;
     }

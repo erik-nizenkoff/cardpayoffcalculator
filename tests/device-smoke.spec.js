@@ -60,11 +60,17 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await page.getByRole("spinbutton", { name: "Visa minimum payment" }).fill("50");
   await page.getByRole("spinbutton", { name: "Extra monthly payment" }).fill("200");
 
+  await expect(page.locator(".supporting-metrics .metric", { hasText: "Starting Monthly Payment" })).toContainText("$250");
+  await expect(page.locator("#comparisonSection th").nth(4)).toHaveText("Starting Payment");
+  await expect(page.locator("#comparisonRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Starting payment");
+  await expect(page.locator("#scheduleModeNote")).toContainText("total monthly payment can decline");
+
   await page.locator("#paymentMode").selectOption("total");
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("250");
   await expect(page.getByRole("spinbutton", { name: "Total monthly debt payoff budget" })).toHaveValue("250");
   await expect(page.locator("#currentPlanSummary")).toContainText("Using a fixed $250/mo budget");
   await expect(page.locator("#savingsResult")).toContainText("Keeping a $250/mo budget");
+  await expect(page.locator("#scheduleModeNote")).toContainText("keeps your payoff budget fixed");
 
   await page.locator("#paymentMode").selectOption("extra");
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("200");

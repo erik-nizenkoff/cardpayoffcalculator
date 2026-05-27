@@ -76,6 +76,7 @@
       var decisionRows = document.getElementById("decisionRows");
       var scheduleRows = document.getElementById("scheduleRows");
       var scheduleNote = document.getElementById("scheduleNote");
+      var scheduleModeNote = document.getElementById("scheduleModeNote");
       var toggleSchedule = document.getElementById("toggleSchedule");
       var scheduleLoading = document.getElementById("scheduleLoading");
       var firstRunHint = document.getElementById("firstRunHint");
@@ -126,7 +127,7 @@
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
-        comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
+        comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
         mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump,
@@ -716,6 +717,8 @@
           optionUsageSummary.innerHTML = "";
         }
         scheduleRows.innerHTML = "";
+        scheduleModeNote.classList.add("hidden");
+        scheduleModeNote.textContent = "";
         scheduleLoading.classList.add("hidden");
         methodRecommendation.classList.add("hidden");
         methodRecommendation.textContent = "";
@@ -1030,7 +1033,7 @@
           "Debt-free date: " + payoffDate,
           result.capped ? "Interest during 50-year model: " + money(result.totalInterest) + " and still accruing" : "Total interest: " + money(result.totalInterest),
           result.capped ? "Paid during 50-year model: " + money(result.totalPaid) : null,
-          "Monthly payment: " + money(result.monthlyPayment),
+          (paymentMode() === "total" ? "Monthly payment budget: " : "Starting monthly payment: ") + money(result.monthlyPayment),
           "Time to payoff: " + duration(result.months, result.capped)
         ].filter(Boolean).join("\n");
       }
@@ -1786,7 +1789,7 @@
             '<td data-label="Payoff date">' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</td>" +
             '<td data-label="Months">' + duration(result.months, result.capped) + "</td>" +
             '<td data-label="Total interest">' + comparisonInterestText(result) + "</td>" +
-            '<td data-label="Monthly payment">' + money(result.monthlyPayment) + "</td>" +
+            '<td data-label="Starting payment">' + money(result.monthlyPayment) + "</td>" +
             '<td data-label="First debt paid">' + (first ? escapeHtml(first.name) + " in " + duration(first.payoffMonth, false) : "-") + "</td>" +
             "</tr>";
         }).join("");
@@ -2670,6 +2673,20 @@
         } else {
           window.setTimeout(renderBatch, 0);
         }
+      }
+
+      function renderScheduleModeNote(payment, result) {
+        if (!payment || !result || result.method === "minimum") {
+          scheduleModeNote.classList.add("hidden");
+          scheduleModeNote.textContent = "";
+          return;
+        }
+        if (payment.mode === "total") {
+          scheduleModeNote.textContent = "This schedule keeps your payoff budget fixed at about " + money(result.monthlyPayment) + "/mo until the final payment.";
+        } else {
+          scheduleModeNote.textContent = "In extra-payment mode, total monthly payment can decline as estimated minimums decline. Choose total monthly payoff budget to keep payment fixed.";
+        }
+        scheduleModeNote.classList.remove("hidden");
       }
 
       function renderFullScheduleForPrint() {
@@ -3622,6 +3639,7 @@
         renderSavings(result, baseline, extra, payment);
         renderFixedBudgetNudge(cards, loans, payment, result);
         renderMonthPlan(result);
+        renderScheduleModeNote(payment, result);
         renderSchedule(result);
         drawCharts(result);
         renderResultExplainer(cards, loans, result, baseline, comparisonResults, payment);
