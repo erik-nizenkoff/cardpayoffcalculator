@@ -108,10 +108,19 @@ assert(
 const overBudgetOffer = live.simulateWithPaymentPlan([], [
   { id: "loan-b", name: "Short loan", balance: 10000, rate: 20, payment: live.loanPaymentForTerm(10000, 20, 12), term: 12 }
 ], { mode: "total", monthlyBudget: 266.67 }, "avalanche");
-assert(
-  live.maxTimelinePayment(overBudgetOffer) > overBudgetOffer.monthlyPayment,
-  "offer simulations expose actual required payments above the entered budget"
-);
+assert.equal(overBudgetOffer.monthlyPayment, live.maxTimelinePayment(overBudgetOffer), "offer simulations display actual required payments above the entered budget");
+
+const promoSpike = live.simulate([
+  { id: "promo", name: "Promo Card", balance: 10000, apr: 79.99, minimum: 25, introApr: 0, introMonths: 1 }
+], { method: "avalanche", monthlyBudget: 150 });
+assert(promoSpike.timeline[1].payment > 700, "promo expiry can force future minimums above the entered budget");
+assert.equal(promoSpike.monthlyPayment, live.maxTimelinePayment(promoSpike), "total-budget results report the actual max monthly payment when minimums spike");
+
+const requiredPromoPayment = live.requiredPaymentForTarget([
+  { id: "promo", name: "Promo Card", balance: 10000, apr: 79.99, minimum: 25, introApr: 0, introMonths: 1 }
+], [], "avalanche", 90);
+assert(requiredPromoPayment.monthlyPayment > requiredPromoPayment.plannedMonthlyPayment, "target-month payment reports future minimum spikes above the searched budget");
+assert.equal(requiredPromoPayment.monthlyPayment, requiredPromoPayment.maxMonthlyPayment, "target-month required payment exposes actual max payment");
 
 const mappedOrder = live.buildOfferCustomOrder(
   ["priority-card", "loan-1", "other-card"],
@@ -148,6 +157,16 @@ assert(shortPromoTransferRate > consolidationRate, "short 0% promos do not outra
 const html = fs.readFileSync("index.html", "utf8");
 assert(!html.includes("lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240))"), "print schedule is not capped at 240 rows");
 assert(html.includes("Math.max(result.startingBalance, timeline.reduce"), "chart scale considers balances above the starting balance");
+assert(html.includes("ctx.moveTo(xPos(0), yPos(result.startingBalance))"), "chart total-balance line starts at starting balance");
+assert(!html.includes("firstPayoff.payoffMonth)"), "chart takeaway does not use 1-based payoff month as a zero-based offset");
 assert(!html.includes('simulate(cards, { method: "avalanche", extraPayment: extraPayment }'), "result explainer does not recompute total-budget plans with fixed extra");
+
+const firstMonthPayoff = live.simulate([
+  { id: "tiny", name: "Tiny Card", balance: 100, apr: 0, minimum: 100 }
+], { method: "avalanche", monthlyBudget: 100 });
+assert(
+  live.chartTakeawayText(firstMonthPayoff, "2026-05").includes("Tiny Card is first paid off around May 2026"),
+  "chart takeaway reports first-month payoff in the start month"
+);
 
 console.log("live calculator tests passed");

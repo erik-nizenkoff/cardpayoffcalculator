@@ -4036,13 +4036,17 @@
         var capped = activeDebts(allDebts).length > 0;
         if (capped) warnings.push("This plan does not pay off all balances within 600 months (50 years).");
         var maxPayment = maxTimelinePayment({ timeline: timeline });
+        var plannedMonthlyPayment = monthlyBudget != null ? monthlyBudget : roundCents(startingMinimumTotal(inputCards, inputLoans || []) + extraPayment);
+        var displayedMonthlyPayment = Math.max(plannedMonthlyPayment, maxPayment);
+        var plannedExtraPayment = monthlyBudget != null ? Math.max(0, plannedMonthlyPayment - startingMinimumTotal(inputCards, inputLoans || [])) : extraPayment;
 
         return {
           method: method,
           startingBalance: startingBalance,
           startingMinimumTotal: startingMinimumTotal(inputCards, inputLoans || []),
-          extraPayment: monthlyBudget != null ? roundCents(Math.max(0, monthlyBudget - startingMinimumTotal(inputCards, inputLoans || []))) : extraPayment,
-          monthlyPayment: monthlyBudget != null ? monthlyBudget : roundCents(startingMinimumTotal(inputCards, inputLoans || []) + extraPayment),
+          extraPayment: roundCents(plannedExtraPayment),
+          monthlyPayment: roundCents(displayedMonthlyPayment),
+          plannedMonthlyPayment: plannedMonthlyPayment,
           months: timeline.length,
           capped: capped,
           totalInterest: roundCents(totalInterest),
@@ -4082,9 +4086,12 @@
 
         var payment = roundCents(high);
         var finalResult = simulate(cards, { method: method, monthlyBudget: payment, customOrder: selectedCustomOrder }, loans);
+        var requiredMonthlyPayment = Math.max(payment, finalResult.maxMonthlyPayment || 0);
         return {
-          monthlyPayment: payment,
-          extraPayment: roundCents(Math.max(0, payment - minimum)),
+          monthlyPayment: roundCents(requiredMonthlyPayment),
+          plannedMonthlyPayment: payment,
+          extraPayment: roundCents(Math.max(0, requiredMonthlyPayment - minimum)),
+          maxMonthlyPayment: finalResult.maxMonthlyPayment || payment,
           months: finalResult.months,
           totalInterest: finalResult.totalInterest
         };
@@ -5098,7 +5105,7 @@
 
         // Total balance line overlay (dark)
         ctx.beginPath();
-        ctx.moveTo(xPos(0), yPos(maxBalance));
+        ctx.moveTo(xPos(0), yPos(result.startingBalance));
         timeline.forEach(function (row, i) {
           ctx.lineTo(xPos(i + 1), yPos(Math.max(0, row.endingBalance)));
         });
@@ -5183,15 +5190,19 @@
 
       function renderChartTakeaway(result) {
         if (!chartTakeaway || !result || !result.timeline || !result.timeline.length) return;
+        chartTakeaway.textContent = chartTakeawayText(result, startInput.value);
+        chartTakeaway.classList.remove("hidden");
+      }
+
+      function chartTakeawayText(result, startMonth) {
         var firstPayoff = (result.summaries || []).filter(function (summary) {
           return summary.payoffMonth !== null;
         }).sort(function (a, b) {
           return a.payoffMonth - b.payoffMonth;
         })[0];
-        var payoffDate = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
-        var firstText = firstPayoff ? firstPayoff.name + " is first paid off around " + addMonths(startInput.value, firstPayoff.payoffMonth) : "No individual payoff appears in the modeled window";
-        chartTakeaway.textContent = "Chart takeaway: balance starts at " + money(result.startingBalance) + ", reaches " + (result.capped ? "the 50-year model limit" : "$0 by " + payoffDate) + ", and " + firstText + ".";
-        chartTakeaway.classList.remove("hidden");
+        var payoffDate = result.capped ? "50+ years" : addMonths(startMonth, result.months - 1);
+        var firstText = firstPayoff ? firstPayoff.name + " is first paid off around " + addMonths(startMonth, firstPayoff.payoffMonth - 1) : "No individual payoff appears in the modeled window";
+        return "Chart takeaway: balance starts at " + money(result.startingBalance) + ", reaches " + (result.capped ? "the 50-year model limit" : "$0 by " + payoffDate) + ", and " + firstText + ".";
       }
 
       window.addEventListener("resize", function () {
@@ -5854,7 +5865,8 @@
           optionSortRate: optionSortRate,
           maxTimelinePayment: maxTimelinePayment,
           simulateWithPaymentPlan: simulateWithPaymentPlan,
-          buildOfferCustomOrder: buildOfferCustomOrder
+          buildOfferCustomOrder: buildOfferCustomOrder,
+          chartTakeawayText: chartTakeawayText
         };
         if (window.CP_TEST_MODE) return;
       }
