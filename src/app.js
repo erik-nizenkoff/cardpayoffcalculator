@@ -70,6 +70,7 @@
       var warningsEl = document.getElementById("warnings");
       var monthPlan = document.getElementById("monthPlan");
       var monthPlanRows = document.getElementById("monthPlanRows");
+      var toggleMonthPlanRows = document.getElementById("toggleMonthPlanRows");
       var comparisonRows = document.getElementById("comparisonRows");
       var comparisonSection = document.getElementById("comparisonSection");
       var decisionSnapshot = document.getElementById("decisionSnapshot");
@@ -126,7 +127,7 @@
         payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
-        criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
+        criticalWarningsEl, warningsEl, monthPlan, monthPlanRows, toggleMonthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
@@ -143,6 +144,7 @@
       var loanNextId = 1;
       var optionScenarioNextId = 1;
       var showAllSchedule = false;
+      var showAllMonthPlan = false;
       var isSampleMode = false;
       var scheduleRenderGeneration = 0;
       var updateTimer = null;
@@ -717,6 +719,10 @@
           optionUsageSummary.classList.add("hidden");
           optionUsageSummary.innerHTML = "";
         }
+        monthPlan.classList.add("hidden");
+        monthPlan.classList.remove("month-plan-collapsed");
+        monthPlanRows.innerHTML = "";
+        toggleMonthPlanRows.classList.add("hidden");
         scheduleRows.innerHTML = "";
         scheduleModeNote.classList.add("hidden");
         scheduleModeNote.textContent = "";
@@ -1725,11 +1731,17 @@
         var firstMonth = result.timeline[0];
         if (!firstMonth || !result.debtNames.length) {
           monthPlan.classList.add("hidden");
+          monthPlan.classList.remove("month-plan-collapsed");
           monthPlanRows.innerHTML = "";
+          toggleMonthPlanRows.classList.add("hidden");
           return;
         }
 
         monthPlan.classList.remove("hidden");
+        var canCollapse = result.debtNames.length > 3;
+        monthPlan.classList.toggle("month-plan-collapsed", canCollapse && !showAllMonthPlan);
+        toggleMonthPlanRows.classList.toggle("hidden", !canCollapse);
+        toggleMonthPlanRows.textContent = showAllMonthPlan ? "Show first 3 debts" : "Show all " + result.debtNames.length + " debts";
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
           var payment = firstMonth.payments[index] || 0;
           var interest = firstMonth.interests[index] || 0;
@@ -4053,6 +4065,11 @@
       bind(toggleSchedule, "click", function () {
         showAllSchedule = !showAllSchedule;
         if (lastResult) renderSchedule(lastResult);
+      });
+
+      bind(toggleMonthPlanRows, "click", function () {
+        showAllMonthPlan = !showAllMonthPlan;
+        if (lastResult) renderMonthPlan(lastResult);
       });
 
       bind(printButton, "click", function () {

@@ -1259,14 +1259,11 @@
     }
 
     .month-plan {
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--line);
+      scroll-margin-top: 16px;
     }
 
-    .month-plan h3 {
-      margin-bottom: 8px;
-      font-size: 1rem;
+    .month-plan-panel {
+      border-top-color: var(--green);
     }
 
     .month-plan table {
@@ -1277,6 +1274,10 @@
     .month-plan th,
     .month-plan td {
       padding: 8px 6px;
+    }
+
+    .month-plan-toggle {
+      display: none;
     }
 
     .scroll-hint {
@@ -1724,6 +1725,7 @@
     }
 
     .compare-panel,
+    .month-plan-panel,
     .visual-panel,
     .schedule-panel,
     .content-grid {
@@ -2441,7 +2443,7 @@
       }
 
       .month-plan {
-        padding-bottom: 110px;
+        padding-bottom: 145px;
       }
 
       .month-plan .table-scroll {
@@ -2467,6 +2469,10 @@
         background: #fff;
         margin-bottom: 10px;
         padding: 10px;
+      }
+
+      .month-plan.month-plan-collapsed tr:nth-child(n+4) {
+        display: none;
       }
 
       .month-plan td {
@@ -2497,6 +2503,13 @@
         font-weight: 900;
         text-align: left;
         text-transform: uppercase;
+      }
+
+      .month-plan-toggle {
+        display: inline-flex;
+        justify-content: center;
+        width: 100%;
+        margin-top: 2px;
       }
 
       .comparison-section .table-scroll,

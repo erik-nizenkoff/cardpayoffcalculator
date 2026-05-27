@@ -111,8 +111,35 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   }));
 
   await expect(page.locator("#monthPlan")).toBeVisible();
+  await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-panel/);
   await expect.poll(() => page.locator("#targetDateOptions").evaluate((details) => details.open)).toBe(false);
   await expect.poll(() => page.locator("#payoffOptions").evaluate((details) => details.open)).toBe(false);
+});
+
+test("month one plan collapses long mobile debt lists", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(sharedUrl({
+    v: 1,
+    method: "avalanche",
+    paymentMode: "extra",
+    paymentAmount: 200,
+    startMonth: "2026-05",
+    cards: [
+      { id: "card-1", name: "Visa 1", balance: 1000, apr: 12, minimum: 50 },
+      { id: "card-2", name: "Visa 2", balance: 1200, apr: 18, minimum: 55 },
+      { id: "card-3", name: "Visa 3", balance: 1400, apr: 20, minimum: 60 },
+      { id: "card-4", name: "Visa 4", balance: 1600, apr: 22, minimum: 65 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1", "card-2", "card-3", "card-4"]
+  }));
+
+  await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
+  await page.locator("#toggleMonthPlanRows").click();
+  await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show first 3 debts");
 });
 
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {
