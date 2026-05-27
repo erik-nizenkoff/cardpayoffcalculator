@@ -318,6 +318,13 @@ const cappedOptionRow = {
 };
 assert.equal(live.optionCostLabel(cappedOptionRow), "Interest + fees during 50-year model", "capped option cards relabel model-window cost");
 assert(live.optionCostText(cappedOptionRow).includes("still accruing"), "capped option cards do not present model-window cost as final payoff cost");
+const stillCappedWithExtra = live.simulate([], { method: "avalanche", extraPayment: 10 }, [
+  { id: "bad-loan", name: "Bad Loan", balance: 10000, rate: 30, payment: 100 }
+]);
+assert.equal(stillCappedWithExtra.capped, true, "small extra payment fixture remains capped");
+const cappedSavingsMessage = live.savingsMessage(stillCappedWithExtra, cappedPrimaryResult, 10);
+assert(cappedSavingsMessage.includes("still does not fully pay off"), "savings message does not claim a capped selected plan creates a payoff path");
+assert(!cappedSavingsMessage.includes("creates a payoff path"), "savings message avoids false payoff-path language when selected plan is capped");
 
 assert(
   live.loanTermWarning({ name: "Short loan", balance: 10000, rate: 10, payment: 100, term: 12 }).includes("Estimated payment needed"),

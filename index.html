@@ -4226,16 +4226,31 @@
           return;
         }
 
-        if (baseline.capped) {
-          savingsResult.classList.remove("hidden");
-          savingsResult.innerHTML = "Minimum-only does not clear the modeled debt within 50 years. Adding <strong>" + money(extraPayment) + "/mo</strong> creates a payoff path in this scenario.";
+        var message = savingsMessage(selected, baseline, extraPayment);
+        if (!message) {
+          savingsResult.classList.add("hidden");
+          savingsResult.innerHTML = "";
           return;
         }
-
-        var interestSaved = roundCents(baseline.totalInterest - selected.totalInterest);
-        var monthsSaved = baseline.months - selected.months;
         savingsResult.classList.remove("hidden");
-        savingsResult.innerHTML = "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than paying minimums only.";
+        savingsResult.innerHTML = message;
+      }
+
+      function savingsMessage(selected, baseline, extraPayment) {
+        if (!extraPayment || !selected || selected.method === "minimum" || !baseline) return "";
+        var interestSaved = roundCents(baseline.totalInterest - selected.totalInterest);
+        if (baseline.capped) {
+          if (selected.capped) {
+            return "Minimum-only does not clear the modeled debt within 50 years. Adding <strong>" + money(extraPayment) + "/mo</strong> lowers interest during the 50-year model by about <strong>" + money(Math.max(0, interestSaved)) + "</strong>, but this plan still does not fully pay off within the calculator limit.";
+          }
+          return "Minimum-only does not clear the modeled debt within 50 years. Adding <strong>" + money(extraPayment) + "/mo</strong> creates a payoff path in this scenario.";
+        }
+
+        if (selected.capped) {
+          return "Adding <strong>" + money(extraPayment) + "/mo</strong> does not produce a comparable payoff within 50 years for this scenario.";
+        }
+        var monthsSaved = baseline.months - selected.months;
+        return "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than paying minimums only.";
       }
 
       function renderMonthPlan(result) {
@@ -6118,6 +6133,7 @@
           resultPaidLabel: resultPaidLabel,
           resultPaidText: resultPaidText,
           buildResultsSummary: buildResultsSummary,
+          savingsMessage: savingsMessage,
           decisionDeltaText: decisionDeltaText,
           chartAxisMonthLabel: chartAxisMonthLabel,
           maxTimelinePayment: maxTimelinePayment,
