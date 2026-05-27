@@ -2015,6 +2015,10 @@
         width: 100%;
       }
 
+      .card-table-wrap {
+        min-height: 160px;
+      }
+
       .card-table thead,
       .loan-table thead {
         display: none;
