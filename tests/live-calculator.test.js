@@ -154,12 +154,54 @@ const consolidationRate = live.optionSortRate("consolidation-loan", {
 }, 36);
 assert(shortPromoTransferRate > consolidationRate, "short 0% promos do not outrank better long-term loan rates");
 
+const shortPromoCost = live.optionModeledCostScore({
+  type: "balance-transfer",
+  introApr: 0,
+  introMonths: 1,
+  postApr: 29.99,
+  feeRate: 3
+}, 36);
+const loanCost = live.optionModeledCostScore({
+  type: "consolidation-loan",
+  apr: 8,
+  term: 36,
+  feeRate: 0
+}, 36);
+const fullPromoCost = live.optionModeledCostScore({
+  type: "balance-transfer",
+  introApr: 0,
+  introMonths: 36,
+  postApr: 29.99,
+  feeRate: 3
+}, 36);
+assert(shortPromoCost > loanCost, "modeled offer ordering accounts for post-promo cost");
+assert(fullPromoCost < loanCost, "modeled offer ordering can still prefer a promo that lasts through payoff");
+
+assert.equal(
+  live.optionDifferenceText({
+    currentCapped: true,
+    result: { capped: false },
+    currentCost: 1000,
+    totalCost: 500
+  }),
+  "Not comparable: one plan does not pay off within 50 years.",
+  "capped current plans do not show precise payoff-option cost differences"
+);
+
+assert(
+  live.loanTermWarning({ name: "Short loan", balance: 10000, rate: 10, payment: 100, term: 12 }).includes("Estimated payment needed"),
+  "installment loan term validates the payment needed to satisfy the entered term"
+);
+
 const html = fs.readFileSync("index.html", "utf8");
 assert(!html.includes("lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240))"), "print schedule is not capped at 240 rows");
 assert(html.includes("Math.max(result.startingBalance, timeline.reduce"), "chart scale considers balances above the starting balance");
 assert(html.includes("ctx.moveTo(xPos(0), yPos(result.startingBalance))"), "chart total-balance line starts at starting balance");
 assert(!html.includes("firstPayoff.payoffMonth)"), "chart takeaway does not use 1-based payoff month as a zero-based offset");
 assert(!html.includes('simulate(cards, { method: "avalanche", extraPayment: extraPayment }'), "result explainer does not recompute total-budget plans with fixed extra");
+assert.equal(live.chartAxisMonthLabel(0, "2026-05"), "May 2026", "chart point 0 labels the starting month");
+assert.equal(live.chartAxisMonthLabel(1, "2026-05"), "May 2026", "chart point 1 matches month-one schedule date");
+assert.equal(live.chartAxisMonthLabel(2, "2026-05"), "Jun 2026", "chart point 2 advances one month after month-one");
 
 const firstMonthPayoff = live.simulate([
   { id: "tiny", name: "Tiny Card", balance: 100, apr: 0, minimum: 100 }

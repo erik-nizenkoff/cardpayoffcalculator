@@ -3199,8 +3199,9 @@
         return monthFormatter.format(date);
       }
 
-      function chartAxisMonthLabel(pointIndex) {
-        return addMonths(startInput.value, Math.max(0, Number(pointIndex || 0)));
+      function chartAxisMonthLabel(pointIndex, startMonth) {
+        var point = Math.max(0, Number(pointIndex || 0));
+        return addMonths(startMonth || startInput.value, point === 0 ? 0 : point - 1);
       }
 
       function resultMonthLabel(monthNumber) {
@@ -3417,9 +3418,7 @@
             term: termVal === "" ? null : Number(termVal),
             hasEnteredValue: hasEnteredValue
           };
-          if (loan.payment > 0 && loan.term != null && !isNaN(loan.term) && loan.term > 0 && loan.balance > 0 && loan.payment * loan.term < loan.balance * 0.5) {
-            loan.warning = loan.name + ": fixed payment may be too low to pay off the loan within the remaining term.";
-          }
+          loan.warning = loanTermWarning(loan);
           return loan;
         }).filter(function (loan) {
           return loan.balance > 0 || (loan.balance !== 0 && loan.hasEnteredValue);
@@ -3950,6 +3949,8 @@
         });
         loans.forEach(function (loan) {
           if (loan.warning) warnings.push(loan.warning);
+          var termWarning = loanTermWarning(loan);
+          if (termWarning && warnings.indexOf(termWarning) === -1) warnings.push(termWarning);
           var interest = roundCents(loan.balance * (loan.apr / 100 / 12));
           if (loan.fixedPayment <= interest + EPSILON) {
             warnings.push(loan.name + ": fixed payment is less than or equal to the first month's interest. This loan may grow unless extra payments cover the gap.");
@@ -4359,6 +4360,14 @@
         return roundCents(balance * monthlyRate * factor / (factor - 1));
       }
 
+      function loanTermWarning(loan) {
+        var payment = loan && loan.payment != null ? loan.payment : loan && loan.fixedPayment;
+        if (!loan || !loan.term || loan.term <= 0 || !loan.balance || !payment) return "";
+        var required = loanPaymentForTerm(loan.balance, loan.rate != null ? loan.rate : loan.apr, loan.term);
+        if (payment + EPSILON >= required) return "";
+        return loan.name + ": fixed payment is too low to pay off within the entered " + loan.term + "-month term. Estimated payment needed is " + money(required) + "/mo.";
+      }
+
       function cloneCardWithBalance(card, balance) {
         return {
           id: card.id,
@@ -4498,6 +4507,35 @@
         return roundCents(Number(values.apr || 0) + feeEquivalentApr);
       }
 
+      function optionModeledCostScore(entry, payoffMonths) {
+        var horizon = Math.max(1, Math.round(Number(payoffMonths || entry.term || 36)));
+        var modeledAmount = 1000;
+        var fee = roundCents(modeledAmount * Number(entry.feeRate || 0) / 100);
+        var balance = roundCents(modeledAmount + fee);
+        var result;
+        if (entry.type === "balance-transfer") {
+          result = simulate([{
+            id: "modeled-balance-transfer",
+            name: "Modeled balance transfer",
+            balance: balance,
+            apr: entry.postApr,
+            minimum: 25,
+            introApr: entry.introApr,
+            introMonths: entry.introMonths
+          }], { method: "avalanche", monthlyBudget: Math.max(25, loanPaymentForTerm(balance, entry.postApr, horizon)) }, []);
+          return roundCents(result.totalInterest + fee);
+        }
+        result = simulate([], { method: "avalanche", monthlyBudget: loanPaymentForTerm(balance, entry.apr, entry.term || horizon) }, [{
+          id: "modeled-consolidation-loan",
+          name: "Modeled consolidation loan",
+          balance: balance,
+          rate: entry.apr,
+          payment: loanPaymentForTerm(balance, entry.apr, entry.term || horizon),
+          term: entry.term || horizon
+        }]);
+        return roundCents(result.totalInterest + fee);
+      }
+
       function readPayoffOptionScenarios(averageApr, cardTotal, payoffMonths) {
         if (!optionScenarioList) return [];
         var entries = [];
@@ -4516,9 +4554,11 @@
               introApr: introApr,
               introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
               postApr: optionNumberValue(getOptionField(scenario, "postApr"), averageApr, 0, MAX_APR),
-              sortRate: 0
+              sortRate: 0,
+              modeledCostScore: 0
             });
             entries[entries.length - 1].sortRate = optionSortRate(type, entries[entries.length - 1], payoffMonths);
+            entries[entries.length - 1].modeledCostScore = optionModeledCostScore(entries[entries.length - 1], payoffMonths);
             return;
           }
           consolidationCount += 1;
@@ -4530,16 +4570,18 @@
             apr: apr,
             term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
             feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
-            sortRate: 0
+            sortRate: 0,
+            modeledCostScore: 0
           });
           entries[entries.length - 1].sortRate = optionSortRate("consolidation-loan", entries[entries.length - 1], payoffMonths);
+          entries[entries.length - 1].modeledCostScore = optionModeledCostScore(entries[entries.length - 1], payoffMonths);
         });
         if (!entries.length) return [];
         var totalAvailable = roundCents(entries.reduce(function (total, entry) {
           return total + entry.amount;
         }, 0));
         entries.sort(function (a, b) {
-          return a.sortRate - b.sortRate || a.feeRate - b.feeRate || a.amount - b.amount;
+          return a.modeledCostScore - b.modeledCostScore || a.sortRate - b.sortRate || a.feeRate - b.feeRate || a.amount - b.amount;
         });
         var hasBalanceTransfers = entries.some(function (entry) { return entry.type === "balance-transfer"; });
         var hasConsolidationLoans = entries.some(function (entry) { return entry.type === "consolidation-loan"; });
@@ -4556,18 +4598,25 @@
         }];
       }
 
+      function optionDifferenceText(row) {
+        if (!row || row.currentCapped || (row.result && row.result.capped)) {
+          return "Not comparable: one plan does not pay off within 50 years.";
+        }
+        var modeledDifference = roundCents(row.currentCost - row.totalCost);
+        return Math.abs(modeledDifference) <= EPSILON
+          ? "No modeled difference"
+          : modeledDifference > 0
+            ? money(modeledDifference) + " lower"
+            : money(Math.abs(modeledDifference)) + " higher";
+      }
+
       function renderPayoffOptionRow(row, bestCost) {
         if (row.unavailable) {
           return '<div class="option-card"><h4>' + escapeHtml(row.name) + '</h4><p class="option-watchout">' + escapeHtml(row.reason) + '</p></div>';
         }
         var result = row.result;
         var monthlyPayment = row.displayMonthlyPayment != null ? row.displayMonthlyPayment : result.monthlyPayment;
-        var modeledDifference = roundCents(row.currentCost - row.totalCost);
-        var differenceText = Math.abs(modeledDifference) <= EPSILON
-          ? "No modeled difference"
-          : modeledDifference > 0
-            ? money(modeledDifference) + " lower"
-            : money(Math.abs(modeledDifference)) + " higher";
+        var differenceText = optionDifferenceText(row);
         var isLowest = row.totalCost === bestCost;
         var risk = "";
         var assumptions = row.assumptions || "";
@@ -4602,7 +4651,7 @@
             "<td>" + money(entry.enteredAmount) + "</td>" +
             "<td>" + money(entry.usedAmount) + "</td>" +
             "<td>" + money(entry.unusedAmount) + "</td>" +
-            "<td>" + formatPercent(entry.sortRate) + "%</td>" +
+            "<td>" + money(entry.modeledCostScore) + "</td>" +
             "</tr>";
         }).join("");
         var payoffText = result
@@ -4617,7 +4666,7 @@
             '<div class="option-summary-metric"><span>Unused capacity</span><strong>' + money(scenario.extraAvailable) + "</strong></div>" +
           "</div>" +
           '<p class="option-scenario-help">Combined scenario: ' + money(scenario.amount) + " moved, " + money(scenario.extraAvailable) + " unused, estimated payoff " + payoffText + ".</p>" +
-          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Rate used for order</th></tr></thead><tbody>' +
+          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Modeled cost order</th></tr></thead><tbody>' +
           summaryRows +
           "</tbody></table></div>";
         optionUsageSummary.classList.remove("hidden");
@@ -4652,7 +4701,7 @@
         }
         var combinedScenario = scenarios[0];
         if (combinedScenario.extraAvailable > EPSILON) {
-          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies lower-interest offers first.";
+          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies lower modeled-cost offers first.";
           optionCapacityNotice.classList.remove("hidden");
         } else {
           optionCapacityNotice.classList.add("hidden");
@@ -4669,6 +4718,7 @@
             displayMonthlyPayment: currentMaxPayment,
             totalCost: currentCost,
             currentCost: currentCost,
+            currentCapped: currentResult.capped,
             watchout: "No new credit product.",
             assumptions: "Uses your entered cards, loans, APRs, minimums, method, and extra monthly payment."
           }
@@ -4700,7 +4750,8 @@
                 enteredAmount: entry.amount,
                 usedAmount: 0,
                 unusedAmount: entry.amount,
-                sortRate: entry.sortRate
+                sortRate: entry.sortRate,
+                modeledCostScore: entry.modeledCostScore
               });
               return;
             }
@@ -4711,7 +4762,8 @@
               enteredAmount: entry.amount,
               usedAmount: entryAmount,
               unusedAmount: roundCents(entry.amount - entryAmount),
-              sortRate: entry.sortRate
+              sortRate: entry.sortRate,
+              modeledCostScore: entry.modeledCostScore
             });
             if (entryAmount <= EPSILON) return;
             var entryFee = roundCents(entryAmount * entry.feeRate / 100);
@@ -4755,7 +4807,7 @@
           );
           var offerMaxPayment = maxTimelinePayment(combinedResult);
           var unusedText = scenario.extraAvailable > EPSILON
-            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so lower-interest offers were applied first."
+            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so lower modeled-cost offers were applied first."
             : "";
           var promoText = earliestPromoEnd != null && combinedResult.months > earliestPromoEnd
             ? " At least one balance-transfer promo can expire before payoff; post-promo APR may apply."
@@ -4768,7 +4820,8 @@
             displayMonthlyPayment: offerMaxPayment,
             totalCost: roundCents(combinedResult.totalInterest + optionFees),
             currentCost: currentCost,
-            assumptions: "Applies offers by lowest entered APR first: " + optionTerms.join("; ") + ".",
+            currentCapped: currentResult.capped,
+            assumptions: "Applies offers by lowest modeled cost first: " + optionTerms.join("; ") + ".",
             watchout: (offerMaxPayment > currentMaxPayment + EPSILON ? "Required monthly payment can rise to " + money(offerMaxPayment) + ", which is higher than the current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
           });
           renderOptionUsageSummary(scenario, allocation, combinedResult, cardTotal);
@@ -4780,7 +4833,7 @@
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
         payoffOptionNote.textContent = scenarios.length
-          ? "Default amounts use the full current credit card balance. Offers are applied by lowest entered APR first when available transfer/loan capacity exceeds current card balances. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
+          ? "Default amounts use the full current credit card balance. Offers are applied by lowest modeled cost when available transfer/loan capacity exceeds current card balances. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
@@ -5862,7 +5915,11 @@
           simulate: simulate,
           requiredPaymentForTarget: requiredPaymentForTarget,
           loanPaymentForTerm: loanPaymentForTerm,
+          loanTermWarning: loanTermWarning,
           optionSortRate: optionSortRate,
+          optionModeledCostScore: optionModeledCostScore,
+          optionDifferenceText: optionDifferenceText,
+          chartAxisMonthLabel: chartAxisMonthLabel,
           maxTimelinePayment: maxTimelinePayment,
           simulateWithPaymentPlan: simulateWithPaymentPlan,
           buildOfferCustomOrder: buildOfferCustomOrder,
