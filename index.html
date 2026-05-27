@@ -4464,16 +4464,28 @@
         });
         var amountLeft = cappedAmount;
         var appliedCardIds = [];
+        var coverage = [];
         remaining.slice().sort(refinanceCardSort(method || "avalanche", order)).forEach(function (item) {
           if (amountLeft <= EPSILON) return;
+          var startingBalance = item.balance;
           var applied = Math.min(item.balance, amountLeft);
           item.balance = roundCents(item.balance - applied);
           amountLeft = roundCents(amountLeft - applied);
-          if (applied > EPSILON && appliedCardIds.indexOf(item.card.id) === -1) appliedCardIds.push(item.card.id);
+          if (applied > EPSILON) {
+            if (appliedCardIds.indexOf(item.card.id) === -1) appliedCardIds.push(item.card.id);
+            coverage.push({
+              id: item.card.id,
+              name: item.card.name || "Card " + (item.index + 1),
+              startingBalance: startingBalance,
+              appliedAmount: roundCents(applied),
+              remainingBalance: item.balance
+            });
+          }
         });
         return {
           amount: cappedAmount,
           appliedCardIds: appliedCardIds,
+          coverage: coverage,
           remainingCards: remaining.filter(function (item) {
             return item.balance > EPSILON;
           }).map(function (item) {
@@ -4711,6 +4723,28 @@
         var amountLeft = refinanced.amount;
         var btCards = [];
         var optionLoans = [];
+        var coverageIndex = 0;
+        var coverageRemaining = refinanced.coverage && refinanced.coverage[0] ? refinanced.coverage[0].appliedAmount : 0;
+        function takeAppliedDebts(amount) {
+          var remainingAmount = roundCents(amount);
+          var appliedDebts = [];
+          while (remainingAmount > EPSILON && coverageIndex < (refinanced.coverage || []).length) {
+            var coverage = refinanced.coverage[coverageIndex];
+            var applied = Math.min(coverageRemaining, remainingAmount);
+            appliedDebts.push({
+              id: coverage.id,
+              name: coverage.name,
+              appliedAmount: roundCents(applied)
+            });
+            remainingAmount = roundCents(remainingAmount - applied);
+            coverageRemaining = roundCents(coverageRemaining - applied);
+            if (coverageRemaining <= EPSILON) {
+              coverageIndex += 1;
+              coverageRemaining = refinanced.coverage[coverageIndex] ? refinanced.coverage[coverageIndex].appliedAmount : 0;
+            }
+          }
+          return appliedDebts;
+        }
         (scenario.entries || []).forEach(function (entry, entryIndex) {
           if (amountLeft <= EPSILON) {
             model.allocation.push({
@@ -4718,6 +4752,7 @@
               enteredAmount: entry.amount,
               usedAmount: 0,
               unusedAmount: entry.amount,
+              appliedDebts: [],
               sortRate: entry.sortRate,
               modeledCostScore: entry.modeledCostScore,
               modeledSavingsPerDollar: entry.modeledSavingsPerDollar
@@ -4731,6 +4766,7 @@
             enteredAmount: entry.amount,
             usedAmount: entryAmount,
             unusedAmount: roundCents(entry.amount - entryAmount),
+            appliedDebts: takeAppliedDebts(entryAmount),
             sortRate: entry.sortRate,
             modeledCostScore: entry.modeledCostScore,
             modeledSavingsPerDollar: entry.modeledSavingsPerDollar
@@ -4958,12 +4994,24 @@
       function renderOptionUsageSummary(scenario, allocation, result, cardTotal) {
         if (!optionUsageSummary || !scenario || !allocation) return;
         var summaryRows = allocation.map(function (entry) {
+          var appliedDebtNames = (entry.appliedDebts || []).map(function (debt) {
+            return debt.name + " (" + money(debt.appliedAmount) + ")";
+          }).join(", ") || "-";
           return "<tr>" +
             "<td>" + escapeHtml(entry.name) + "</td>" +
             "<td>" + money(entry.enteredAmount) + "</td>" +
             "<td>" + money(entry.usedAmount) + "</td>" +
             "<td>" + money(entry.unusedAmount) + "</td>" +
+            "<td>" + escapeHtml(appliedDebtNames) + "</td>" +
             "<td>" + optionSavingsLabel(entry.modeledSavingsPerDollar) + "</td>" +
+            "</tr>";
+        }).join("");
+        var debtRows = ((scenario.bestModel && scenario.bestModel.refinanced && scenario.bestModel.refinanced.coverage) || []).map(function (debt) {
+          return "<tr>" +
+            "<td>" + escapeHtml(debt.name) + "</td>" +
+            "<td>" + money(debt.startingBalance) + "</td>" +
+            "<td>" + money(debt.appliedAmount) + "</td>" +
+            "<td>" + money(debt.remainingBalance) + "</td>" +
             "</tr>";
         }).join("");
         var payoffText = result
@@ -4978,9 +5026,10 @@
             '<div class="option-summary-metric"><span>Unused capacity</span><strong>' + money(scenario.extraAvailable) + "</strong></div>" +
           "</div>" +
           '<p class="option-scenario-help">Combined scenario: ' + money(scenario.amount) + " moved, " + money(scenario.extraAvailable) + " unused, estimated payoff " + payoffText + ".</p>" +
-          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Modeled savings per $</th></tr></thead><tbody>' +
+          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Applied to</th><th>Modeled savings per $</th></tr></thead><tbody>' +
           summaryRows +
-          "</tbody></table></div>";
+          "</tbody></table></div>" +
+          (debtRows ? '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Debt</th><th>Current balance</th><th>Moved to offers</th><th>Balance remaining</th></tr></thead><tbody>' + debtRows + "</tbody></table></div>" : "");
         optionUsageSummary.classList.remove("hidden");
       }
 

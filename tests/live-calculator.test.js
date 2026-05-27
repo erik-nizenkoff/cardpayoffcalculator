@@ -154,6 +154,15 @@ assert.equal(
   JSON.stringify(["mid"]),
   "offer model refinances the first custom-order card first"
 );
+const partialRefinance = live.refinanceCardsByAmount([
+  { id: "card-one", name: "Card One", balance: 3000, apr: 20, minimum: 75 },
+  { id: "card-two", name: "Card Two", balance: 2000, apr: 10, minimum: 50 }
+], 3500, "avalanche");
+assert.equal(
+  JSON.stringify(partialRefinance.coverage.map((debt) => [debt.name, debt.appliedAmount, debt.remainingBalance])),
+  JSON.stringify([["Card One", 3000, 0], ["Card Two", 500, 1500]]),
+  "offer model records which debts are covered and remaining balances"
+);
 
 const negativeLoan = live.simulate([], { method: "avalanche", extraPayment: 0 }, [
   { id: "loan-a", name: "Underpaid loan", balance: 10000, rate: 30, payment: 100 }
@@ -294,6 +303,8 @@ const optimizedPermutation = live.optimizePayoffScenarioOrder(Object.assign({
 }, permutationScenarioBase), actualPaymentCards, [], actualPaymentPlan, "avalanche", [], 0, currentActualPaymentResult);
 assert.equal(optimizedPermutation.entries[0].name, "L1", "combined offer allocation chooses the lowest modeled-cost permutation");
 assert.equal(optimizedPermutation.bestModel.totalCost, l1FirstModel.totalCost, "optimized combined offer model matches the cheapest tested order");
+const appliedDebtNames = optimizedPermutation.bestModel.allocation[0].appliedDebts.map((debt) => debt.name);
+assert(appliedDebtNames.includes("Card"), "optimized offer allocation records source debts per offer");
 
 assert.equal(
   live.optionDifferenceText({
