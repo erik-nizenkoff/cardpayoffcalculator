@@ -4,6 +4,6 @@
   "private": true,
   "description": "Static single-page credit card payoff calculator.",
   "scripts": {
-    "test": "node tests/payoff.test.js"
+    "test": "node tests/payoff.test.js && node tests/live-calculator.test.js"
   }
 }

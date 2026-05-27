@@ -3894,12 +3894,15 @@
         var minimum = startingMinimumTotal(cards, loans || []);
         var mode = paymentMode();
         var extraPayment = mode === "total" ? Math.max(0, roundCents(enteredAmount - minimum)) : enteredAmount;
+        var monthlyBudget = mode === "total" ? Math.max(minimum, roundCents(enteredAmount)) : roundCents(minimum + extraPayment);
         if (method === "minimum") extraPayment = 0;
+        if (method === "minimum") monthlyBudget = minimum;
         return {
           mode: mode,
           enteredAmount: roundCents(enteredAmount),
           minimum: minimum,
-          extraPayment: roundCents(extraPayment)
+          extraPayment: roundCents(extraPayment),
+          monthlyBudget: roundCents(monthlyBudget)
         };
       }
 
@@ -3912,6 +3915,8 @@
         var allDebts = cards.concat(loans);
         var startingBalance = roundCents(allDebts.reduce(function (sum, d) { return sum + d.startingBalance; }, 0));
         var extraPayment = method === "minimum" ? 0 : roundCents(Math.max(0, Number(opts.extraPayment || 0)));
+        var monthlyBudget = opts.monthlyBudget != null ? roundCents(Math.max(0, Number(opts.monthlyBudget || 0))) : null;
+        if (method === "minimum") monthlyBudget = null;
         var timeline = [];
         var totalInterest = 0;
         var totalPaid = 0;
@@ -3938,6 +3943,10 @@
         });
         loans.forEach(function (loan) {
           if (loan.warning) warnings.push(loan.warning);
+          var interest = roundCents(loan.balance * (loan.apr / 100 / 12));
+          if (loan.fixedPayment <= interest + EPSILON) {
+            warnings.push(loan.name + ": fixed payment is less than or equal to the first month's interest. This loan may grow unless extra payments cover the gap.");
+          }
         });
         if (method === "minimum" && cards.length > 0 && zeroProgressCards === cards.length) {
           criticalWarnings.push("None of your entered minimum payments are enough to reduce any balance. You must pay more than the minimums shown to make progress.");
@@ -3976,7 +3985,7 @@
             monthPayment = roundCents(monthPayment + payment);
           });
 
-          var remainingExtra = extraPayment;
+          var remainingExtra = monthlyBudget != null ? Math.max(0, roundCents(monthlyBudget - monthPayment)) : extraPayment;
           while (remainingExtra > EPSILON && activeDebts(allDebts).length) {
             var target = activeDebts(allDebts).slice().sort(targetSort(method, selectedCustomOrder))[0];
             var extra = Math.min(target.balance, remainingExtra);
@@ -4024,8 +4033,8 @@
           method: method,
           startingBalance: startingBalance,
           startingMinimumTotal: startingMinimumTotal(inputCards, inputLoans || []),
-          extraPayment: extraPayment,
-          monthlyPayment: roundCents(startingMinimumTotal(inputCards, inputLoans || []) + extraPayment),
+          extraPayment: monthlyBudget != null ? roundCents(Math.max(0, monthlyBudget - startingMinimumTotal(inputCards, inputLoans || []))) : extraPayment,
+          monthlyPayment: monthlyBudget != null ? monthlyBudget : roundCents(startingMinimumTotal(inputCards, inputLoans || []) + extraPayment),
           months: timeline.length,
           capped: capped,
           totalInterest: roundCents(totalInterest),
@@ -4048,22 +4057,22 @@
         var high = Math.max(minimum + 100, balances + minimum);
         var i;
         for (i = 0; i < 24; i += 1) {
-          var test = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum), customOrder: selectedCustomOrder }, loans);
+          var test = simulate(cards, { method: method, monthlyBudget: high, customOrder: selectedCustomOrder }, loans);
           if (!test.capped && test.months <= targetMonths) break;
           high *= 1.7;
         }
-        var feasible = simulate(cards, { method: method, extraPayment: Math.max(0, high - minimum), customOrder: selectedCustomOrder }, loans);
+        var feasible = simulate(cards, { method: method, monthlyBudget: high, customOrder: selectedCustomOrder }, loans);
         if (feasible.capped || feasible.months > targetMonths) return null;
 
         for (i = 0; i < 42; i += 1) {
           var mid = (low + high) / 2;
-          var result = simulate(cards, { method: method, extraPayment: Math.max(0, mid - minimum), customOrder: selectedCustomOrder }, loans);
+          var result = simulate(cards, { method: method, monthlyBudget: mid, customOrder: selectedCustomOrder }, loans);
           if (!result.capped && result.months <= targetMonths) high = mid;
           else low = mid;
         }
 
         var payment = roundCents(high);
-        var finalResult = simulate(cards, { method: method, extraPayment: Math.max(0, payment - minimum), customOrder: selectedCustomOrder }, loans);
+        var finalResult = simulate(cards, { method: method, monthlyBudget: payment, customOrder: selectedCustomOrder }, loans);
         return {
           monthlyPayment: payment,
           extraPayment: roundCents(Math.max(0, payment - minimum)),
@@ -4233,16 +4242,22 @@
         }).join("");
       }
 
-      function renderComparison(cards, loans, extraPayment, preResult, preBaseline) {
+      function renderComparison(cards, loans, payment, preResult, preBaseline) {
         var methods = ["avalanche", "snowball", "minimum"];
         var rows = methods.map(function (method) {
-          if (preResult && preResult.method === method && (method === "minimum" || preResult.extraPayment === extraPayment)) {
+          if (preResult && preResult.method === method) {
             return preResult;
           }
           if (preBaseline && method === "minimum") {
             return preBaseline;
           }
-          return simulate(cards, { method: method, extraPayment: method === "minimum" ? 0 : extraPayment }, loans);
+          if (method === "minimum") {
+            return simulate(cards, { method: method, extraPayment: 0 }, loans);
+          }
+          if (payment.mode === "total") {
+            return simulate(cards, { method: method, monthlyBudget: payment.monthlyBudget }, loans);
+          }
+          return simulate(cards, { method: method, extraPayment: payment.extraPayment }, loans);
         });
         var finiteRows = rows.filter(function (row) { return !row.capped; });
         var bestInterest = finiteRows.length ? Math.min.apply(null, finiteRows.map(function (row) { return row.totalInterest; })) : null;
@@ -4315,10 +4330,12 @@
         return roundCents(balance * monthlyRate * factor / (factor - 1));
       }
 
-      function simulateWithMonthlyBudget(cards, loans, monthlyBudget) {
-        var minimum = startingMinimumTotal(cards, loans);
-        var extra = Math.max(0, roundCents(monthlyBudget - minimum));
-        return simulate(cards, { method: "avalanche", extraPayment: extra }, loans);
+      function simulateWithMonthlyBudget(cards, loans, monthlyBudget, method, order) {
+        return simulate(cards, {
+          method: method || "avalanche",
+          monthlyBudget: monthlyBudget,
+          customOrder: Array.isArray(order) ? order.slice() : customOrder.slice()
+        }, loans);
       }
 
       function cloneCardWithBalance(card, balance) {
@@ -4445,7 +4462,19 @@
         return number;
       }
 
-      function readPayoffOptionScenarios(averageApr, cardTotal) {
+      function optionSortRate(type, values, payoffMonths) {
+        var horizon = Math.max(1, Number(payoffMonths || 1));
+        var feeEquivalentApr = Number(values.feeRate || 0) * 12 / horizon;
+        if (type === "balance-transfer") {
+          var introMonths = Math.min(horizon, Math.max(0, Number(values.introMonths || 0)));
+          var postMonths = Math.max(0, horizon - introMonths);
+          var weightedApr = ((Number(values.introApr || 0) * introMonths) + (Number(values.postApr || 0) * postMonths)) / horizon;
+          return roundCents(weightedApr + feeEquivalentApr);
+        }
+        return roundCents(Number(values.apr || 0) + feeEquivalentApr);
+      }
+
+      function readPayoffOptionScenarios(averageApr, cardTotal, payoffMonths) {
         if (!optionScenarioList) return [];
         var entries = [];
         var balanceTransferCount = 0;
@@ -4463,8 +4492,9 @@
               introApr: introApr,
               introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
               postApr: optionNumberValue(getOptionField(scenario, "postApr"), averageApr, 0, MAX_APR),
-              sortRate: introApr
+              sortRate: 0
             });
+            entries[entries.length - 1].sortRate = optionSortRate(type, entries[entries.length - 1], payoffMonths);
             return;
           }
           consolidationCount += 1;
@@ -4476,8 +4506,9 @@
             apr: apr,
             term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
             feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
-            sortRate: apr
+            sortRate: 0
           });
+          entries[entries.length - 1].sortRate = optionSortRate("consolidation-loan", entries[entries.length - 1], payoffMonths);
         });
         if (!entries.length) return [];
         var totalAvailable = roundCents(entries.reduce(function (total, entry) {
@@ -4561,7 +4592,7 @@
             '<div class="option-summary-metric"><span>Unused capacity</span><strong>' + money(scenario.extraAvailable) + "</strong></div>" +
           "</div>" +
           '<p class="option-scenario-help">Combined scenario: ' + money(scenario.amount) + " moved, " + money(scenario.extraAvailable) + " unused, estimated payoff " + payoffText + ".</p>" +
-          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>APR used for order</th></tr></thead><tbody>' +
+          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Rate used for order</th></tr></thead><tbody>' +
           summaryRows +
           "</tbody></table></div>";
         optionUsageSummary.classList.remove("hidden");
@@ -4584,7 +4615,7 @@
         var currentCost = currentResult.totalInterest;
         var averageApr = weightedCardApr(cards);
         syncDefaultOptionAmountFields(cardTotal);
-        var scenarios = readPayoffOptionScenarios(averageApr, cardTotal);
+        var scenarios = readPayoffOptionScenarios(averageApr, cardTotal, currentResult.months);
         if (!scenarios.length) {
           optionCapacityNotice.classList.add("hidden");
           optionCapacityNotice.textContent = "";
@@ -4683,7 +4714,13 @@
             });
             optionTerms.push(entry.name + ": " + money(entryAmount) + " at " + formatPercent(entry.apr) + "% APR for " + entry.term + " months with " + formatPercent(entry.feeRate) + "% fee");
           });
-          var combinedResult = simulateWithMonthlyBudget(refinanced.remainingCards.concat(btCards), (loans || []).concat(optionLoans), currentMonthlyBudget);
+          var combinedResult = simulateWithMonthlyBudget(
+            refinanced.remainingCards.concat(btCards),
+            (loans || []).concat(optionLoans),
+            currentMonthlyBudget,
+            methodInput.value,
+            customOrder
+          );
           var unusedText = scenario.extraAvailable > EPSILON
             ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so lower-interest offers were applied first."
             : "";
@@ -4790,7 +4827,7 @@
         if (!lastResult) return;
         scheduleRenderGeneration += 1;
         showAllSchedule = true;
-        var rows = lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240));
+        var rows = lastResult.timeline.slice();
         scheduleRows.innerHTML = rows.map(function (row) {
           return "<tr>" +
             "<td>" + row.month + "</td>" +
@@ -4942,7 +4979,9 @@
         var pad = chartPad();
         var innerW = W - pad.left - pad.right;
         var innerH = H - pad.top - pad.bottom;
-        var maxBalance = result.startingBalance;
+        var maxBalance = Math.max(result.startingBalance, timeline.reduce(function (max, row) {
+          return Math.max(max, Number(row.endingBalance || 0));
+        }, 0));
         var months = timeline.length;
 
         ctx.fillStyle = "#fafcff";
@@ -5630,7 +5669,9 @@
           return;
         }
         var extra = payment.extraPayment;
-        var result = simulate(cards, { method: method, extraPayment: extra, customOrder: customOrder.slice() }, loans);
+        var result = simulate(cards, payment.mode === "total"
+          ? { method: method, monthlyBudget: payment.monthlyBudget, customOrder: customOrder.slice() }
+          : { method: method, extraPayment: extra, customOrder: customOrder.slice() }, loans);
         var baseline = simulate(cards, { method: "minimum", extraPayment: 0 }, loans);
         lastResult = result;
         setCopySummaryAvailable(true);
@@ -5659,7 +5700,7 @@
         }
         renderCriticalWarnings(result.criticalWarnings || []);
         renderWarnings(warnings);
-        var comparisonResults = renderComparison(cards, loans, extra, result, baseline);
+        var comparisonResults = renderComparison(cards, loans, payment, result, baseline);
         renderDecisionSnapshot(comparisonResults, result);
         renderMethodRecommendation(cards, loans, extra, comparisonResults);
         renderPayoffOptions(cards, loans, result);
@@ -5749,6 +5790,21 @@
         if (settings.focus) {
           setTimeout(function () { focusFirstCardField(settings.focusField || "name"); }, 0);
         }
+      }
+
+      if (typeof window !== "undefined") {
+        window.CardPayoffLiveMath = {
+          roundCents: roundCents,
+          normalizeCards: normalizeCards,
+          normalizeLoans: normalizeLoans,
+          startingMinimumTotal: startingMinimumTotal,
+          simulate: simulate,
+          requiredPaymentForTarget: requiredPaymentForTarget,
+          loanPaymentForTerm: loanPaymentForTerm,
+          optionSortRate: optionSortRate,
+          simulateWithMonthlyBudget: simulateWithMonthlyBudget
+        };
+        if (window.CP_TEST_MODE) return;
       }
 
       bind(cardRows, "input", function (event) {
