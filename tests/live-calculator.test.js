@@ -177,6 +177,39 @@ const fullPromoCost = live.optionModeledCostScore({
 assert(shortPromoCost > loanCost, "modeled offer ordering accounts for post-promo cost");
 assert(fullPromoCost < loanCost, "modeled offer ordering can still prefer a promo that lasts through payoff");
 
+const actualPaymentCards = [
+  { id: "card-expensive", name: "Card", balance: 10000, apr: 24, minimum: 200 }
+];
+const actualPaymentPlan = { mode: "total", monthlyBudget: 350 };
+const shortPromoOffer = {
+  type: "balance-transfer",
+  name: "Short promo",
+  amount: 10000,
+  introApr: 0,
+  introMonths: 3,
+  postApr: 12,
+  feeRate: 0,
+  sortRate: 0,
+  modeledCostScore: 0
+};
+const lowRateLongLoan = {
+  type: "consolidation-loan",
+  name: "Low-rate loan",
+  amount: 10000,
+  apr: 4,
+  term: 120,
+  feeRate: 0,
+  sortRate: 0,
+  modeledCostScore: 0
+};
+const actualShortPromoCost = live.optionActualCostScore(shortPromoOffer, actualPaymentCards, [], actualPaymentPlan, "avalanche", []);
+const actualLoanCost = live.optionActualCostScore(lowRateLongLoan, actualPaymentCards, [], actualPaymentPlan, "avalanche", []);
+assert(actualShortPromoCost > actualLoanCost, "actual offer scoring uses the user's payment plan, not only generic offer terms");
+const scoredScenario = live.scorePayoffScenarioEntries({
+  entries: [Object.assign({}, shortPromoOffer), Object.assign({}, lowRateLongLoan)]
+}, actualPaymentCards, [], actualPaymentPlan, "avalanche", []);
+assert.equal(scoredScenario.entries[0].name, "Low-rate loan", "offer allocation applies the lower actual-cost offer first");
+
 assert.equal(
   live.optionDifferenceText({
     currentCapped: true,
@@ -186,6 +219,16 @@ assert.equal(
   }),
   "Not comparable: one plan does not pay off within 50 years.",
   "capped current plans do not show precise payoff-option cost differences"
+);
+
+assert.equal(
+  live.decisionDeltaText(
+    { method: "avalanche", capped: false, totalInterest: 1653.33 },
+    { method: "minimum", capped: true, totalInterest: 16310000000 },
+    16310000000
+  ),
+  "Not comparable: one plan does not pay off within 50 years.",
+  "method comparison avoids precise savings against capped plans"
 );
 
 assert(

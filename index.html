@@ -4313,12 +4313,12 @@
 
       function renderDecisionSnapshot(rows, selectedResult) {
         if (!decisionSnapshot || !decisionRows || !rows || !rows.length) return;
-        var currentCost = selectedResult ? selectedResult.totalInterest : rows[0].totalInterest;
+        var currentResult = selectedResult || rows[0];
+        var currentCost = currentResult.totalInterest;
         var finiteRows = rows.filter(function (row) { return !row.capped; });
         var bestInterest = finiteRows.length ? Math.min.apply(null, finiteRows.map(function (row) { return row.totalInterest; })) : null;
         decisionRows.innerHTML = rows.map(function (result) {
-          var delta = roundCents(result.totalInterest - currentCost);
-          var deltaText = Math.abs(delta) <= EPSILON ? "Current" : (delta < 0 ? "Saves " + money(Math.abs(delta)) : "Costs " + money(delta) + " more");
+          var deltaText = decisionDeltaText(result, currentResult, currentCost);
           return '<div class="decision-row ' + (bestInterest !== null && result.totalInterest === bestInterest ? "best-row" : "") + '">' +
             '<strong>' + escapeHtml(methodLabel(result.method)) + '</strong>' +
             '<span>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + '</span>' +
@@ -4326,6 +4326,14 @@
             '</div>';
         }).join("");
         decisionSnapshot.classList.remove("hidden");
+      }
+
+      function decisionDeltaText(result, currentResult, currentCost) {
+        if (!result || !currentResult) return "";
+        if (result.method === currentResult.method) return "Current";
+        if (result.capped || currentResult.capped) return "Not comparable: one plan does not pay off within 50 years.";
+        var delta = roundCents(result.totalInterest - currentCost);
+        return Math.abs(delta) <= EPSILON ? "Same estimated cost" : (delta < 0 ? "Saves " + money(Math.abs(delta)) : "Costs " + money(delta) + " more");
       }
 
       function sumCardBalances(cards) {
@@ -4536,6 +4544,54 @@
         return roundCents(result.totalInterest + fee);
       }
 
+      function optionActualCostScore(entry, cards, loans, payment, method, order) {
+        var cardTotal = roundCents(sumCardBalances(cards || []));
+        var entryAmount = Math.min(cardTotal, Math.max(0, roundCents(Number(entry && entry.amount || 0))));
+        if (!entry || entryAmount <= EPSILON) return Number.POSITIVE_INFINITY;
+        var refinanced = refinanceCardsByAmount(cards || [], entryAmount);
+        var fee = roundCents(entryAmount * Number(entry.feeRate || 0) / 100);
+        var entryBalance = roundCents(entryAmount + fee);
+        var debtId = "score-" + entry.type;
+        var scoreCards = refinanced.remainingCards.slice();
+        var scoreLoans = (loans || []).slice();
+        if (entry.type === "balance-transfer") {
+          scoreCards.push({
+            id: debtId,
+            name: entry.name || "Balance transfer",
+            balance: entryBalance,
+            apr: entry.postApr,
+            minimum: 25,
+            introApr: entry.introApr,
+            introMonths: entry.introMonths
+          });
+        } else {
+          scoreLoans.push({
+            id: debtId,
+            name: entry.name || "Consolidation loan",
+            balance: entryBalance,
+            rate: entry.apr,
+            payment: loanPaymentForTerm(entryBalance, entry.apr, entry.term || 36),
+            term: entry.term || 36
+          });
+        }
+        var scoreOrder = method === "custom"
+          ? buildOfferCustomOrder(order || customOrder, refinanced.remainingCards, [debtId], refinanced.appliedCardIds)
+          : order;
+        var result = simulateWithPaymentPlan(scoreCards, scoreLoans, payment, method, scoreOrder);
+        return result.capped ? Number.POSITIVE_INFINITY : roundCents(result.totalInterest + fee);
+      }
+
+      function scorePayoffScenarioEntries(scenario, cards, loans, payment, method, order) {
+        if (!scenario || !Array.isArray(scenario.entries)) return scenario;
+        scenario.entries.forEach(function (entry) {
+          entry.modeledCostScore = optionActualCostScore(entry, cards, loans, payment, method, order);
+        });
+        scenario.entries.sort(function (a, b) {
+          return a.modeledCostScore - b.modeledCostScore || a.sortRate - b.sortRate || a.feeRate - b.feeRate || a.amount - b.amount;
+        });
+        return scenario;
+      }
+
       function readPayoffOptionScenarios(averageApr, cardTotal, payoffMonths) {
         if (!optionScenarioList) return [];
         var entries = [];
@@ -4610,6 +4666,10 @@
             : money(Math.abs(modeledDifference)) + " higher";
       }
 
+      function optionScoreLabel(value) {
+        return Number.isFinite(value) ? money(value) : "50+ years";
+      }
+
       function renderPayoffOptionRow(row, bestCost) {
         if (row.unavailable) {
           return '<div class="option-card"><h4>' + escapeHtml(row.name) + '</h4><p class="option-watchout">' + escapeHtml(row.reason) + '</p></div>';
@@ -4651,7 +4711,7 @@
             "<td>" + money(entry.enteredAmount) + "</td>" +
             "<td>" + money(entry.usedAmount) + "</td>" +
             "<td>" + money(entry.unusedAmount) + "</td>" +
-            "<td>" + money(entry.modeledCostScore) + "</td>" +
+            "<td>" + optionScoreLabel(entry.modeledCostScore) + "</td>" +
             "</tr>";
         }).join("");
         var payoffText = result
@@ -4666,7 +4726,7 @@
             '<div class="option-summary-metric"><span>Unused capacity</span><strong>' + money(scenario.extraAvailable) + "</strong></div>" +
           "</div>" +
           '<p class="option-scenario-help">Combined scenario: ' + money(scenario.amount) + " moved, " + money(scenario.extraAvailable) + " unused, estimated payoff " + payoffText + ".</p>" +
-          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Modeled cost order</th></tr></thead><tbody>' +
+          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Modeled cost under this plan</th></tr></thead><tbody>' +
           summaryRows +
           "</tbody></table></div>";
         optionUsageSummary.classList.remove("hidden");
@@ -4699,9 +4759,9 @@
           payoffOptionNote.textContent = "Scenario amount defaults will use your current credit card balance when you add an option.";
           return;
         }
-        var combinedScenario = scenarios[0];
+        var combinedScenario = scorePayoffScenarioEntries(scenarios[0], cards, loans, payment, methodInput.value, customOrder);
         if (combinedScenario.extraAvailable > EPSILON) {
-          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies lower modeled-cost offers first.";
+          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies offers with lower modeled cost under this payment plan first.";
           optionCapacityNotice.classList.remove("hidden");
         } else {
           optionCapacityNotice.classList.add("hidden");
@@ -4807,7 +4867,7 @@
           );
           var offerMaxPayment = maxTimelinePayment(combinedResult);
           var unusedText = scenario.extraAvailable > EPSILON
-            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so lower modeled-cost offers were applied first."
+            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so offers with lower modeled cost under this payment plan were applied first."
             : "";
           var promoText = earliestPromoEnd != null && combinedResult.months > earliestPromoEnd
             ? " At least one balance-transfer promo can expire before payoff; post-promo APR may apply."
@@ -4821,7 +4881,7 @@
             totalCost: roundCents(combinedResult.totalInterest + optionFees),
             currentCost: currentCost,
             currentCapped: currentResult.capped,
-            assumptions: "Applies offers by lowest modeled cost first: " + optionTerms.join("; ") + ".",
+            assumptions: "Applies offers by lowest modeled cost under this payment plan first: " + optionTerms.join("; ") + ".",
             watchout: (offerMaxPayment > currentMaxPayment + EPSILON ? "Required monthly payment can rise to " + money(offerMaxPayment) + ", which is higher than the current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
           });
           renderOptionUsageSummary(scenario, allocation, combinedResult, cardTotal);
@@ -4833,7 +4893,7 @@
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
         payoffOptionNote.textContent = scenarios.length
-          ? "Default amounts use the full current credit card balance. Offers are applied by lowest modeled cost when available transfer/loan capacity exceeds current card balances. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
+          ? "Default amounts use the full current credit card balance. Offers are applied by lowest modeled cost under this payment plan when available transfer/loan capacity exceeds current card balances. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
@@ -5918,7 +5978,10 @@
           loanTermWarning: loanTermWarning,
           optionSortRate: optionSortRate,
           optionModeledCostScore: optionModeledCostScore,
+          optionActualCostScore: optionActualCostScore,
+          scorePayoffScenarioEntries: scorePayoffScenarioEntries,
           optionDifferenceText: optionDifferenceText,
+          decisionDeltaText: decisionDeltaText,
           chartAxisMonthLabel: chartAxisMonthLabel,
           maxTimelinePayment: maxTimelinePayment,
           simulateWithPaymentPlan: simulateWithPaymentPlan,
