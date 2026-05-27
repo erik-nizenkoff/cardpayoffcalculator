@@ -42,6 +42,15 @@ test("keyboard users can reach primary calculator actions", async ({ page }) => 
   expect(focusedLabels.join(" ")).toContain("Payoff Strategy");
 });
 
+test("tabbing from credit card APR moves to minimum payment", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("spinbutton", { name: "Card APR" }).focus();
+  await page.keyboard.press("Tab");
+
+  await expect(page.getByRole("spinbutton", { name: "Card minimum payment" })).toBeFocused();
+});
+
 test("deferred educational content mounts and remains interactive", async ({ page }) => {
   await page.goto("/");
 

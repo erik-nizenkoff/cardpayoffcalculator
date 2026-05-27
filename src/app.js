@@ -3642,6 +3642,18 @@
         if (!sampleDataBanner.classList.contains("hidden")) sampleDataBanner.classList.add("hidden");
         scheduleUpdate();
       });
+
+      bind(cardRows, "keydown", function (event) {
+        if (event.key !== "Tab" || event.shiftKey) return;
+        var input = event.target;
+        if (!input || input.dataset.field !== "apr") return;
+        var row = input.closest("tr");
+        var minimumInput = row ? row.querySelector('[data-field="minimum"]') : null;
+        if (!minimumInput) return;
+        event.preventDefault();
+        minimumInput.focus();
+      });
+
       bind(optionScenarioList, "input", function (event) {
         exitSampleForOwnPlan(null);
         if (event.target && event.target.dataset && event.target.dataset.optionField === "amount") {
