@@ -14,7 +14,7 @@ for (const viewport of viewports) {
     await expect(page.getByRole("heading", { name: "Credit Card and Debt Payoff Calculator" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Clear form" })).toBeVisible();
     await expect(page.getByRole("spinbutton", { name: "Card balance" })).toBeVisible();
-    await expect(page.getByRole("combobox", { name: "Payoff strategy" })).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "Payoff Strategy" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Payoff results" })).toBeVisible();
 
     const pageWidths = await page.evaluate(() => ({
@@ -39,7 +39,7 @@ test("keyboard users can reach primary calculator actions", async ({ page }) => 
 
   expect(focusedLabels.join(" ")).toContain("Clear form");
   expect(focusedLabels.join(" ")).toContain("Card balance");
-  expect(focusedLabels.join(" ")).toContain("Payoff strategy");
+  expect(focusedLabels.join(" ")).toContain("Payoff Strategy");
 });
 
 test("deferred educational content mounts and remains interactive", async ({ page }) => {
