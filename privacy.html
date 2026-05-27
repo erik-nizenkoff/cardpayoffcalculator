@@ -122,16 +122,17 @@
       <p>The payoff calculation runs in your browser. You can use the calculator without creating an account.</p>
 
       <h2>What May Be Sent</h2>
-      <p>Plausible may receive basic page-view analytics when the page loads. After you edit calculator inputs or optional scenarios and the calculator has valid results, non-identifying calculator inputs and result metrics may be sent to Supabase. The default sample calculation is not sent to Supabase on page load.</p>
+      <p>Plausible may receive basic page-view analytics when the page loads. After you edit calculator inputs or optional scenarios and the calculator has valid results, anonymous calculator details and result metrics may be sent to Supabase. The default sample calculation is not sent to Supabase on page load.</p>
       <p>Calculator telemetry can include balances, APRs, minimum payments, payoff method, payment entry mode, payment amount, start month, target month, custom payoff order, loan inputs, balance-transfer assumptions, consolidation-loan assumptions, payoff months, and total interest.</p>
       <p>The app also stores a random anonymous browser ID in local storage so repeated calculations from the same browser can be grouped without asking who you are.</p>
       <p>You can opt out of anonymous calculator telemetry with the checkbox near the calculator inputs. The site also respects browser Do Not Track where available.</p>
+      <p>Copying a share link is different from telemetry. A share link is created only when you click the share button, and it includes the debt nicknames and calculator inputs currently shown so the plan can be reopened from that link.</p>
 
       <h2>What Is Not Sent</h2>
       <ul>
         <li>Card numbers or account numbers</li>
         <li>Bank or card login credentials</li>
-        <li>Names, account names, or identifiers typed into card nickname fields</li>
+        <li>Names, account names, or identifiers typed into card nickname fields as telemetry</li>
         <li>Your name, email address, phone number, address, or Social Security number</li>
       </ul>
 
@@ -142,7 +143,7 @@
       <p>Current service providers include Vercel for site hosting, Supabase for calculator telemetry storage, Plausible for usage analytics, and Google Fonts for font delivery. These providers may process technical information needed to deliver those services.</p>
 
       <h2>Retention And Changes</h2>
-      <p>Calculator telemetry is used for product improvement and debugging. Raw non-identifying calculation telemetry is kept for up to 24 months, then deleted or aggregated. Because the telemetry is not tied to an email address or account, deletion requests may be limited if we cannot identify which anonymous rows belong to a specific visitor.</p>
+      <p>Calculator telemetry is used for product improvement and debugging. Raw anonymous calculation telemetry is kept for up to 24 months, then deleted or aggregated. Because the telemetry is not tied to an email address or account, deletion requests may be limited if we cannot identify which anonymous rows belong to a specific visitor.</p>
       <p>If this project later adds accounts, saved plans, email capture, affiliate links, ads, or personally identifying data collection, this page should be updated before those features go live.</p>
 
       <h2>Contact</h2>

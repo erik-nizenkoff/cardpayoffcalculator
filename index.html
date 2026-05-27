@@ -545,6 +545,13 @@
       line-height: 1.4;
     }
 
+    .share-privacy-note {
+      margin: 6px 0 0;
+      color: #49627f;
+      font-size: .76rem;
+      line-height: 1.4;
+    }
+
     .privacy-note {
       margin: 7px 0 0;
       color: #7b8798;
@@ -672,6 +679,14 @@
       margin: 5px 0 0;
       color: var(--muted);
       font-size: .84rem;
+    }
+
+    .core-path-note {
+      margin: 6px 0 0;
+      color: var(--navy);
+      font-size: .84rem;
+      font-weight: 800;
+      line-height: 1.42;
     }
 
     .field-helper {
@@ -1349,6 +1364,31 @@
       padding: 14px;
     }
 
+    .optional-module {
+      border-color: #d8e2ef;
+      background: linear-gradient(180deg, #fbfdff 0%, #f7faff 100%);
+    }
+
+    .optional-module h2,
+    .optional-module h3 {
+      color: #2f425b;
+    }
+
+    .optional-label {
+      display: inline-flex;
+      width: fit-content;
+      margin: 0 0 6px;
+      border: 1px solid #cbd8e8;
+      border-radius: 999px;
+      background: #fff;
+      color: #5c6f89;
+      padding: 3px 7px;
+      font-size: .68rem;
+      font-weight: 900;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
     .payoff-options h3 {
       margin-bottom: 4px;
     }
@@ -1500,6 +1540,18 @@
       margin: 6px 0 0;
       color: var(--muted);
       font-size: .8rem;
+      line-height: 1.4;
+    }
+
+    .option-plain-summary {
+      margin: 8px 0 10px;
+      border: 1px solid #bfe7cf;
+      border-radius: 7px;
+      background: #f1fbf5;
+      color: #22543d;
+      padding: 8px 10px;
+      font-size: .82rem;
+      font-weight: 800;
       line-height: 1.4;
     }
 
@@ -2201,6 +2253,55 @@
         display: none;
       }
 
+      .comparison-section .table-scroll,
+      .option-summary .table-scroll {
+        overflow-x: visible;
+      }
+
+      .comparison-section table,
+      .offer-allocation-table,
+      .option-summary .allocation-table:not(.schedule-table) {
+        min-width: 0;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      .comparison-section thead,
+      .option-summary thead {
+        display: none;
+      }
+
+      .comparison-section tr,
+      .option-summary tr {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px;
+      }
+
+      .comparison-section td,
+      .option-summary td {
+        display: grid;
+        grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+        gap: 8px;
+        border-bottom: 0;
+        padding: 0;
+        text-align: left;
+      }
+
+      .comparison-section td::before,
+      .option-summary td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: .72rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        line-height: 1.3;
+      }
+
       .intro-fields {
         display: grid;
         grid-template-columns: 1fr;
@@ -2464,7 +2565,7 @@
       {
         "@type": "HowToStep",
         "name": "Add extra payment",
-        "text": "Enter any extra monthly amount you can pay above the calculated minimums."
+        "text": "Enter any extra monthly amount above minimums, or enter your full monthly payoff budget."
       },
       {
         "@type": "HowToStep",
@@ -2496,7 +2597,7 @@
             <p class="entry-guide">To get your first answer, enter three numbers per card: balance, APR, and minimum payment.</p>
             <details class="privacy-disclosure">
               <summary>Privacy and data</summary>
-              <p class="privacy-note">Calculations run in your browser. Do not enter card numbers, logins, or account names; optional telemetry may include non-identifying inputs and results to improve the calculator. <a href="privacy.html">Privacy details</a></p>
+              <p class="privacy-note">Calculations run in your browser. Do not enter card numbers, logins, or account names; optional telemetry may include anonymous calculator details and results to improve the calculator. Share links include the nicknames and inputs currently shown. <a href="privacy.html">Privacy details</a></p>
               <label class="telemetry-toggle"><input id="telemetryOptOut" type="checkbox"> Do not send calculation telemetry</label>
             </details>
           </div>
@@ -2537,9 +2638,10 @@
           <span id="rowLimitNote" class="hint">Enter the minimum from your latest statement. The calculator may estimate a higher minimum when issuer-style rules apply. Up to 20 debts; $0 balances are ignored.</span>
         </div>
 
-        <div id="loanSection" class="loan-section" aria-labelledby="loanSectionHeading">
+        <div id="loanSection" class="loan-section optional-module" aria-labelledby="loanSectionHeading">
           <div class="subsection-head">
             <div>
+              <span class="optional-label">Optional</span>
               <h2 id="loanSectionHeading">Installment loans (optional)</h2>
               <p>Add fixed-payment debts such as personal, auto, or student loans.</p>
             </div>
@@ -2566,7 +2668,7 @@
         <div class="subsection-head" aria-labelledby="payoffInputsHeading">
           <div>
             <h2 id="payoffInputsHeading">Payoff inputs</h2>
-            <p>Choose the strategy, budget, start month, and optional target month for this plan.</p>
+            <p class="core-path-note">Set the strategy, start month, and monthly amount for your main payoff plan.</p>
           </div>
         </div>
 
@@ -2606,7 +2708,8 @@
 
         </div>
 
-        <div id="targetDateOptions" class="advanced-options" aria-labelledby="targetDateHeading">
+        <div id="targetDateOptions" class="advanced-options optional-module" aria-labelledby="targetDateHeading">
+          <span class="optional-label">Optional scenario</span>
           <h3 id="targetDateHeading">Optional target payoff month</h3>
           <div class="settings-grid">
             <div class="field-stack">
@@ -2619,9 +2722,10 @@
           <div id="targetResult" class="target-card hidden"></div>
         </div>
 
-        <div id="payoffOptions" class="payoff-options" aria-labelledby="payoffOptionsHeading">
-          <h3 id="payoffOptionsHeading">Optional: Compare balance transfer or consolidation loan offers</h3>
-          <p class="hint">Enter offers you are considering. The calculator combines them, tests modeled offer orders, and only applies enough to cover your current credit card debt.</p>
+        <div id="payoffOptions" class="payoff-options optional-module" aria-labelledby="payoffOptionsHeading">
+          <span class="optional-label">Optional scenario</span>
+          <h3 id="payoffOptionsHeading">Compare new payoff options</h3>
+          <p class="hint">Add balance transfer or consolidation loan offers you are considering. The calculator only moves enough existing card debt to cover your current credit card balances.</p>
           <p class="option-disclaimer">These are planning scenarios, not recommendations or offers. Approval, available limits, APRs, fees, and terms are not guaranteed; new purchases or missed payments can make debt worse.</p>
           <div id="payoffOptionControls" class="option-controls">
             <div id="optionScenarioList" class="option-settings-grid"></div>
@@ -2751,6 +2855,7 @@
               <span id="copySummaryStatus" class="copy-status" aria-live="polite"></span>
             </div>
             <p id="copyActionsHelp" class="copy-helper">Share and copy controls activate after valid results are shown.</p>
+            <p class="share-privacy-note">Print includes the full payoff schedule. Share links include the debt nicknames and inputs currently shown.</p>
             <p id="sampleShareNote" class="copy-helper hidden">Sample plan only. Replace sample data before sharing a real payoff plan.</p>
           </div>
 
@@ -2867,7 +2972,7 @@
         </details>
         <details>
           <summary>Can I use this offline?</summary>
-          <p>Yes. This is a single self-contained HTML file with client-side calculations. After the page is loaded or saved, it can run without a network connection.</p>
+          <p>Yes. The calculator math runs in your browser and can keep working after the page loads. Some online services, such as fonts or analytics, may not load while offline.</p>
         </details>
       </div>
     </section>
@@ -2959,7 +3064,7 @@
 
   <footer class="site-footer">
     <div class="shell">
-      <div class="footer-update">Last updated: May 2026 · <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · Do not enter card numbers, account names, logins, or personal identifiers. Non-identifying inputs and anonymous usage events may be used to improve the tool. · Not financial advice</div>
+      <div class="footer-update">Last updated: May 2026 · <a href="https://github.com/erik-nizenkoff/cardpayoffcalculator/issues">Report an issue</a> · <a href="privacy.html">Privacy</a> · For educational use only · Do not enter card numbers, account names, logins, or personal identifiers. Anonymous calculator details and usage events may be used to improve the tool. · Not financial advice</div>
     </div>
   </footer>
 
@@ -3561,7 +3666,7 @@
         var helper = isSampleMode
           ? "Sample plan only. Replace sample data before sharing or copying a real payoff plan."
           : enabled
-          ? "Share links include the current numeric inputs; copy actions are ready."
+          ? "Print includes the full schedule. Share links include the current debt nicknames and inputs."
           : "Share and copy controls activate after valid results are shown.";
         if (copyActionsHelp) copyActionsHelp.textContent = helper;
         if (copyLinkButton) copyLinkButton.title = isSampleMode ? "Replace sample data before sharing" : enabled ? "Copy a link to these calculator inputs" : "Enter valid debt inputs to enable share links";
@@ -4356,12 +4461,12 @@
           })[0];
 
           return '<tr class="' + (bestInterest !== null && result.totalInterest === bestInterest ? "best-row" : "") + '">' +
-            "<td>" + methodLabel(result.method) + "</td>" +
-            "<td>" + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</td>" +
-            "<td>" + duration(result.months, result.capped) + "</td>" +
-            "<td>" + comparisonInterestText(result) + "</td>" +
-            "<td>" + money(result.monthlyPayment) + "</td>" +
-            "<td>" + (first ? escapeHtml(first.name) + " in " + duration(first.payoffMonth, false) : "-") + "</td>" +
+            '<td data-label="Method">' + methodLabel(result.method) + "</td>" +
+            '<td data-label="Payoff date">' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</td>" +
+            '<td data-label="Months">' + duration(result.months, result.capped) + "</td>" +
+            '<td data-label="Total interest">' + comparisonInterestText(result) + "</td>" +
+            '<td data-label="Monthly payment">' + money(result.monthlyPayment) + "</td>" +
+            '<td data-label="First debt paid">' + (first ? escapeHtml(first.name) + " in " + duration(first.payoffMonth, false) : "-") + "</td>" +
             "</tr>";
         }).join("");
         return rows;
@@ -5035,20 +5140,20 @@
             }).join("") + "</span>"
             : "-";
           return "<tr>" +
-            "<td>" + escapeHtml(entry.name) + "</td>" +
-            "<td>" + money(entry.enteredAmount) + "</td>" +
-            "<td>" + money(entry.usedAmount) + "</td>" +
-            "<td>" + money(entry.unusedAmount) + "</td>" +
-            "<td>" + appliedDebtNames + "</td>" +
-            "<td>" + optionSavingsLabel(entry.modeledSavingsPerDollar) + "</td>" +
+            '<td data-label="Offer">' + escapeHtml(entry.name) + "</td>" +
+            '<td data-label="Entered">' + money(entry.enteredAmount) + "</td>" +
+            '<td data-label="Used">' + money(entry.usedAmount) + "</td>" +
+            '<td data-label="Unused">' + money(entry.unusedAmount) + "</td>" +
+            '<td data-label="Applied to">' + appliedDebtNames + "</td>" +
+            '<td data-label="Modeled savings per $">' + optionSavingsLabel(entry.modeledSavingsPerDollar) + "</td>" +
             "</tr>";
         }).join("");
         var debtRows = ((scenario.bestModel && scenario.bestModel.refinanced && scenario.bestModel.refinanced.coverage) || []).map(function (debt) {
           return "<tr>" +
-            "<td>" + escapeHtml(debt.name) + "</td>" +
-            "<td>" + money(debt.startingBalance) + "</td>" +
-            "<td>" + money(debt.appliedAmount) + "</td>" +
-            "<td>" + money(debt.remainingBalance) + "</td>" +
+            '<td data-label="Debt">' + escapeHtml(debt.name) + "</td>" +
+            '<td data-label="Current balance">' + money(debt.startingBalance) + "</td>" +
+            '<td data-label="Moved to offers">' + money(debt.appliedAmount) + "</td>" +
+            '<td data-label="Balance remaining">' + money(debt.remainingBalance) + "</td>" +
             "</tr>";
         }).join("");
         var payoffText = result
@@ -5063,6 +5168,7 @@
             '<div class="option-summary-metric"><span>Unused capacity</span><strong>' + money(scenario.extraAvailable) + "</strong></div>" +
           "</div>" +
           '<p class="option-scenario-help">Combined scenario: ' + money(scenario.amount) + " moved, " + money(scenario.extraAvailable) + " unused, estimated payoff " + payoffText + ".</p>" +
+          '<p class="option-plain-summary">What this means: the calculator moves existing card balances into the cheapest offer order it can model first.</p>' +
           '<div class="table-scroll"><table class="allocation-table offer-allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Applied to</th><th>Modeled savings per $</th></tr></thead><tbody>' +
           summaryRows +
           "</tbody></table></div>" +
@@ -5099,7 +5205,7 @@
         }
         var combinedScenario = optimizePayoffScenarioOrder(scenarios[0], cards, loans, payment, methodInput.value, customOrder, 0, currentResult);
         if (combinedScenario.extraAvailable > EPSILON) {
-          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies the lowest modeled total-cost offer combination.";
+          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies the cheapest offer order it can model.";
           optionCapacityNotice.classList.remove("hidden");
         } else {
           optionCapacityNotice.classList.add("hidden");
@@ -5133,7 +5239,7 @@
             return;
           }
           var unusedText = scenario.extraAvailable > EPSILON
-            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so the lowest modeled total-cost offer combination was applied."
+            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so the cheapest offer order the calculator can model was applied."
             : "";
           var promoText = model.earliestPromoEnd != null && model.result.months > model.earliestPromoEnd
             ? " At least one balance-transfer promo can expire before payoff; post-promo APR may apply."
@@ -5147,7 +5253,7 @@
             totalCost: model.totalCost,
             currentCost: currentCost,
             currentCapped: currentResult.capped,
-            assumptions: "Applies the lowest modeled total-cost offer combination: " + model.optionTerms.join("; ") + ".",
+            assumptions: "Applies the cheapest offer order the calculator can model: " + model.optionTerms.join("; ") + ".",
             watchout: (model.offerMaxPayment > currentMaxPayment + EPSILON ? "Required monthly payment can rise to " + money(model.offerMaxPayment) + ", which is higher than the current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
           });
           renderOptionUsageSummary(scenario, model.allocation, model.result, cardTotal);
@@ -5159,7 +5265,7 @@
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
         payoffOptionNote.textContent = scenarios.length
-          ? "Default amounts use the full current credit card balance. The calculator tests offer combinations and applies the lowest modeled total-cost order it can evaluate. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
+          ? "New offers start at your current card balance by default. The calculator tests offer combinations and applies the cheapest order it can model. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
