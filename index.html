@@ -4626,6 +4626,10 @@
         return number;
       }
 
+      function optionCapacityValue(value, fallback) {
+        return optionNumberValue(value, fallback, 0, Number.MAX_SAFE_INTEGER);
+      }
+
       function optionSortRate(type, values, payoffMonths) {
         var horizon = Math.max(1, Number(payoffMonths || 1));
         var feeEquivalentApr = Number(values.feeRate || 0) * 12 / horizon;
@@ -4911,7 +4915,7 @@
             entries.push({
               type: type,
               name: "Balance transfer " + balanceTransferCount,
-              amount: optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal),
+              amount: optionCapacityValue(getOptionField(scenario, "amount"), cardTotal),
               feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
               introApr: introApr,
               introMonths: Math.round(optionNumberValue(getOptionField(scenario, "introMonths"), 18, MIN_INTRO_MONTHS, MAX_INTRO_MONTHS)),
@@ -4928,7 +4932,7 @@
           entries.push({
             type: "consolidation-loan",
             name: "Consolidation loan" + (consolidationCount > 1 ? " " + consolidationCount : ""),
-            amount: optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal),
+            amount: optionCapacityValue(getOptionField(scenario, "amount"), cardTotal),
             apr: apr,
             term: Math.round(optionNumberValue(getOptionField(scenario, "term"), 36, 1, 360)),
             feeRate: optionNumberValue(getOptionField(scenario, "fee"), 3, 0, 20),
@@ -6250,6 +6254,7 @@
           optionModeledCostScore: optionModeledCostScore,
           optionActualCostScore: optionActualCostScore,
           optionSavingsPerDollar: optionSavingsPerDollar,
+          optionCapacityValue: optionCapacityValue,
           maxPayoffOptions: MAX_PAYOFF_OPTIONS,
           cleanSharedName: cleanSharedName,
           sharedCard: sharedCard,
