@@ -63,10 +63,13 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await page.locator("#paymentMode").selectOption("total");
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("250");
   await expect(page.getByRole("spinbutton", { name: "Total monthly debt payoff budget" })).toHaveValue("250");
+  await expect(page.locator("#currentPlanSummary")).toContainText("Using a fixed $250/mo budget");
+  await expect(page.locator("#savingsResult")).toContainText("Keeping a $250/mo budget");
 
   await page.locator("#paymentMode").selectOption("extra");
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("200");
   await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("200");
+  await expect(page.locator("#currentPlanSummary")).toContainText("With $200 extra");
   await expect(page.locator("#scheduleRows tr").first()).toContainText("Visa $250.00 (+$200 extra)");
 });
 

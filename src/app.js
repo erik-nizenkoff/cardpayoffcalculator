@@ -1026,7 +1026,7 @@
           "Payoff method: " + methodLabel,
           "Starting balance: " + money(result.startingBalance),
           paymentLine,
-          "Extra above minimums: " + money(result.extraPayment),
+          (paymentMode() === "total" ? "Initial extra above minimums: " : "Extra above minimums: ") + money(result.extraPayment),
           "Debt-free date: " + payoffDate,
           result.capped ? "Interest during 50-year model: " + money(result.totalInterest) + " and still accruing" : "Total interest: " + money(result.totalInterest),
           result.capped ? "Paid during 50-year model: " + money(result.totalPaid) : null,
@@ -1617,27 +1617,32 @@
         targetResult.innerHTML = missText + "To be debt-free by <strong>" + targetDate + "</strong>, estimated payment needed: <strong>" + money(required.monthlyPayment) + "/mo</strong> (" + money(required.extraPayment) + " above starting minimums).";
       }
 
-      function renderCurrentPlanSummary(result) {
+      function renderCurrentPlanSummary(result, payment) {
         if (!currentPlanSummary || !result || !result.timeline.length) return;
         var firstTarget = result.timeline[0].target || "your first target";
-        var extraText = result.method === "minimum"
+        var totalMode = payment && payment.mode === "total";
+        var planText = result.method === "minimum"
           ? "With minimum payments only"
-          : "With " + money(result.extraPayment) + " extra using " + methodLabel(result.method).toLowerCase();
+          : totalMode
+            ? "Using a fixed " + money(result.monthlyPayment) + "/mo budget with " + methodLabel(result.method).toLowerCase()
+            : "With " + money(result.extraPayment) + " extra using " + methodLabel(result.method).toLowerCase();
         var nextText = result.method === "minimum"
           ? "Next: try an extra monthly payment to see how much time and interest it saves."
-          : "Next: try adding $50/month to see whether the payoff date improves enough.";
-        currentPlanSummary.textContent = extraText + ", this plan sends extra payment to " + firstTarget + " first. " + nextText;
+          : totalMode
+            ? "Next: try increasing the fixed budget by $50/month to see whether the payoff date improves enough."
+            : "Next: try adding $50/month to see whether the payoff date improves enough.";
+        currentPlanSummary.textContent = planText + ", this plan sends extra payment to " + firstTarget + " first. " + nextText;
         currentPlanSummary.classList.remove("hidden");
       }
 
-      function renderSavings(selected, baseline, extraPayment) {
+      function renderSavings(selected, baseline, extraPayment, payment) {
         if (!extraPayment || selected.method === "minimum") {
           savingsResult.classList.add("hidden");
           savingsResult.innerHTML = "";
           return;
         }
 
-        var message = savingsMessage(selected, baseline, extraPayment);
+        var message = savingsMessage(selected, baseline, extraPayment, payment);
         if (!message) {
           savingsResult.classList.add("hidden");
           savingsResult.innerHTML = "";
@@ -1647,21 +1652,29 @@
         savingsResult.innerHTML = message;
       }
 
-      function savingsMessage(selected, baseline, extraPayment) {
+      function savingsActionText(selected, extraPayment, payment) {
+        if (payment && payment.mode === "total") {
+          return "Keeping a <strong>" + money(selected.monthlyPayment) + "/mo</strong> budget";
+        }
+        return "Adding <strong>" + money(extraPayment) + "/mo</strong>";
+      }
+
+      function savingsMessage(selected, baseline, extraPayment, payment) {
         if (!extraPayment || !selected || selected.method === "minimum" || !baseline) return "";
         var interestSaved = roundCents(baseline.totalInterest - selected.totalInterest);
+        var actionText = savingsActionText(selected, extraPayment, payment);
         if (baseline.capped) {
           if (selected.capped) {
-            return "Minimum-only does not clear the modeled debt within 50 years. Adding <strong>" + money(extraPayment) + "/mo</strong> lowers interest during the 50-year model by about <strong>" + money(Math.max(0, interestSaved)) + "</strong>, but this plan still does not fully pay off within the calculator limit.";
+            return "Minimum-only does not clear the modeled debt within 50 years. " + actionText + " lowers interest during the 50-year model by about <strong>" + money(Math.max(0, interestSaved)) + "</strong>, but this plan still does not fully pay off within the calculator limit.";
           }
-          return "Minimum-only does not clear the modeled debt within 50 years. Adding <strong>" + money(extraPayment) + "/mo</strong> creates a payoff path in this scenario.";
+          return "Minimum-only does not clear the modeled debt within 50 years. " + actionText + " creates a payoff path in this scenario.";
         }
 
         if (selected.capped) {
-          return "Adding <strong>" + money(extraPayment) + "/mo</strong> does not produce a comparable payoff within 50 years for this scenario.";
+          return actionText + " does not produce a comparable payoff within 50 years for this scenario.";
         }
         var monthsSaved = baseline.months - selected.months;
-        return "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than paying minimums only.";
+        return actionText + " saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than paying minimums only.";
       }
 
       function renderPaymentModeSummary(payment, result) {
@@ -3591,7 +3604,7 @@
         totalPaidLabel.textContent = resultPaidLabel(result);
         totalPaidEl.textContent = resultPaidText(result);
         firstTargetEl.textContent = result.timeline[0] ? (result.timeline[0].target || "-") : "-";
-        renderCurrentPlanSummary(result);
+        renderCurrentPlanSummary(result, payment);
         renderPaymentModeSummary(payment, result);
         updateMobileSummary(result);
 
@@ -3606,7 +3619,7 @@
         renderMethodRecommendation(cards, loans, payment, comparisonResults);
         renderPayoffOptions(cards, loans, result, payment);
         renderTarget(cards, loans, method);
-        renderSavings(result, baseline, extra);
+        renderSavings(result, baseline, extra, payment);
         renderFixedBudgetNudge(cards, loans, payment, result);
         renderMonthPlan(result);
         renderSchedule(result);
