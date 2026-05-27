@@ -238,6 +238,42 @@ const mixedCapacityScenario = live.scorePayoffScenarioEntries({
 assert.equal(mixedCapacityScenario.entries[0].name, "Small low-rate loan", "mixed-capacity offer allocation uses modeled savings per dollar");
 assert(mixedCapacityScenario.entries[0].modeledSavingsPerDollar > mixedCapacityScenario.entries[1].modeledSavingsPerDollar, "smaller better offer has higher modeled savings per dollar");
 
+const permutationLoanA = {
+  type: "consolidation-loan",
+  name: "L0",
+  amount: 4192.71,
+  apr: 12.6,
+  term: 130,
+  feeRate: 0.25,
+  sortRate: 0,
+  modeledCostScore: 0
+};
+const permutationLoanB = {
+  type: "consolidation-loan",
+  name: "L1",
+  amount: 8247.63,
+  apr: 13.79,
+  term: 14,
+  feeRate: 3.2,
+  sortRate: 0,
+  modeledCostScore: 0
+};
+const permutationScenarioBase = {
+  type: "combined-new-credit",
+  name: "Combined offers",
+  amount: 10000,
+  totalAvailable: 12440.34,
+  extraAvailable: 2440.34
+};
+const l0FirstModel = live.buildPayoffScenarioModel(Object.assign({ entries: [Object.assign({}, permutationLoanA), Object.assign({}, permutationLoanB)] }, permutationScenarioBase), actualPaymentCards, [], actualPaymentPlan, "avalanche", [], 0);
+const l1FirstModel = live.buildPayoffScenarioModel(Object.assign({ entries: [Object.assign({}, permutationLoanB), Object.assign({}, permutationLoanA)] }, permutationScenarioBase), actualPaymentCards, [], actualPaymentPlan, "avalanche", [], 0);
+assert(l1FirstModel.totalCost < l0FirstModel.totalCost, "test fixture has a cheaper reversed combined offer order");
+const optimizedPermutation = live.optimizePayoffScenarioOrder(Object.assign({
+  entries: [Object.assign({}, permutationLoanA), Object.assign({}, permutationLoanB)]
+}, permutationScenarioBase), actualPaymentCards, [], actualPaymentPlan, "avalanche", [], 0, currentActualPaymentResult);
+assert.equal(optimizedPermutation.entries[0].name, "L1", "combined offer allocation chooses the lowest modeled-cost permutation");
+assert.equal(optimizedPermutation.bestModel.totalCost, l1FirstModel.totalCost, "optimized combined offer model matches the cheapest tested order");
+
 assert.equal(
   live.optionDifferenceText({
     currentCapped: true,
@@ -264,6 +300,18 @@ assert.equal(
   "Still accruing after 50 years",
   "capped comparison rows do not show partial 50-year interest as payoff interest"
 );
+
+const cappedPrimaryResult = live.simulate([], { method: "minimum", extraPayment: 0 }, [
+  { id: "bad-loan", name: "Bad Loan", balance: 10000, rate: 30, payment: 100 }
+]);
+assert.equal(cappedPrimaryResult.capped, true, "fixture reaches the 50-year model cap");
+assert.equal(live.resultInterestLabel(cappedPrimaryResult), "Interest During 50-Year Model", "capped primary result relabels interest");
+assert(live.resultInterestText(cappedPrimaryResult).includes("still accruing"), "capped primary result does not present interest as final payoff interest");
+assert.equal(live.resultPaidLabel(cappedPrimaryResult), "Paid During 50-Year Model", "capped primary result relabels paid total");
+assert(live.resultPaidText(cappedPrimaryResult).includes("paid before limit"), "capped primary result does not present paid amount as final payoff total");
+const cappedSummary = live.buildResultsSummary(cappedPrimaryResult);
+assert(cappedSummary.includes("Interest during 50-year model"), "copied summary labels capped interest as model-window interest");
+assert(!cappedSummary.includes("Total interest:"), "copied summary does not call capped model-window interest total payoff interest");
 
 assert(
   live.loanTermWarning({ name: "Short loan", balance: 10000, rate: 10, payment: 100, term: 12 }).includes("Estimated payment needed"),
