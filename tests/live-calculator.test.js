@@ -380,6 +380,9 @@ const html = fs.readFileSync("index.html", "utf8");
 assert.equal(live.maxPayoffOptions, 8, "payoff offers are capped at eight for exhaustive ordering");
 assert(!html.includes("slice(0, 30)"), "shared payoff options no longer allow thirty offer scenarios");
 assert(html.includes("MAX_PAYOFF_OPTIONS"), "payoff option limits use one shared constant");
+assert(html.includes("repeat(auto-fit"), "single payoff offer cards fill available space without an empty grid column");
+assert(html.includes("offer-allocation-table"), "offer allocation table has dedicated column sizing");
+assert(html.includes("applied-debt-list"), "applied debts render as stacked lines instead of a cramped comma list");
 assert.equal(
   live.sharedCard({ id: "card-nick", name: "  Travel   Rewards  ", balance: 1200, apr: 19.99, minimum: 35 }, 0).name,
   "Travel Rewards",

@@ -1431,6 +1431,35 @@
       overflow-wrap: anywhere;
     }
 
+    .offer-allocation-table th:nth-child(1),
+    .offer-allocation-table td:nth-child(1) {
+      width: 16%;
+    }
+
+    .offer-allocation-table th:nth-child(2),
+    .offer-allocation-table td:nth-child(2),
+    .offer-allocation-table th:nth-child(3),
+    .offer-allocation-table td:nth-child(3),
+    .offer-allocation-table th:nth-child(4),
+    .offer-allocation-table td:nth-child(4) {
+      width: 13%;
+    }
+
+    .offer-allocation-table th:nth-child(5),
+    .offer-allocation-table td:nth-child(5) {
+      width: 29%;
+    }
+
+    .offer-allocation-table th:nth-child(6),
+    .offer-allocation-table td:nth-child(6) {
+      width: 16%;
+    }
+
+    .applied-debt-list {
+      display: grid;
+      gap: 3px;
+    }
+
     .option-controls {
       margin: 12px 0;
       border: 1px solid var(--line);
@@ -1441,7 +1470,7 @@
 
     .option-settings-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
       gap: 12px;
       margin: 12px 0;
     }
@@ -4994,15 +5023,17 @@
       function renderOptionUsageSummary(scenario, allocation, result, cardTotal) {
         if (!optionUsageSummary || !scenario || !allocation) return;
         var summaryRows = allocation.map(function (entry) {
-          var appliedDebtNames = (entry.appliedDebts || []).map(function (debt) {
-            return debt.name + " (" + money(debt.appliedAmount) + ")";
-          }).join(", ") || "-";
+          var appliedDebtNames = (entry.appliedDebts || []).length
+            ? '<span class="applied-debt-list">' + entry.appliedDebts.map(function (debt) {
+              return "<span>" + escapeHtml(debt.name) + " (" + money(debt.appliedAmount) + ")</span>";
+            }).join("") + "</span>"
+            : "-";
           return "<tr>" +
             "<td>" + escapeHtml(entry.name) + "</td>" +
             "<td>" + money(entry.enteredAmount) + "</td>" +
             "<td>" + money(entry.usedAmount) + "</td>" +
             "<td>" + money(entry.unusedAmount) + "</td>" +
-            "<td>" + escapeHtml(appliedDebtNames) + "</td>" +
+            "<td>" + appliedDebtNames + "</td>" +
             "<td>" + optionSavingsLabel(entry.modeledSavingsPerDollar) + "</td>" +
             "</tr>";
         }).join("");
@@ -5026,7 +5057,7 @@
             '<div class="option-summary-metric"><span>Unused capacity</span><strong>' + money(scenario.extraAvailable) + "</strong></div>" +
           "</div>" +
           '<p class="option-scenario-help">Combined scenario: ' + money(scenario.amount) + " moved, " + money(scenario.extraAvailable) + " unused, estimated payoff " + payoffText + ".</p>" +
-          '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Applied to</th><th>Modeled savings per $</th></tr></thead><tbody>' +
+          '<div class="table-scroll"><table class="allocation-table offer-allocation-table"><thead><tr><th>Offer</th><th>Entered</th><th>Used</th><th>Unused</th><th>Applied to</th><th>Modeled savings per $</th></tr></thead><tbody>' +
           summaryRows +
           "</tbody></table></div>" +
           (debtRows ? '<div class="table-scroll"><table class="allocation-table"><thead><tr><th>Debt</th><th>Current balance</th><th>Moved to offers</th><th>Balance remaining</th></tr></thead><tbody>' + debtRows + "</tbody></table></div>" : "");
