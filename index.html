@@ -16,7 +16,8 @@
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
   <!-- Privacy-friendly analytics by Plausible -->
   <script>
     (function () {
@@ -3327,6 +3328,9 @@
 
       document.querySelectorAll(".table-scroll").forEach(function (region, index) {
         region.setAttribute("tabindex", "0");
+        if (!region.hasAttribute("role")) {
+          region.setAttribute("role", "region");
+        }
         if (!region.hasAttribute("aria-label")) {
           region.setAttribute("aria-label", "Scrollable table " + (index + 1));
         }
@@ -3445,8 +3449,9 @@
         }
         if (hint) hint.textContent = expanded ? "Done" : "Tap to edit";
         if (toggle) {
+          var summaryLabel = name + ", Balance " + money(balance) + ", APR " + (Number.isFinite(apr) ? apr.toFixed(2).replace(/\.00$/, "") : "0") + "%, Minimum " + money(minimum);
           toggle.setAttribute("aria-expanded", String(expanded));
-          toggle.setAttribute("aria-label", expanded ? "Collapse card details" : "Expand card details");
+          toggle.setAttribute("aria-label", summaryLabel + ", " + (expanded ? "Done, Collapse card details" : "Tap to edit, Expand card details"));
         }
         setFieldLabel(row, "name", name + " card name");
         setFieldLabel(row, "balance", name + " balance");
