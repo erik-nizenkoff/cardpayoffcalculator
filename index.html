@@ -5726,6 +5726,20 @@
         }
       }
 
+      function syncInputFocusState() {
+        if (isInputFocused()) {
+          document.body.classList.add("input-focused");
+          hideMobileSummary();
+          return;
+        }
+        document.body.classList.remove("input-focused");
+        if (lastResult) updateMobileSummary(lastResult);
+      }
+
+      function scheduleInputFocusSync() {
+        setTimeout(syncInputFocusState, 0);
+      }
+
       function updateMobileSummaryContext() {
         if (!mobileSummaryBar || !mobileSummaryLink || mobileSummaryBar.classList.contains("hidden")) return;
         if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
@@ -6572,14 +6586,15 @@
       document.addEventListener("focus", handleEditableFocus, true);
       document.addEventListener("focusin", handleEditableFocus);
       document.addEventListener("pointerdown", handleEditableFocus, true);
-      document.addEventListener("click", handleEditableFocus, true);
+      document.addEventListener("click", function (event) {
+        if (isEditableField(event.target)) {
+          handleEditableFocus(event);
+          return;
+        }
+        scheduleInputFocusSync();
+      }, true);
       document.addEventListener("focusout", function () {
-        setTimeout(function () {
-          if (!isInputFocused()) {
-            document.body.classList.remove("input-focused");
-            if (lastResult) updateMobileSummary(lastResult);
-          }
-        }, 0);
+        scheduleInputFocusSync();
       });
       bind(calculatorForm, "submit", function (event) {
         event.preventDefault();
