@@ -368,6 +368,12 @@
       box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
     }
 
+    input::placeholder,
+    textarea::placeholder {
+      color: #98a2b3;
+      opacity: 1;
+    }
+
     .card-table input {
       min-height: 36px;
       padding: 6px 7px;
@@ -519,6 +525,10 @@
       white-space: normal;
     }
 
+    .secondary-actions .copy-status {
+      grid-column: 1 / -1;
+    }
+
     .copy-status {
       color: var(--muted);
       font-size: .82rem;
@@ -553,12 +563,6 @@
       font-size: .78rem;
     }
 
-    .privacy-disclosure summary {
-      cursor: pointer;
-      color: var(--navy);
-      font-weight: 900;
-    }
-
     .entry-guide {
       margin: 8px 0 0;
       color: var(--navy);
@@ -572,10 +576,16 @@
       align-items: center;
       gap: 8px;
       margin-top: 7px;
-      color: #7b8798;
+      color: #4a5568;
       font-size: .76rem;
       font-weight: 700;
       line-height: 1.35;
+    }
+
+    .feedback-attach-toggle {
+      margin-top: 0;
+      color: var(--text);
+      font-size: .86rem;
     }
 
     .telemetry-toggle input {
@@ -1355,6 +1365,69 @@
     .optional-module {
       border-color: #d8e2ef;
       background: linear-gradient(180deg, #fbfdff 0%, #f7faff 100%);
+    }
+
+    details.optional-module {
+      padding: 14px;
+    }
+
+    .loan-section.optional-module {
+      padding: 18px 14px 14px;
+    }
+
+    .optional-summary {
+      display: block;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .optional-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .optional-summary .subsection-head {
+      margin: 0;
+      padding: 0;
+      border-top: 0;
+    }
+
+    .optional-body {
+      margin-top: 12px;
+    }
+
+    .optional-module-actions {
+      justify-content: flex-start;
+      margin: 0 0 8px;
+    }
+
+    .optional-summary-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      min-height: 30px;
+      border: 1px solid #cbd8e8;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--navy);
+      font-size: 0;
+      font-weight: 900;
+      line-height: 1;
+      padding: 5px 9px;
+    }
+
+    .optional-summary-action::after {
+      content: "Show";
+      font-size: .76rem;
+    }
+
+    .optional-details[open] .optional-summary-action::after {
+      content: "Hide";
+    }
+
+    .optional-summary > .optional-summary-action {
+      float: right;
+      margin-top: -30px;
     }
 
     .optional-module h2,

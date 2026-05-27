@@ -1,4 +1,5 @@
 .openclaw/
+.vercel/
 node_modules/
 playwright-report/
 public/

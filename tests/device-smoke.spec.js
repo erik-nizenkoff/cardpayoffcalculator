@@ -12,7 +12,7 @@ for (const viewport of viewports) {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { name: "Credit Card and Debt Payoff Calculator" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Enter my cards" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Clear form" })).toBeVisible();
     await expect(page.getByRole("spinbutton", { name: "Card balance" })).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Payoff strategy" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Payoff results" })).toBeVisible();
@@ -37,7 +37,7 @@ test("keyboard users can reach primary calculator actions", async ({ page }) => 
     }));
   }
 
-  expect(focusedLabels.join(" ")).toContain("Enter my cards");
+  expect(focusedLabels.join(" ")).toContain("Clear form");
   expect(focusedLabels.join(" ")).toContain("Card balance");
   expect(focusedLabels.join(" ")).toContain("Payoff strategy");
 });
