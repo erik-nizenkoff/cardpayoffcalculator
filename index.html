@@ -5625,6 +5625,10 @@
         return Math.round(number * 100) / 100;
       }
 
+      function cleanSharedName(value) {
+        return String(value || "").replace(/\s+/g, " ").trim().slice(0, 60);
+      }
+
       function encodeSharedState(state) {
         var json = JSON.stringify(state);
         return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -5643,10 +5647,12 @@
       function sharedCard(card, index) {
         var item = {
           id: card.id || "card-" + (index + 1),
+          name: cleanSharedName(card.name),
           balance: cleanSharedNumber(card.balance, 0, Number.MAX_SAFE_INTEGER),
           apr: cleanSharedNumber(card.apr, 0, MAX_APR),
           minimum: cleanSharedNumber(card.minimum, 0, Number.MAX_SAFE_INTEGER)
         };
+        if (!item.name) delete item.name;
         if (card.introApr != null && card.introMonths != null) {
           item.introApr = cleanSharedNumber(card.introApr, 0, MAX_APR);
           item.introMonths = Math.round(Number(card.introMonths));
@@ -5747,7 +5753,7 @@
 
         var cards = Array.isArray(state.cards) ? state.cards.slice(0, MAX_CARDS).map(function (card, index) {
           var item = sharedCard(card || {}, index);
-          item.name = "Card " + (index + 1);
+          item.name = cleanSharedName(card && card.name) || "Card " + (index + 1);
           if (!item.balance || item.apr === null || !item.minimum) return null;
           if (item.introApr === null || !Number.isInteger(item.introMonths) || item.introMonths < MIN_INTRO_MONTHS || item.introMonths > MAX_INTRO_MONTHS) {
             delete item.introApr;
@@ -6165,6 +6171,8 @@
           optionActualCostScore: optionActualCostScore,
           optionSavingsPerDollar: optionSavingsPerDollar,
           maxPayoffOptions: MAX_PAYOFF_OPTIONS,
+          cleanSharedName: cleanSharedName,
+          sharedCard: sharedCard,
           scorePayoffScenarioEntries: scorePayoffScenarioEntries,
           optimizePayoffScenarioOrder: optimizePayoffScenarioOrder,
           buildPayoffScenarioModel: buildPayoffScenarioModel,
