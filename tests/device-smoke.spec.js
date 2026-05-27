@@ -51,6 +51,24 @@ test("tabbing from credit card APR moves to minimum payment", async ({ page }) =
   await expect(page.getByRole("spinbutton", { name: "Card minimum payment" })).toBeFocused();
 });
 
+test("payment mode switch converts between extra and total budget amounts", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("textbox", { name: "Card name" }).fill("Visa");
+  await page.getByRole("spinbutton", { name: "Visa balance" }).fill("1000");
+  await page.getByRole("spinbutton", { name: "Visa APR" }).fill("12");
+  await page.getByRole("spinbutton", { name: "Visa minimum payment" }).fill("50");
+  await page.getByRole("spinbutton", { name: "Extra monthly payment" }).fill("200");
+
+  await page.locator("#paymentMode").selectOption("total");
+  await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("250");
+  await expect(page.getByRole("spinbutton", { name: "Total monthly debt payoff budget" })).toHaveValue("250");
+
+  await page.locator("#paymentMode").selectOption("extra");
+  await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("200");
+  await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("200");
+});
+
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {
   await page.goto("/");
 

@@ -152,6 +152,7 @@
       var lastCards = [];
       var lastLoans = [];
       var customOrder = [];
+      var previousPaymentMode = paymentMode();
 
       var moneyFormatter = new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -329,6 +330,30 @@
 
       function paymentMode() {
         return paymentModeInput && paymentModeInput.value === "total" ? "total" : "extra";
+      }
+
+      function syncPaymentModeTracker() {
+        previousPaymentMode = paymentMode();
+        syncPaymentInputCopy();
+      }
+
+      function syncPaymentModeValue() {
+        var nextMode = paymentMode();
+        if (nextMode === previousPaymentMode) {
+          syncPaymentInputCopy();
+          return;
+        }
+
+        var enteredAmount = Math.max(0, Number(extraInput.value || 0));
+        if (!Number.isFinite(enteredAmount)) enteredAmount = 0;
+        var minimum = startingMinimumTotal(readCards(), readLoans());
+        if (previousPaymentMode === "extra" && nextMode === "total") {
+          extraInput.value = String(roundCents(minimum + enteredAmount));
+        } else if (previousPaymentMode === "total" && nextMode === "extra") {
+          extraInput.value = String(roundCents(Math.max(0, enteredAmount - minimum)));
+        }
+        previousPaymentMode = nextMode;
+        syncPaymentInputCopy();
       }
 
       enhanceScrollableTables(document);
@@ -3317,7 +3342,7 @@
         methodInput.value = ["avalanche", "snowball", "minimum", "custom"].indexOf(state.method) !== -1 ? state.method : "avalanche";
         paymentModeInput.value = state.paymentMode === "total" ? "total" : "extra";
         extraInput.value = cleanSharedNumber(state.paymentAmount != null ? state.paymentAmount : state.extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0;
-        syncPaymentInputCopy();
+        syncPaymentModeTracker();
         startInput.value = isValidMonthValue(state.startMonth) ? state.startMonth : currentMonthValue();
         targetInput.value = isValidMonthValue(state.targetMonth) ? state.targetMonth : "";
         if (Array.isArray(state.customOrder)) {
@@ -3607,7 +3632,7 @@
         methodInput.value = "avalanche";
         paymentModeInput.value = "extra";
         extraInput.value = "250";
-        syncPaymentInputCopy();
+        syncPaymentModeTracker();
         startInput.value = currentMonthValue();
         targetInput.value = "";
         resetDefaultOptionScenarios();
@@ -3652,7 +3677,7 @@
         methodInput.value = "avalanche";
         paymentModeInput.value = "extra";
         extraInput.value = "0";
-        syncPaymentInputCopy();
+        syncPaymentModeTracker();
         startInput.value = currentMonthValue();
         targetInput.value = "";
         resetDefaultOptionScenarios();
@@ -3928,7 +3953,7 @@
         }
         paymentModeInput.value = "total";
         extraInput.value = String(roundCents(lastResult.monthlyPayment));
-        syncPaymentInputCopy();
+        syncPaymentModeTracker();
         update();
         try {
           extraInput.focus({ preventScroll: true });
@@ -3970,11 +3995,11 @@
       [methodInput, paymentModeInput, extraInput, startInput, targetInput].forEach(function (input) {
         bind(input, "input", function () {
           exitSampleForOwnPlan(null);
-          if (input === paymentModeInput) syncPaymentInputCopy();
+          if (input === paymentModeInput) syncPaymentModeValue();
           scheduleUpdate();
         });
         bind(input, "change", function () {
-          if (input === paymentModeInput) syncPaymentInputCopy();
+          if (input === paymentModeInput) syncPaymentModeValue();
           update();
         });
       });
@@ -4001,7 +4026,7 @@
       bind(feedbackDialog, "click", function (event) {
         if (event.target === feedbackDialog) closeFeedbackDialog();
       });
-      syncPaymentInputCopy();
+      syncPaymentModeTracker();
 
       window.addEventListener("beforeprint", function () {
         prepareScheduleForPrint();
