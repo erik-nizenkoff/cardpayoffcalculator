@@ -468,7 +468,7 @@
       }
 
       function addCardRow(card, options) {
-        if (cardRows.children.length >= MAX_CARDS) return;
+        if (cardRows.children.length >= MAX_CARDS) return null;
         var data = card || {};
         var settings = options || {};
         var id = data.id || "card-" + nextId++;
@@ -504,6 +504,7 @@
         cardRows.appendChild(tr);
         if (customOrder.indexOf(id) === -1) customOrder.push(id);
         updateAddButton();
+        return tr;
       }
 
       function updateAddButton() {
@@ -541,11 +542,24 @@
         });
         updateLoanLabels(tr);
         if (customOrder.indexOf(id) === -1) customOrder.push(id);
+        return tr;
       }
 
       function getLoanField(row, field) {
         var el = row.querySelector('[data-field="' + field + '"]');
         return el ? el.value.trim() : "";
+      }
+
+      function rowHasEnteredField(row, fields) {
+        return fields.some(function (field) {
+          return getField(row, field) !== "";
+        });
+      }
+
+      function loanRowHasEnteredField(row) {
+        return ["name", "balance", "rate", "payment", "term"].some(function (field) {
+          return getLoanField(row, field) !== "";
+        });
       }
 
       function readLoans() {
@@ -3563,6 +3577,16 @@
         }
       }
 
+      function focusFirstField(root) {
+        var input = root ? root.querySelector("input") : null;
+        if (!input) return;
+        try {
+          input.focus({ preventScroll: true });
+        } catch (error) {
+          input.focus();
+        }
+      }
+
       function loadBlankEntry(options) {
         var settings = options || {};
         setSampleMode(false);
@@ -3646,12 +3670,22 @@
       bind(cardRows, "keydown", function (event) {
         if (event.key !== "Tab" || event.shiftKey) return;
         var input = event.target;
-        if (!input || input.dataset.field !== "apr") return;
+        if (!input || !input.dataset) return;
         var row = input.closest("tr");
-        var minimumInput = row ? row.querySelector('[data-field="minimum"]') : null;
-        if (!minimumInput) return;
+        if (input.dataset.field === "apr") {
+          var minimumInput = row ? row.querySelector('[data-field="minimum"]') : null;
+          if (!minimumInput) return;
+          event.preventDefault();
+          minimumInput.focus();
+          return;
+        }
+        if (input.dataset.field !== "minimum" || !row || row.nextElementSibling) return;
+        if (!rowHasEnteredField(row, ["name", "balance", "apr", "minimum", "introApr", "introMonths"])) return;
         event.preventDefault();
-        minimumInput.focus();
+        exitSampleForOwnPlan(row);
+        var newRow = addCardRow(null, { expandOnMobile: true });
+        update();
+        focusFirstField(newRow);
       });
 
       bind(optionScenarioList, "input", function (event) {
@@ -3660,6 +3694,20 @@
           event.target.dataset.optionAutoDefault = "false";
         }
         scheduleUpdate();
+      });
+      bind(optionScenarioList, "keydown", function (event) {
+        if (event.key !== "Tab" || event.shiftKey) return;
+        var input = event.target;
+        if (!input || !input.dataset || !input.dataset.optionField) return;
+        var scenario = input.closest(".option-fieldset");
+        if (!scenario || scenario.nextElementSibling) return;
+        var lastField = scenario.dataset.optionType === "balance-transfer" ? "postApr" : "fee";
+        if (input.dataset.optionField !== lastField) return;
+        event.preventDefault();
+        exitSampleForOwnPlan(null);
+        var newScenario = addOptionScenario(scenario.dataset.optionType);
+        update();
+        focusFirstField(newScenario);
       });
       bind(payoffOptions, "click", function (event) {
         var button = event.target.closest("button[data-action]");
@@ -3732,6 +3780,19 @@
       bind(loanRows, "input", function () {
         exitSampleForOwnPlan(null);
         scheduleUpdate();
+      });
+      bind(loanRows, "keydown", function (event) {
+        if (event.key !== "Tab" || event.shiftKey) return;
+        var input = event.target;
+        if (!input || !input.dataset || input.dataset.field !== "term") return;
+        var row = input.closest("tr");
+        if (!row || row.nextElementSibling) return;
+        if (!loanRowHasEnteredField(row)) return;
+        event.preventDefault();
+        exitSampleForOwnPlan(null);
+        var newRow = addLoanRow();
+        update();
+        focusFirstField(newRow);
       });
       bind(loanRows, "click", function (event) {
         var button = event.target.closest("button[data-action='remove-loan']");

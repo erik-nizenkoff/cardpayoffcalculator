@@ -51,6 +51,68 @@ test("tabbing from credit card APR moves to minimum payment", async ({ page }) =
   await expect(page.getByRole("spinbutton", { name: "Card minimum payment" })).toBeFocused();
 });
 
+test("tabbing from final credit card minimum adds a card row", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("textbox", { name: "Card name" }).fill("Visa");
+  await page.getByRole("spinbutton", { name: "Visa balance" }).fill("8500");
+  await page.getByRole("spinbutton", { name: "Visa APR" }).fill("22.99");
+  await page.getByRole("spinbutton", { name: "Visa minimum payment" }).fill("170");
+  await page.getByRole("spinbutton", { name: "Visa minimum payment" }).focus();
+  await page.keyboard.press("Tab");
+
+  await expect(page.locator("#cardRows tr")).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => ({
+    field: document.activeElement && document.activeElement.dataset.field,
+    rowIndex: Array.from(document.querySelectorAll("#cardRows tr")).indexOf(document.activeElement.closest("tr"))
+  }))).toEqual({ field: "name", rowIndex: 1 });
+});
+
+test("tabbing from final installment loan field adds a loan row", async ({ page }) => {
+  await page.goto("/");
+
+  await page.locator("#loanSection summary").click();
+  await page.getByRole("button", { name: "Add Loan" }).click();
+  await page.getByRole("textbox", { name: "Loan name" }).fill("Auto Loan");
+  await page.getByRole("spinbutton", { name: "Auto Loan balance" }).fill("12000");
+  await page.getByRole("spinbutton", { name: "Auto Loan interest rate" }).fill("6.5");
+  await page.getByRole("spinbutton", { name: "Auto Loan fixed monthly payment" }).fill("300");
+  await page.getByRole("spinbutton", { name: "Auto Loan remaining term in months" }).fill("48");
+  await page.getByRole("spinbutton", { name: "Auto Loan remaining term in months" }).focus();
+  await page.keyboard.press("Tab");
+
+  await expect(page.locator("#loanRows tr")).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => ({
+    field: document.activeElement && document.activeElement.dataset.field,
+    rowIndex: Array.from(document.querySelectorAll("#loanRows tr")).indexOf(document.activeElement.closest("tr"))
+  }))).toEqual({ field: "name", rowIndex: 1 });
+});
+
+test("tabbing from final payoff option fields adds another option", async ({ page }) => {
+  await page.goto("/");
+
+  await page.locator("#payoffOptions summary").click();
+  await page.getByRole("button", { name: "Add Balance Transfer" }).click();
+  await page.locator('[data-option-field="postApr"]').focus();
+  await page.keyboard.press("Tab");
+
+  await expect(page.locator('#optionScenarioList .option-fieldset[data-option-type="balance-transfer"]')).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => ({
+    field: document.activeElement && document.activeElement.dataset.optionField,
+    type: document.activeElement.closest(".option-fieldset") && document.activeElement.closest(".option-fieldset").dataset.optionType
+  }))).toEqual({ field: "amount", type: "balance-transfer" });
+
+  await page.getByRole("button", { name: "Add Consolidation Loan" }).click();
+  await page.locator('#optionScenarioList .option-fieldset[data-option-type="consolidation-loan"] [data-option-field="fee"]').focus();
+  await page.keyboard.press("Tab");
+
+  await expect(page.locator('#optionScenarioList .option-fieldset[data-option-type="consolidation-loan"]')).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => ({
+    field: document.activeElement && document.activeElement.dataset.optionField,
+    type: document.activeElement.closest(".option-fieldset") && document.activeElement.closest(".option-fieldset").dataset.optionType
+  }))).toEqual({ field: "amount", type: "consolidation-loan" });
+});
+
 test("deferred educational content mounts and remains interactive", async ({ page }) => {
   await page.goto("/");
 
