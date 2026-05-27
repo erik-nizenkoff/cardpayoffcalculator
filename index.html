@@ -5711,6 +5711,14 @@
         mobileSummaryBar.classList.add("hidden");
       }
 
+      function isEditableField(element) {
+        return Boolean(element && element.matches && element.matches("input, select, textarea"));
+      }
+
+      function isInputFocused() {
+        return isEditableField(document.activeElement);
+      }
+
       function updateMobileSummaryContext() {
         if (!mobileSummaryBar || !mobileSummaryLink || mobileSummaryBar.classList.contains("hidden")) return;
         if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
@@ -5731,7 +5739,7 @@
       }
 
       function updateMobileSummary(result) {
-        if (!result || isSampleMode) {
+        if (!result || isSampleMode || isInputFocused()) {
           hideMobileSummary();
           return;
         }
@@ -6555,15 +6563,16 @@
       });
 
       document.addEventListener("focusin", function (event) {
-        if (event.target && event.target.matches && event.target.matches("input, select, textarea")) {
+        if (isEditableField(event.target)) {
           document.body.classList.add("input-focused");
+          hideMobileSummary();
         }
       });
       document.addEventListener("focusout", function () {
         setTimeout(function () {
-          var active = document.activeElement;
-          if (!active || !active.matches || !active.matches("input, select, textarea")) {
+          if (!isInputFocused()) {
             document.body.classList.remove("input-focused");
+            if (lastResult) updateMobileSummary(lastResult);
           }
         }, 0);
       });
