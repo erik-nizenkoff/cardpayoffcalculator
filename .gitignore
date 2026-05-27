@@ -1,6 +1,7 @@
 .openclaw/
 node_modules/
 playwright-report/
+public/
 test-results/
 AGENTS.md
 HEARTBEAT.md
