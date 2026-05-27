@@ -4,6 +4,11 @@
   "private": true,
   "description": "Static single-page credit card payoff calculator.",
   "scripts": {
-    "test": "node tests/live-calculator.test.js"
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:e2e": "playwright test",
+    "test:unit": "node tests/live-calculator.test.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
   }
 }
