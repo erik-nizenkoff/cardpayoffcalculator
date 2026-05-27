@@ -53,9 +53,11 @@
       var totalPaidLabel = document.getElementById("totalPaidLabel");
       var totalPaidEl = document.getElementById("totalPaid");
       var firstTargetEl = document.getElementById("firstTarget");
+      var paymentModeSummary = document.getElementById("paymentModeSummary");
       var targetResult = document.getElementById("targetResult");
       var targetInlineResult = document.getElementById("targetInlineResult");
       var savingsResult = document.getElementById("savingsResult");
+      var fixedBudgetNudge = document.getElementById("fixedBudgetNudge");
       var methodRecommendation = document.getElementById("methodRecommendation");
       var resultExplainer = document.getElementById("resultExplainer");
       var payoffOptions = document.getElementById("payoffOptions");
@@ -121,7 +123,7 @@
         clearAllButton, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
         targetInput, telemetryOptOut, telemetryOptOutStatus, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
-        totalPaidLabel, totalPaidEl, firstTargetEl, targetResult, targetInlineResult, savingsResult, methodRecommendation,
+        totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, toggleSchedule,
@@ -321,7 +323,7 @@
         if (paymentInputHint) {
           paymentInputHint.textContent = totalMode
             ? "This is your full monthly payoff budget, including all required minimum or fixed payments."
-            : "Applied after all active debts receive their required minimum or fixed payment.";
+            : "Adds this amount on top of required payments. Your total monthly payment may drop as debts are paid off unless you choose a fixed budget.";
         }
       }
 
@@ -691,6 +693,14 @@
           currentPlanSummary.classList.add("hidden");
           currentPlanSummary.textContent = "";
         }
+        if (paymentModeSummary) {
+          paymentModeSummary.classList.add("hidden");
+          paymentModeSummary.textContent = "";
+        }
+        if (fixedBudgetNudge) {
+          fixedBudgetNudge.classList.add("hidden");
+          fixedBudgetNudge.innerHTML = "";
+        }
         renderCriticalWarnings([]);
         renderWarnings([]);
         clearCharts();
@@ -713,7 +723,7 @@
         var helper = isSampleMode
           ? "Sample plan only. Replace sample data before sharing or copying a real payoff plan."
           : enabled
-          ? "Print includes the full schedule. Share links include the current debt nicknames and inputs."
+          ? "Print includes the full schedule. Share links include debt names/nicknames, balances, APRs, payments, and settings."
           : "Share and copy controls activate after valid results are shown.";
         if (copyActionsHelp) copyActionsHelp.textContent = helper;
         if (copyLinkButton) copyLinkButton.title = isSampleMode ? "Replace sample data before sharing" : enabled ? "Copy a link to these calculator inputs" : "Enter valid debt inputs to enable share links";
@@ -1304,9 +1314,8 @@
           var minimum = calculatedMinimum(card, interest);
           if (card.statedMinimum <= interest + EPSILON) {
             zeroProgressCards += 1;
-            warnings.push(card.name + "'s entered minimum is less than or equal to the first month's interest. The minimum payment may not reduce the balance meaningfully; consider paying more than the minimum.");
-          }
-          if (interest >= minimum - EPSILON) {
+            warnings.push(card.name + "'s entered minimum is below the first month's estimated interest. The calculator uses an estimated first-month minimum of " + money(minimum) + " so the balance can make progress.");
+          } else if (interest >= minimum - EPSILON) {
             warnings.push(card.name + "'s minimum payment may not reduce the balance meaningfully; consider paying more than the minimum.");
           }
         });
@@ -1581,7 +1590,7 @@
         var nextText = result.method === "minimum"
           ? "Next: try an extra monthly payment to see how much time and interest it saves."
           : "Next: try adding $50/month to see whether the payoff date improves enough.";
-        currentPlanSummary.textContent = extraText + ", this plan targets " + firstTarget + " first. " + nextText;
+        currentPlanSummary.textContent = extraText + ", this plan sends extra payment to " + firstTarget + " first. " + nextText;
         currentPlanSummary.classList.remove("hidden");
       }
 
@@ -1617,6 +1626,46 @@
         }
         var monthsSaved = baseline.months - selected.months;
         return "Adding <strong>" + money(extraPayment) + "/mo</strong> saves about <strong>" + money(Math.max(0, interestSaved)) + "</strong> in interest and finishes <strong>" + duration(Math.max(0, monthsSaved), false) + "</strong> sooner than paying minimums only.";
+      }
+
+      function renderPaymentModeSummary(payment, result) {
+        if (!paymentModeSummary || !payment || !result) return;
+        if (result.method === "minimum") {
+          paymentModeSummary.textContent = "This plan uses estimated required payments only, with no extra payoff amount.";
+        } else if (payment.mode === "total") {
+          paymentModeSummary.textContent = "This plan keeps your monthly payoff budget at about " + money(result.monthlyPayment) + "/mo. Extra payment adjusts as required minimums change.";
+        } else {
+          paymentModeSummary.textContent = "This plan starts at about " + money(result.monthlyPayment) + "/mo: " + money(result.startingMinimumTotal) + " in estimated starting minimums plus " + money(result.extraPayment) + " extra. Total monthly payment may drop as debts are paid off unless you choose a fixed monthly budget.";
+        }
+        paymentModeSummary.classList.remove("hidden");
+      }
+
+      function renderFixedBudgetNudge(cards, loans, payment, result) {
+        if (!fixedBudgetNudge) return;
+        fixedBudgetNudge.classList.add("hidden");
+        fixedBudgetNudge.innerHTML = "";
+        if (!payment || payment.mode !== "extra" || !result || result.method === "minimum" || result.capped || result.extraPayment <= EPSILON) return;
+
+        var fixedBudget = roundCents(result.monthlyPayment);
+        var fixedResult = simulate(cards, {
+          method: result.method,
+          monthlyBudget: fixedBudget,
+          customOrder: customOrder.slice()
+        }, loans);
+        if (fixedResult.capped) return;
+
+        var monthsSaved = result.months - fixedResult.months;
+        var interestSaved = roundCents(result.totalInterest - fixedResult.totalInterest);
+        if (monthsSaved <= 0 && interestSaved <= EPSILON) return;
+
+        var savingsText = interestSaved > EPSILON ? " and save about <strong>" + money(interestSaved) + "</strong> more interest" : "";
+        fixedBudgetNudge.innerHTML =
+          "<p><strong>Keep " + money(fixedBudget) + "/mo fixed?</strong> If you keep paying the same monthly amount after debts are paid off, this plan could finish around <strong>" +
+          escapeHtml(addMonths(startInput.value, fixedResult.months - 1)) + "</strong>" +
+          (monthsSaved > 0 ? " - <strong>" + duration(monthsSaved, false) + "</strong> sooner" : "") +
+          savingsText + ".</p> " +
+          '<button type="button" class="secondary" data-action="use-fixed-budget">Use fixed budget</button>';
+        fixedBudgetNudge.classList.remove("hidden");
       }
 
       function renderMonthPlan(result) {
@@ -3508,6 +3557,7 @@
         totalPaidEl.textContent = resultPaidText(result);
         firstTargetEl.textContent = result.timeline[0] ? (result.timeline[0].target || "-") : "-";
         renderCurrentPlanSummary(result);
+        renderPaymentModeSummary(payment, result);
         updateMobileSummary(result);
 
         var warnings = result.warnings.slice();
@@ -3522,6 +3572,7 @@
         renderPayoffOptions(cards, loans, result, payment);
         renderTarget(cards, loans, method);
         renderSavings(result, baseline, extra);
+        renderFixedBudgetNudge(cards, loans, payment, result);
         renderMonthPlan(result);
         renderSchedule(result);
         drawCharts(result);
@@ -3860,6 +3911,23 @@
         var current = Number(extraInput.value || 0);
         extraInput.value = String(Math.max(0, (Number.isFinite(current) ? current : 0) + 50));
         if (methodInput.value === "minimum") methodInput.value = "avalanche";
+        syncPaymentInputCopy();
+        update();
+        try {
+          extraInput.focus({ preventScroll: true });
+        } catch (error) {
+          extraInput.focus();
+        }
+      });
+      bind(fixedBudgetNudge, "click", function (event) {
+        var button = event.target.closest("button[data-action='use-fixed-budget']");
+        if (!button || !lastResult) return;
+        if (isSampleMode) {
+          showSampleActionRequired("Replace sample data before trying a fixed monthly budget on your own plan.");
+          return;
+        }
+        paymentModeInput.value = "total";
+        extraInput.value = String(roundCents(lastResult.monthlyPayment));
         syncPaymentInputCopy();
         update();
         try {

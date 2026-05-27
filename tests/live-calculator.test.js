@@ -170,6 +170,14 @@ assert(
   "negative-amortizing loans receive a specific warning"
 );
 
+const underInterestCard = live.simulate([
+  { id: "low-min", name: "Low Minimum Card", balance: 10000, apr: 36, minimum: 100 }
+], { method: "avalanche", extraPayment: 0 });
+assert(
+  underInterestCard.warnings.some((warning) => warning.includes("uses an estimated first-month minimum")),
+  "card warnings explain when entered minimums are below first-month interest"
+);
+
 const shortPromoTransferRate = live.optionSortRate("balance-transfer", {
   introApr: 0,
   introMonths: 1,
@@ -386,7 +394,7 @@ assert(html.includes("Installment loans use the fixed payment you entered"), "me
 assert(html.includes("unused capacity is reported but not modeled as new borrowing"), "methodology explains excess offer capacity correctly");
 assert(!html.includes("does not include new charges, fees"), "methodology does not say all fees are excluded when offer fees are modeled");
 assert(html.includes("Compare new payoff options"), "offer modeling uses user-centered section language");
-assert(html.includes("Share links include the card nicknames, loan names, and inputs currently shown"), "share link helper explains shared names are included");
+assert(html.includes("Share links include debt names/nicknames, balances, APRs, payments, and settings currently shown"), "share link helper explains shared names and inputs are included");
 assert(html.includes("comparison-section td::before"), "method comparison can collapse into labeled mobile rows");
 assert(html.includes("repeat(auto-fit"), "single payoff offer cards fill available space without an empty grid column");
 assert(html.includes("offer-allocation-table"), "offer allocation table has dedicated column sizing");
