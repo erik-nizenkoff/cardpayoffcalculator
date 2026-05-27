@@ -160,6 +160,8 @@ Telemetry details for current launch state:
 
 The Supabase calculation row should include a non-identifying `input_state` JSON snapshot plus payoff option scenario inputs so later analysis can understand the inputs behind a calculation. Do not store card nicknames, loan names, account names, or other user-entered identifiers.
 
+Legacy duplicated input columns should not be kept once `input_state` is available. Store the target month in `target_month`; do not use the old `target_date` column name for new telemetry.
+
 Store the input snapshot without card or loan names:
 
 - payoff method, payment entry mode, entered payment amount, calculated extra payment, start month, and target month

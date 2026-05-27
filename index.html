@@ -5515,22 +5515,6 @@
         };
       }
 
-      function legacyCalculationPayload(payload) {
-        var legacy = {};
-        Object.keys(payload).forEach(function (key) {
-          if ([
-            "input_state",
-            "payoff_options",
-            "num_payoff_options",
-            "num_balance_transfer_options",
-            "num_consolidation_loan_options"
-          ].indexOf(key) === -1) {
-            legacy[key] = payload[key];
-          }
-        });
-        return legacy;
-      }
-
       function payoffOptionTelemetryEnabled() {
         try {
           return PAYOFF_OPTION_TELEMETRY_ENABLED ||
@@ -5554,61 +5538,28 @@
           });
         }
 
-        var canSendPayoffOptions = Boolean(payload.payoff_options) && payoffOptionTelemetryEnabled();
-        var body = canSendPayoffOptions ? payload : legacyCalculationPayload(payload);
+        var body = payload;
+        if (!payoffOptionTelemetryEnabled()) {
+          body = {};
+          Object.keys(payload).forEach(function (key) {
+            if ([
+              "payoff_options",
+              "num_payoff_options",
+              "num_balance_transfer_options",
+              "num_consolidation_loan_options"
+            ].indexOf(key) === -1) {
+              body[key] = payload[key];
+            }
+          });
+        }
 
-        return post(body).then(function (response) {
-          if (response.ok) return response;
-          if (payload.input_state && canSendPayoffOptions) {
-            var withoutInputState = {};
-            Object.keys(payload).forEach(function (key) {
-              if (key !== "input_state") withoutInputState[key] = payload[key];
-            });
-            return post(withoutInputState).then(function (retryResponse) {
-              if (retryResponse.ok) return retryResponse;
-              try {
-                localStorage.removeItem("cpoc_payoff_option_telemetry_enabled");
-              } catch (error) {}
-              return post(legacyCalculationPayload(payload));
-            });
-          }
-          if (!canSendPayoffOptions) return response;
-          try {
-            localStorage.removeItem("cpoc_payoff_option_telemetry_enabled");
-          } catch (error) {}
-          return post(legacyCalculationPayload(payload));
-        });
+        return post(body);
       }
 
       function trackCalculation(cards, loans, options, result) {
         if (telemetryDisabled()) return;
         try {
           var uid = getUid();
-          var cardData = cards.map(function (c, index) {
-            return {
-              index: index + 1,
-              balance: c.balance,
-              apr: c.apr,
-              minimum: c.minimum,
-              introApr: c.introApr != null ? c.introApr : null,
-              introMonths: c.introMonths != null ? c.introMonths : null
-            };
-          });
-          var loanData = (loans || []).map(function (l, index) {
-            return {
-              index: index + 1,
-              balance: l.balance,
-              apr: l.apr != null ? l.apr : l.rate,
-              payment: l.payment,
-              termMonths: l.termMonths || l.term || null,
-              type: l.type || 'loan'
-            };
-          });
-          var totalBalance = cards.concat(loans || []).reduce(function (s, d) { return s + (d.balance || 0); }, 0);
-          var allAprs = cards.concat(loans || []).map(function (d) {
-            return d.apr != null ? d.apr : (d.rate || 0);
-          }).filter(function (a) { return a > 0; });
-          var avgApr = allAprs.length ? Math.round((allAprs.reduce(function (s, a) { return s + a; }, 0) / allAprs.length) * 100) / 100 : 0;
           var payoffOptionData = trackingPayoffOptions(cards);
           var balanceTransferOptionCount = payoffOptionData.reduce(function (count, option) {
             return count + (option.entries || []).filter(function (entry) { return entry.type === "balance-transfer"; }).length;
@@ -5619,15 +5570,7 @@
 
           var payload = {
             uid: uid,
-            method: options.method || 'avalanche',
-            extra_payment: options.extraPayment || 0,
-            target_date: options.targetDate || null,
-            cards: cardData,
-            loans: loanData,
-            num_cards: cards.length,
-            num_loans: (loans || []).length,
-            total_balance: Math.round(totalBalance * 100) / 100,
-            avg_apr: avgApr,
+            target_month: options.targetDate || null,
             months_to_payoff: result.months || null,
             total_interest: result.totalInterest != null ? Math.round(result.totalInterest * 100) / 100 : null,
             input_state: trackingInputState(cards, loans, options),
