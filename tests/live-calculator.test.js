@@ -134,6 +134,27 @@ assert.equal(
   "offer-created debts are mapped near the custom-order card they replaced"
 );
 
+const refinanceMethodCards = [
+  { id: "small-low", name: "Small Low", balance: 1000, apr: 5, minimum: 25 },
+  { id: "large-high", name: "Large High", balance: 5000, apr: 25, minimum: 100 },
+  { id: "mid", name: "Middle", balance: 3000, apr: 12, minimum: 75 }
+];
+assert.equal(
+  JSON.stringify(live.refinanceCardsByAmount(refinanceMethodCards, 1000, "avalanche").appliedCardIds),
+  JSON.stringify(["large-high"]),
+  "offer model refinances avalanche's highest-APR card first"
+);
+assert.equal(
+  JSON.stringify(live.refinanceCardsByAmount(refinanceMethodCards, 1000, "snowball").appliedCardIds),
+  JSON.stringify(["small-low"]),
+  "offer model refinances snowball's smallest card first"
+);
+assert.equal(
+  JSON.stringify(live.refinanceCardsByAmount(refinanceMethodCards, 1000, "custom", ["mid", "small-low", "large-high"]).appliedCardIds),
+  JSON.stringify(["mid"]),
+  "offer model refinances the first custom-order card first"
+);
+
 const negativeLoan = live.simulate([], { method: "avalanche", extraPayment: 0 }, [
   { id: "loan-a", name: "Underpaid loan", balance: 10000, rate: 30, payment: 100 }
 ]);

@@ -4430,7 +4430,24 @@
         };
       }
 
-      function refinanceCardsByAmount(cards, amount) {
+      function refinanceCardSort(method, order) {
+        var selectedOrder = Array.isArray(order) ? order : customOrder;
+        return function (a, b) {
+          if (method === "custom") {
+            var aIndex = selectedOrder.indexOf(a.card.id);
+            var bIndex = selectedOrder.indexOf(b.card.id);
+            var aRank = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+            var bRank = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+            return aRank - bRank || a.index - b.index;
+          }
+          if (method === "snowball") {
+            return a.balance - b.balance || b.card.apr - a.card.apr || a.index - b.index;
+          }
+          return b.card.apr - a.card.apr || b.balance - a.balance || a.index - b.index;
+        };
+      }
+
+      function refinanceCardsByAmount(cards, amount, method, order) {
         var cappedAmount = Math.min(roundCents(sumCardBalances(cards)), Math.max(0, roundCents(amount)));
         var remaining = cards.map(function (card, index) {
           return {
@@ -4441,9 +4458,7 @@
         });
         var amountLeft = cappedAmount;
         var appliedCardIds = [];
-        remaining.slice().sort(function (a, b) {
-          return b.card.apr - a.card.apr || b.balance - a.balance || a.index - b.index;
-        }).forEach(function (item) {
+        remaining.slice().sort(refinanceCardSort(method || "avalanche", order)).forEach(function (item) {
           if (amountLeft <= EPSILON) return;
           var applied = Math.min(item.balance, amountLeft);
           item.balance = roundCents(item.balance - applied);
@@ -4609,7 +4624,7 @@
         var cardTotal = roundCents(sumCardBalances(cards || []));
         var entryAmount = Math.min(cardTotal, Math.max(0, roundCents(Number(entry && entry.amount || 0))));
         if (!entry || entryAmount <= EPSILON) return Number.POSITIVE_INFINITY;
-        var refinanced = refinanceCardsByAmount(cards || [], entryAmount);
+        var refinanced = refinanceCardsByAmount(cards || [], entryAmount, method, order);
         var fee = roundCents(entryAmount * Number(entry.feeRate || 0) / 100);
         var entryBalance = roundCents(entryAmount + fee);
         var debtId = "score-" + entry.type;
@@ -4674,7 +4689,7 @@
       }
 
       function buildPayoffScenarioModel(scenario, cards, loans, payment, method, order, scenarioIndex) {
-        var refinanced = refinanceCardsByAmount(cards || [], scenario.amount);
+        var refinanced = refinanceCardsByAmount(cards || [], scenario.amount, method, order);
         var model = {
           refinanced: refinanced,
           allocation: [],
@@ -6138,6 +6153,7 @@
           requiredPaymentForTarget: requiredPaymentForTarget,
           loanPaymentForTerm: loanPaymentForTerm,
           loanTermWarning: loanTermWarning,
+          refinanceCardsByAmount: refinanceCardsByAmount,
           optionSortRate: optionSortRate,
           optionModeledCostScore: optionModeledCostScore,
           optionActualCostScore: optionActualCostScore,
