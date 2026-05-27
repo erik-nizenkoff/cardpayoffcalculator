@@ -64,7 +64,7 @@ test("do not track locks telemetry opt-out with an explanation", async ({ page }
   await forceDoNotTrack(page);
   await page.goto("/");
 
-  const optOut = page.getByLabel("Do not send calculation telemetry");
+  const optOut = page.getByLabel("Privacy option: Do not use my calculator inputs to improve this site");
   await expect(optOut).toBeChecked();
   await expect(optOut).toBeDisabled();
   await expect(page.getByText("Your browser's Do Not Track setting is already opting you out of calculation telemetry.")).toBeVisible();
@@ -113,7 +113,7 @@ test("telemetry excludes debt nicknames and opt-out stops later sends", async ({
   });
 
   requests.length = 0;
-  await page.getByLabel("Do not send calculation telemetry").check();
+  await page.getByLabel("Privacy option: Do not use my calculator inputs to improve this site").check();
   await page.getByRole("spinbutton", { name: "Private Bank Card balance" }).fill("9200");
   await page.waitForTimeout(1000);
 
