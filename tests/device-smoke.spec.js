@@ -41,3 +41,16 @@ test("keyboard users can reach primary calculator actions", async ({ page }) => 
   expect(focusedLabels.join(" ")).toContain("Card balance");
   expect(focusedLabels.join(" ")).toContain("Payoff strategy");
 });
+
+test("deferred educational content mounts and remains interactive", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Methodology" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Worked Example: Paying Off $12,900 in Credit Card Debt" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Load this example" }).click();
+
+  await expect(page.locator(".card-summary-line").first()).toContainText("Sample Visa");
+  await expect(page.locator(".card-summary-line").first()).toContainText("$8,500");
+  await expect(page.locator(".hero-label", { hasText: "Debt-Free Date" })).toBeVisible();
+});

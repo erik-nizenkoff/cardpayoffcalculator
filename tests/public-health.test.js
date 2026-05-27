@@ -29,6 +29,11 @@ const checks = [
   {
     path: "/favicon.ico",
     type: "binary"
+  },
+  {
+    path: "/src/app.min.js",
+    type: "text",
+    includes: "CardPayoffLiveMath"
   }
 ];
 

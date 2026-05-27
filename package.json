@@ -4,7 +4,8 @@
   "private": true,
   "description": "Static single-page credit card payoff calculator.",
   "scripts": {
-    "test": "npm run test:unit && npm run test:e2e",
+    "build": "node scripts/build-assets.js",
+    "test": "npm run build && npm run test:unit && npm run test:e2e",
     "test:e2e": "playwright test",
     "test:public": "node tests/public-health.test.js",
     "test:readiness": "npm test && npm run test:public",
@@ -12,6 +13,8 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
-    "@playwright/test": "^1.60.0"
+    "@playwright/test": "^1.60.0",
+    "clean-css": "^5.3.3",
+    "terser": "^5.48.0"
   }
 }

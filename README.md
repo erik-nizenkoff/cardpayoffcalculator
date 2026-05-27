@@ -22,7 +22,9 @@ Privacy details live in [privacy.html](privacy.html).
 
 ## Development
 
-Open `index.html` in a browser — no build step required.
+Open `index.html` in a browser to use the committed static build.
+
+Run `npm run build` after editing `src/critical.css` or `src/app.js`; it refreshes the inlined critical CSS and generated `src/app.min.js`.
 
 Run `npm test` to execute the calculator regression suite, Playwright browser smoke tests, cross-device layout checks, telemetry guards, keyboard smoke coverage, and automated accessibility checks. The browser tests use the local Chrome channel by default; CI uses Playwright's installed Chromium. Set `PLAYWRIGHT_CHANNEL` if you want Playwright to use a different installed browser channel.
 

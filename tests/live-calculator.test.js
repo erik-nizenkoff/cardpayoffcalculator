@@ -30,9 +30,7 @@ function createElementStub() {
 }
 
 function loadLiveMath() {
-  const html = fs.readFileSync("index.html", "utf8");
-  const scripts = [...html.matchAll(/<script(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/gi)].map((match) => match[1]);
-  const mainScript = scripts[scripts.length - 1];
+  const mainScript = fs.readFileSync("src/app.js", "utf8");
   const elementCache = new Map();
   const document = {
     body: createElementStub(),
@@ -377,12 +375,13 @@ assert(
 );
 
 const html = fs.readFileSync("index.html", "utf8");
+const appSource = fs.readFileSync("src/app.js", "utf8");
 assert.equal(live.maxPayoffOptions, 8, "payoff offers are capped at eight for exhaustive ordering");
 assert.equal(live.optionCapacityValue("20000", 12900), 20000, "entered offer capacity can exceed eligible card debt");
 assert.equal(live.optionCapacityValue("", 12900), 12900, "empty offer capacity still defaults to eligible card debt");
-assert(!html.includes("slice(0, 30)"), "shared payoff options no longer allow thirty offer scenarios");
-assert(html.includes("MAX_PAYOFF_OPTIONS"), "payoff option limits use one shared constant");
-assert(!html.includes('optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal)'), "offer capacity is not clamped before unused capacity is calculated");
+assert(!appSource.includes("slice(0, 30)"), "shared payoff options no longer allow thirty offer scenarios");
+assert(appSource.includes("MAX_PAYOFF_OPTIONS"), "payoff option limits use one shared constant");
+assert(!appSource.includes('optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal)'), "offer capacity is not clamped before unused capacity is calculated");
 assert(html.includes("Installment loans use the fixed payment you entered"), "methodology distinguishes installment loan payments from card minimums");
 assert(html.includes("unused capacity is reported but not modeled as new borrowing"), "methodology explains excess offer capacity correctly");
 assert(!html.includes("does not include new charges, fees"), "methodology does not say all fees are excluded when offer fees are modeled");
@@ -402,11 +401,11 @@ assert.equal(
   60,
   "shared card nicknames are capped to keep links compact"
 );
-assert(!html.includes("lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240))"), "print schedule is not capped at 240 rows");
-assert(html.includes("Math.max(result.startingBalance, timeline.reduce"), "chart scale considers balances above the starting balance");
-assert(html.includes("ctx.moveTo(xPos(0), yPos(result.startingBalance))"), "chart total-balance line starts at starting balance");
-assert(!html.includes("firstPayoff.payoffMonth)"), "chart takeaway does not use 1-based payoff month as a zero-based offset");
-assert(!html.includes('simulate(cards, { method: "avalanche", extraPayment: extraPayment }'), "result explainer does not recompute total-budget plans with fixed extra");
+assert(!appSource.includes("lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240))"), "print schedule is not capped at 240 rows");
+assert(appSource.includes("Math.max(result.startingBalance, timeline.reduce"), "chart scale considers balances above the starting balance");
+assert(appSource.includes("ctx.moveTo(xPos(0), yPos(result.startingBalance))"), "chart total-balance line starts at starting balance");
+assert(!appSource.includes("firstPayoff.payoffMonth)"), "chart takeaway does not use 1-based payoff month as a zero-based offset");
+assert(!appSource.includes('simulate(cards, { method: "avalanche", extraPayment: extraPayment }'), "result explainer does not recompute total-budget plans with fixed extra");
 assert.equal(live.chartAxisMonthLabel(0, "2026-05"), "May 2026", "chart point 0 labels the starting month");
 assert.equal(live.chartAxisMonthLabel(1, "2026-05"), "May 2026", "chart point 1 matches month-one schedule date");
 assert.equal(live.chartAxisMonthLabel(2, "2026-05"), "Jun 2026", "chart point 2 advances one month after month-one");
