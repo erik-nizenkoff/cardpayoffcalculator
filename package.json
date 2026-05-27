@@ -6,9 +6,12 @@
   "scripts": {
     "test": "npm run test:unit && npm run test:e2e",
     "test:e2e": "playwright test",
+    "test:public": "node tests/public-health.test.js",
+    "test:readiness": "npm test && npm run test:public",
     "test:unit": "node tests/live-calculator.test.js"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0"
   }
 }

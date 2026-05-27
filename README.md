@@ -24,8 +24,10 @@ Privacy details live in [privacy.html](privacy.html).
 
 Open `index.html` in a browser — no build step required.
 
-Run `npm test` to execute the calculator regression suite and the mobile Playwright smoke test. The browser test uses the local Chrome channel by default; set `PLAYWRIGHT_CHANNEL` if you want Playwright to use a different installed browser channel.
+Run `npm test` to execute the calculator regression suite, Playwright browser smoke tests, telemetry guards, and automated accessibility checks. The browser tests use the local Chrome channel by default; CI uses Playwright's installed Chromium. Set `PLAYWRIGHT_CHANNEL` if you want Playwright to use a different installed browser channel.
+
+Run `npm run test:public` after deployment to smoke-test the public homepage, privacy page, robots file, sitemap, and favicon on both `cardpayoffcalculator.com` and `cardpayoffcalculator.vercel.app`. Set `PUBLIC_BASE_URL` or comma-separated `PUBLIC_BASE_URLS` to verify another deployment URL.
 
 ## Status
 
-🚧 In development
+Production deployment is ready for public use, with ongoing regression coverage in CI.

@@ -1,6 +1,7 @@
 const { defineConfig } = require("@playwright/test");
 
 const port = Number(process.env.PORT || 4173);
+const browserChannel = process.env.PLAYWRIGHT_CHANNEL || (process.env.CI ? "" : "chrome");
 
 module.exports = defineConfig({
   testDir: "./tests",
@@ -9,7 +10,7 @@ module.exports = defineConfig({
   use: {
     baseURL: "http://127.0.0.1:" + port,
     browserName: "chromium",
-    channel: process.env.PLAYWRIGHT_CHANNEL || "chrome",
+    ...(browserChannel ? { channel: browserChannel } : {}),
     viewport: { width: 390, height: 844 }
   },
   webServer: {
