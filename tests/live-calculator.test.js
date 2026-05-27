@@ -346,6 +346,19 @@ assert.equal(stillCappedWithExtra.capped, true, "small extra payment fixture rem
 const cappedSavingsMessage = live.savingsMessage(stillCappedWithExtra, cappedPrimaryResult, 10);
 assert(cappedSavingsMessage.includes("still does not fully pay off"), "savings message does not claim a capped selected plan creates a payoff path");
 assert(!cappedSavingsMessage.includes("creates a payoff path"), "savings message avoids false payoff-path language when selected plan is capped");
+const cappedMethodLoans = [
+  { id: "high", name: "High APR Loan", balance: 10000, rate: 30, payment: 100 },
+  { id: "low", name: "Low APR Loan", balance: 1000, rate: 5, payment: 25 }
+];
+const cappedAvalanche = live.simulate([], { method: "avalanche", extraPayment: 10 }, cappedMethodLoans);
+const cappedSnowball = live.simulate([], { method: "snowball", extraPayment: 10 }, cappedMethodLoans);
+assert.equal(cappedAvalanche.capped, true, "capped recommendation fixture avalanche remains capped");
+assert.equal(cappedSnowball.capped, true, "capped recommendation fixture snowball remains capped");
+assert(cappedSnowball.totalInterest - cappedAvalanche.totalInterest > 100, "capped recommendation fixture has materially different modeled interest");
+const cappedRecommendation = live.methodRecommendationMessage(cappedAvalanche, cappedSnowball);
+assert(cappedRecommendation.includes("Both plans remain unpaid after 50 years"), "capped recommendation acknowledges both plans remain unpaid");
+assert(cappedRecommendation.includes("Avalanche has"), "capped recommendation identifies the lower-interest capped method");
+assert(!cappedRecommendation.includes("nearly equal"), "capped recommendation does not call materially different capped methods nearly equal");
 
 assert(
   live.loanTermWarning({ name: "Short loan", balance: 10000, rate: 10, payment: 100, term: 12 }).includes("Estimated payment needed"),

@@ -4137,27 +4137,33 @@
           simulateWithPaymentPlan(cards, loans, payment, "avalanche");
         var snowball = findResultByMethod(comparisonResults, "snowball") ||
           simulateWithPaymentPlan(cards, loans, payment, "snowball");
-        var message;
-
-        if (!avalanche.capped && !snowball.capped) {
-          var difference = roundCents(snowball.totalInterest - avalanche.totalInterest);
-          if (difference > 100) {
-            message = "💡 Avalanche saves you " + money(difference) + " more than Snowball";
-          } else if (difference < -100) {
-            message = "💡 Snowball saves you " + money(Math.abs(difference)) + " more than Avalanche";
-          } else {
-            message = "💡 Snowball and Avalanche are nearly equal for this scenario.";
-          }
-        } else if (avalanche.capped && snowball.capped) {
-          message = "💡 Snowball and Avalanche are nearly equal for this scenario.";
-        } else if (!avalanche.capped) {
-          message = "💡 Avalanche finds a payoff path within the 50-year model.";
-        } else {
-          message = "💡 Snowball finds a payoff path within the 50-year model.";
-        }
+        var message = methodRecommendationMessage(avalanche, snowball);
 
         methodRecommendation.classList.remove("hidden");
         methodRecommendation.textContent = message;
+      }
+
+      function methodRecommendationMessage(avalanche, snowball) {
+        if (!avalanche || !snowball) return "";
+        if (!avalanche.capped && !snowball.capped) {
+          var difference = roundCents(snowball.totalInterest - avalanche.totalInterest);
+          if (difference > 100) {
+            return "💡 Avalanche saves you " + money(difference) + " more than Snowball";
+          }
+          if (difference < -100) return "💡 Snowball saves you " + money(Math.abs(difference)) + " more than Avalanche";
+          return "💡 Snowball and Avalanche are nearly equal for this scenario.";
+        } else if (avalanche.capped && snowball.capped) {
+          var cappedDifference = roundCents(snowball.totalInterest - avalanche.totalInterest);
+          if (cappedDifference > 100) {
+            return "💡 Both plans remain unpaid after 50 years. Avalanche has " + money(cappedDifference) + " lower modeled interest during the 50-year window.";
+          }
+          if (cappedDifference < -100) {
+            return "💡 Both plans remain unpaid after 50 years. Snowball has " + money(Math.abs(cappedDifference)) + " lower modeled interest during the 50-year window.";
+          }
+          return "💡 Both plans remain unpaid after 50 years, with similar modeled interest during the 50-year window.";
+        }
+        if (!avalanche.capped) return "💡 Avalanche finds a payoff path within the 50-year model.";
+        return "💡 Snowball finds a payoff path within the 50-year model.";
       }
 
       function renderTarget(cards, loans, method) {
@@ -6172,6 +6178,7 @@
           resultPaidText: resultPaidText,
           buildResultsSummary: buildResultsSummary,
           savingsMessage: savingsMessage,
+          methodRecommendationMessage: methodRecommendationMessage,
           decisionDeltaText: decisionDeltaText,
           chartAxisMonthLabel: chartAxisMonthLabel,
           maxTimelinePayment: maxTimelinePayment,
