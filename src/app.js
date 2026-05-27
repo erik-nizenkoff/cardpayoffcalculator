@@ -780,9 +780,8 @@
           monthlyPayment: roundCents(result.monthlyPayment || 0),
           totalInterest: roundCents(result.totalInterest || 0),
           totalPaid: roundCents(result.totalPaid || 0),
-          firstTarget: result.timeline && result.timeline[0] ? result.timeline[0].target || null : null,
-          warnings: (result.warnings || []).slice(0, 6),
-          criticalWarnings: (result.criticalWarnings || []).slice(0, 6)
+          warningCount: (result.warnings || []).length,
+          criticalWarningCount: (result.criticalWarnings || []).length
         };
       }
 
