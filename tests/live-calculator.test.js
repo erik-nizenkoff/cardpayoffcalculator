@@ -91,11 +91,39 @@ budgetResult.timeline.slice(0, -1).forEach((row) => {
 });
 assert(budgetResult.timeline.at(-1).payment <= 500, "final month may be less than the budget");
 
-const snowballOffer = live.simulateWithMonthlyBudget([
+const snowballOffer = live.simulateWithPaymentPlan([
   { id: "small", name: "Small Low APR", balance: 1000, apr: 5, minimum: 25 },
   { id: "large", name: "Large High APR", balance: 2000, apr: 20, minimum: 25 }
-], [], 500, "snowball");
+], [], { mode: "total", monthlyBudget: 500 }, "snowball");
 assert.equal(snowballOffer.timeline[0].target, "Small Low APR", "offer simulations honor selected snowball order");
+
+const fixedExtraOffer = live.simulateWithPaymentPlan([
+  { id: "card-b", name: "Card B", balance: 10000, apr: 25, minimum: 250 }
+], [], { mode: "extra", extraPayment: 0 }, "avalanche");
+assert(
+  fixedExtraOffer.timeline[1].payment < fixedExtraOffer.timeline[0].payment,
+  "extra-payment offer simulations keep fixed extra behavior instead of a fixed total budget"
+);
+
+const overBudgetOffer = live.simulateWithPaymentPlan([], [
+  { id: "loan-b", name: "Short loan", balance: 10000, rate: 20, payment: live.loanPaymentForTerm(10000, 20, 12), term: 12 }
+], { mode: "total", monthlyBudget: 266.67 }, "avalanche");
+assert(
+  live.maxTimelinePayment(overBudgetOffer) > overBudgetOffer.monthlyPayment,
+  "offer simulations expose actual required payments above the entered budget"
+);
+
+const mappedOrder = live.buildOfferCustomOrder(
+  ["priority-card", "loan-1", "other-card"],
+  [{ id: "other-card" }],
+  ["option-consolidation-loan-1"],
+  ["priority-card"]
+);
+assert.equal(
+  JSON.stringify(mappedOrder.slice(0, 3)),
+  JSON.stringify(["option-consolidation-loan-1", "loan-1", "other-card"]),
+  "offer-created debts are mapped near the custom-order card they replaced"
+);
 
 const negativeLoan = live.simulate([], { method: "avalanche", extraPayment: 0 }, [
   { id: "loan-a", name: "Underpaid loan", balance: 10000, rate: 30, payment: 100 }
@@ -120,5 +148,6 @@ assert(shortPromoTransferRate > consolidationRate, "short 0% promos do not outra
 const html = fs.readFileSync("index.html", "utf8");
 assert(!html.includes("lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240))"), "print schedule is not capped at 240 rows");
 assert(html.includes("Math.max(result.startingBalance, timeline.reduce"), "chart scale considers balances above the starting balance");
+assert(!html.includes('simulate(cards, { method: "avalanche", extraPayment: extraPayment }'), "result explainer does not recompute total-budget plans with fixed extra");
 
 console.log("live calculator tests passed");

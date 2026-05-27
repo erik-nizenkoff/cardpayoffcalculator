@@ -3881,6 +3881,13 @@
         return active[0] ? active[0].name : "";
       }
 
+      function maxTimelinePayment(result) {
+        if (!result || !result.timeline || !result.timeline.length) return 0;
+        return roundCents(result.timeline.reduce(function (max, row) {
+          return Math.max(max, Number(row.payment || 0));
+        }, 0));
+      }
+
       function startingMinimumTotal(cards, loans) {
         var allDebts = normalizeCards(cards).concat(normalizeLoans(loans || []));
         return roundCents(allDebts.reduce(function (sum, debt) {
@@ -4028,6 +4035,7 @@
 
         var capped = activeDebts(allDebts).length > 0;
         if (capped) warnings.push("This plan does not pay off all balances within 600 months (50 years).");
+        var maxPayment = maxTimelinePayment({ timeline: timeline });
 
         return {
           method: method,
@@ -4039,6 +4047,7 @@
           capped: capped,
           totalInterest: roundCents(totalInterest),
           totalPaid: roundCents(totalPaid),
+          maxMonthlyPayment: maxPayment,
           timeline: timeline,
           summaries: summaries,
           debtNames: allDebts.map(function (d) { return d.name; }),
@@ -4111,11 +4120,11 @@
         })[0] || null;
       }
 
-      function renderMethodRecommendation(cards, loans, extraPayment, comparisonResults) {
+      function renderMethodRecommendation(cards, loans, payment, comparisonResults) {
         var avalanche = findResultByMethod(comparisonResults, "avalanche") ||
-          simulate(cards, { method: "avalanche", extraPayment: extraPayment }, loans);
+          simulateWithPaymentPlan(cards, loans, payment, "avalanche");
         var snowball = findResultByMethod(comparisonResults, "snowball") ||
-          simulate(cards, { method: "snowball", extraPayment: extraPayment }, loans);
+          simulateWithPaymentPlan(cards, loans, payment, "snowball");
         var message;
 
         if (!avalanche.capped && !snowball.capped) {
@@ -4242,6 +4251,22 @@
         }).join("");
       }
 
+      function simulateWithPaymentPlan(cards, loans, payment, method, order) {
+        var plan = payment || { mode: "extra", extraPayment: 0 };
+        if (plan.mode === "total") {
+          return simulate(cards, {
+            method: method || "avalanche",
+            monthlyBudget: plan.monthlyBudget,
+            customOrder: Array.isArray(order) ? order.slice() : customOrder.slice()
+          }, loans);
+        }
+        return simulate(cards, {
+          method: method || "avalanche",
+          extraPayment: plan.extraPayment || 0,
+          customOrder: Array.isArray(order) ? order.slice() : customOrder.slice()
+        }, loans);
+      }
+
       function renderComparison(cards, loans, payment, preResult, preBaseline) {
         var methods = ["avalanche", "snowball", "minimum"];
         var rows = methods.map(function (method) {
@@ -4254,10 +4279,7 @@
           if (method === "minimum") {
             return simulate(cards, { method: method, extraPayment: 0 }, loans);
           }
-          if (payment.mode === "total") {
-            return simulate(cards, { method: method, monthlyBudget: payment.monthlyBudget }, loans);
-          }
-          return simulate(cards, { method: method, extraPayment: payment.extraPayment }, loans);
+          return simulateWithPaymentPlan(cards, loans, payment, method);
         });
         var finiteRows = rows.filter(function (row) { return !row.capped; });
         var bestInterest = finiteRows.length ? Math.min.apply(null, finiteRows.map(function (row) { return row.totalInterest; })) : null;
@@ -4330,14 +4352,6 @@
         return roundCents(balance * monthlyRate * factor / (factor - 1));
       }
 
-      function simulateWithMonthlyBudget(cards, loans, monthlyBudget, method, order) {
-        return simulate(cards, {
-          method: method || "avalanche",
-          monthlyBudget: monthlyBudget,
-          customOrder: Array.isArray(order) ? order.slice() : customOrder.slice()
-        }, loans);
-      }
-
       function cloneCardWithBalance(card, balance) {
         return {
           id: card.id,
@@ -4360,6 +4374,7 @@
           };
         });
         var amountLeft = cappedAmount;
+        var appliedCardIds = [];
         remaining.slice().sort(function (a, b) {
           return b.card.apr - a.card.apr || b.balance - a.balance || a.index - b.index;
         }).forEach(function (item) {
@@ -4367,9 +4382,11 @@
           var applied = Math.min(item.balance, amountLeft);
           item.balance = roundCents(item.balance - applied);
           amountLeft = roundCents(amountLeft - applied);
+          if (applied > EPSILON && appliedCardIds.indexOf(item.card.id) === -1) appliedCardIds.push(item.card.id);
         });
         return {
           amount: cappedAmount,
+          appliedCardIds: appliedCardIds,
           remainingCards: remaining.filter(function (item) {
             return item.balance > EPSILON;
           }).map(function (item) {
@@ -4537,6 +4554,7 @@
           return '<div class="option-card"><h4>' + escapeHtml(row.name) + '</h4><p class="option-watchout">' + escapeHtml(row.reason) + '</p></div>';
         }
         var result = row.result;
+        var monthlyPayment = row.displayMonthlyPayment != null ? row.displayMonthlyPayment : result.monthlyPayment;
         var modeledDifference = roundCents(row.currentCost - row.totalCost);
         var differenceText = Math.abs(modeledDifference) <= EPSILON
           ? "No modeled difference"
@@ -4561,7 +4579,7 @@
           (assumptions ? '<p class="option-assumptions">' + escapeHtml(assumptions) + "</p>" : "") +
           (row.amount != null ? '<div class="summary-line"><span>Debt covered</span><strong>' + money(row.amount) + "</strong></div>" : "") +
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
-          '<div class="summary-line"><span>Monthly payment</span><strong>' + money(result.monthlyPayment) + "</strong></div>" +
+          '<div class="summary-line"><span>Monthly payment</span><strong>' + money(monthlyPayment) + "</strong></div>" +
           '<div class="summary-line"><span>Interest + fees</span><strong>' + money(row.totalCost) + "</strong></div>" +
           '<div class="summary-line"><span>Estimated cost difference vs current plan</span><strong>' + differenceText + "</strong></div>" +
           '<p class="option-watchout">' + escapeHtml(row.watchout || "") + "</p>" +
@@ -4598,7 +4616,7 @@
         optionUsageSummary.classList.remove("hidden");
       }
 
-      function renderPayoffOptions(cards, loans, currentResult) {
+      function renderPayoffOptions(cards, loans, currentResult, payment) {
         if (!payoffOptionRows || !payoffOptionNote) return;
         var cardTotal = roundCents(sumCardBalances(cards));
         if (cardTotal <= EPSILON) {
@@ -4611,7 +4629,7 @@
           return;
         }
 
-        var currentMonthlyBudget = currentResult.monthlyPayment;
+        var currentMaxPayment = maxTimelinePayment(currentResult);
         var currentCost = currentResult.totalInterest;
         var averageApr = weightedCardApr(cards);
         syncDefaultOptionAmountFields(cardTotal);
@@ -4641,6 +4659,7 @@
             type: "current",
             name: "Current plan",
             result: currentResult,
+            displayMonthlyPayment: currentMaxPayment,
             totalCost: currentCost,
             currentCost: currentCost,
             watchout: "No new credit product.",
@@ -4664,6 +4683,7 @@
           var optionTerms = [];
           var btCards = [];
           var optionLoans = [];
+          var optionDebtIds = [];
           var allocation = [];
           var earliestPromoEnd = null;
           (scenario.entries || []).forEach(function (entry, entryIndex) {
@@ -4699,6 +4719,7 @@
                 introApr: entry.introApr,
                 introMonths: entry.introMonths
               });
+              optionDebtIds.push("option-balance-transfer-" + index + "-" + entryIndex);
               earliestPromoEnd = earliestPromoEnd == null ? entry.introMonths : Math.min(earliestPromoEnd, entry.introMonths);
               optionTerms.push(entry.name + ": " + money(entryAmount) + " at " + formatPercent(entry.feeRate) + "% fee, " + formatPercent(entry.introApr) + "% intro APR for " + entry.introMonths + " months, then " + formatPercent(entry.postApr) + "% APR");
               return;
@@ -4712,15 +4733,20 @@
               payment: loanPaymentForTerm(entryBalance, entry.apr, entry.term),
               term: entry.term
             });
+            optionDebtIds.push("option-consolidation-loan-" + index + "-" + entryIndex);
             optionTerms.push(entry.name + ": " + money(entryAmount) + " at " + formatPercent(entry.apr) + "% APR for " + entry.term + " months with " + formatPercent(entry.feeRate) + "% fee");
           });
-          var combinedResult = simulateWithMonthlyBudget(
+          var offerOrder = methodInput.value === "custom"
+            ? buildOfferCustomOrder(customOrder, refinanced.remainingCards, optionDebtIds, refinanced.appliedCardIds)
+            : customOrder;
+          var combinedResult = simulateWithPaymentPlan(
             refinanced.remainingCards.concat(btCards),
             (loans || []).concat(optionLoans),
-            currentMonthlyBudget,
+            payment,
             methodInput.value,
-            customOrder
+            offerOrder
           );
+          var offerMaxPayment = maxTimelinePayment(combinedResult);
           var unusedText = scenario.extraAvailable > EPSILON
             ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so lower-interest offers were applied first."
             : "";
@@ -4732,15 +4758,16 @@
             name: scenario.name,
             amount: refinanced.amount,
             result: combinedResult,
+            displayMonthlyPayment: offerMaxPayment,
             totalCost: roundCents(combinedResult.totalInterest + optionFees),
             currentCost: currentCost,
             assumptions: "Applies offers by lowest entered APR first: " + optionTerms.join("; ") + ".",
-            watchout: (combinedResult.monthlyPayment > currentMonthlyBudget + EPSILON ? "Required payment is higher than current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
+            watchout: (offerMaxPayment > currentMaxPayment + EPSILON ? "Required monthly payment can rise to " + money(offerMaxPayment) + ", which is higher than the current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
           });
           renderOptionUsageSummary(scenario, allocation, combinedResult, cardTotal);
         });
 
-        var availableRows = rows.filter(function (row) { return !row.result.capped; });
+        var availableRows = rows.filter(function (row) { return row.result && !row.result.capped; });
         var bestCost = availableRows.length ? Math.min.apply(null, availableRows.map(function (row) { return row.totalCost; })) : null;
         payoffOptionRows.innerHTML = rows.map(function (row) {
           return renderPayoffOptionRow(row, bestCost);
@@ -5224,10 +5251,12 @@
         updateTimer = setTimeout(update, 80);
       }
 
-      function renderResultExplainer(cards, loans, result, baseline, extraPayment) {
+      function renderResultExplainer(cards, loans, result, baseline, comparisonResults, payment) {
         var insights = [];
-        var avalanche = simulate(cards, { method: "avalanche", extraPayment: extraPayment }, loans);
-        var snowball = simulate(cards, { method: "snowball", extraPayment: extraPayment }, loans);
+        var avalanche = findResultByMethod(comparisonResults, "avalanche") ||
+          simulateWithPaymentPlan(cards, loans, payment, "avalanche");
+        var snowball = findResultByMethod(comparisonResults, "snowball") ||
+          simulateWithPaymentPlan(cards, loans, payment, "snowball");
         var allRates = cards.map(function (card) { return Number(card.apr || 0); })
           .concat(loans.map(function (loan) { return Number(loan.rate || 0); }));
         var highestApr = allRates.length ? Math.max.apply(null, allRates) : 0;
@@ -5554,6 +5583,27 @@
         };
       }
 
+      function buildOfferCustomOrder(baseOrder, remainingCards, newDebtIds, replacedCardIds) {
+        var remainingCardIds = (remainingCards || []).map(function (card) { return card.id; });
+        var replacements = newDebtIds || [];
+        var replaced = replacedCardIds || [];
+        var output = [];
+        var inserted = false;
+        function pushUnique(id) {
+          if (id && output.indexOf(id) === -1) output.push(id);
+        }
+        (baseOrder || []).forEach(function (id) {
+          var wasReplaced = replaced.indexOf(id) !== -1;
+          if (!wasReplaced || remainingCardIds.indexOf(id) !== -1) pushUnique(id);
+          if (wasReplaced && !inserted) {
+            replacements.forEach(pushUnique);
+            inserted = true;
+          }
+        });
+        if (!inserted) replacements.forEach(pushUnique);
+        return output;
+      }
+
       function payoffOptionTelemetryEnabled() {
         try {
           return PAYOFF_OPTION_TELEMETRY_ENABLED ||
@@ -5702,8 +5752,8 @@
         renderWarnings(warnings);
         var comparisonResults = renderComparison(cards, loans, payment, result, baseline);
         renderDecisionSnapshot(comparisonResults, result);
-        renderMethodRecommendation(cards, loans, extra, comparisonResults);
-        renderPayoffOptions(cards, loans, result);
+        renderMethodRecommendation(cards, loans, payment, comparisonResults);
+        renderPayoffOptions(cards, loans, result, payment);
         renderTarget(cards, loans, method);
         renderSavings(result, baseline, extra);
         renderMonthPlan(result);
@@ -5712,7 +5762,7 @@
         if (!options.skipUrlUpdate) {
           updateSharedUrl(cards, loans, method, extra, payment.mode, payment.enteredAmount);
         }
-        renderResultExplainer(cards, loans, result, baseline, extra);
+        renderResultExplainer(cards, loans, result, baseline, comparisonResults, payment);
         if (!options.skipTracking && !isSampleMode) {
           trackCalculation(cards, loans, {
             method: method,
@@ -5802,7 +5852,9 @@
           requiredPaymentForTarget: requiredPaymentForTarget,
           loanPaymentForTerm: loanPaymentForTerm,
           optionSortRate: optionSortRate,
-          simulateWithMonthlyBudget: simulateWithMonthlyBudget
+          maxTimelinePayment: maxTimelinePayment,
+          simulateWithPaymentPlan: simulateWithPaymentPlan,
+          buildOfferCustomOrder: buildOfferCustomOrder
         };
         if (window.CP_TEST_MODE) return;
       }
