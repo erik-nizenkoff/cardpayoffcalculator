@@ -2398,7 +2398,7 @@
         "name": "How does a credit card payoff calculator work?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A credit card payoff calculator estimates monthly interest from each card's APR, applies minimum payments, applies any extra payment to the selected payoff method, and repeats the process until all balances are paid or the model reaches its time limit."
+          "text": "A credit card payoff calculator estimates monthly interest from each debt's APR, applies card minimums or fixed installment-loan payments, applies any extra payment to the selected payoff method, and repeats the process until all balances are paid or the model reaches its time limit."
         }
       },
       {
@@ -2430,7 +2430,7 @@
         "name": "How do I calculate what payment I need to be debt-free by a specific month?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Enter a target payoff month and compare the required payment result. The calculator searches for the smallest estimated monthly payment that pays all entered balances by that month."
+          "text": "Enter a target payoff month and compare the required payment result. The calculator searches for the smallest estimated monthly payoff amount that pays all entered balances by that month."
         }
       },
       {
@@ -2704,12 +2704,12 @@
             </div>
             <details class="estimate-details">
               <summary>How this estimate works</summary>
-              <p class="minimum-note">Estimated minimums use the greater of your entered minimum, $25, or 1% of balance plus monthly interest.</p>
-              <p class="cost-note">Total paid includes starting balances plus estimated interest; total interest is the financing cost inside that total.</p>
+              <p class="minimum-note">Credit card minimums use the greater of your entered minimum, $25, or 1% of balance plus monthly interest. Installment loans use the fixed payment you entered.</p>
+              <p class="cost-note">Total paid includes starting balances plus estimated interest. Offer scenarios add entered transfer or origination fees to the modeled new balance.</p>
               <div class="assumptions-list" aria-label="Calculation assumptions">
                 <span>No new purchases</span>
-                <span>APR unchanged</span>
-                <span>Minimum rules estimated</span>
+                <span>Entered APRs unchanged</span>
+                <span>Card minimum rules estimated</span>
                 <span>Payments monthly</span>
               </div>
             </details>
@@ -2840,16 +2840,18 @@
     <section class="content-grid">
       <div class="panel content-section">
         <h2>Methodology</h2>
-        <p>Each month, the calculator computes interest for every active debt using APR divided by 12. It then uses the greater of the issuer-style minimum estimate, the entered minimum payment, or $25, capped at the amount needed to pay the debt off that month.</p>
-        <p>The issuer-style minimum estimate is current balance times 1% plus that month&apos;s interest. The payment first covers interest, then reduces principal. Avalanche applies extra money to the highest APR debt until it is paid, then cascades. Snowball applies extra money to the smallest balance until it is paid, then cascades. Paying minimums only applies no extra payment.</p>
-        <p>The schedule stops when all balances reach $0 or after 600 months. Results are estimates and do not include new charges, fees, mid-cycle balance transfers, penalty APRs, payment timing differences, or issuer-specific minimum rules beyond the model above. Promotional/intro APRs are supported — enter them per card in the Intro APR fields.</p>
+        <p>Each month, the calculator computes interest for every active debt using that debt&apos;s APR divided by 12. Credit card payments use the greater of the entered minimum, $25, or 1% of the current balance plus that month&apos;s interest, capped at the amount needed to pay the card off that month. Installment loans use the fixed monthly payment you entered, also capped at payoff.</p>
+        <p>Payments first cover that month&apos;s interest, then reduce principal. If you enter an extra payment, the calculator pays every active card minimum and loan payment first, then sends remaining money to the selected payoff strategy. If you enter a total monthly payoff budget, the calculator treats that amount as the planned total payment, but future required minimums or fixed loan payments can make the actual monthly payment higher.</p>
+        <p>Avalanche targets the highest APR debt first. Snowball targets the smallest active balance first. Custom order follows the list you set. Paying minimums only applies no extra payment. When promotional APRs are entered, the promo rate applies through the entered promo months, then the standard APR applies.</p>
+        <p>Balance transfer and consolidation loan scenarios only move current credit card debt. If entered offer capacity is greater than eligible card debt, the unused capacity is reported but not modeled as new borrowing. Entered transfer and origination fees are added to the modeled new balance, and the offer model tests offer orders using the selected payoff strategy, projected interest, fees, promo expirations, and loan terms.</p>
+        <p>The schedule stops when all balances reach $0 or after 600 months. Results are estimates and do not include new purchases, late fees, annual fees, mid-cycle timing changes, penalty APRs, payment posting differences, or issuer-specific minimum rules beyond the model above.</p>
       </div>
 
       <div class="panel content-section">
         <h2>FAQ</h2>
         <details>
           <summary>What payment do I need to be debt-free by a target month?</summary>
-          <p>Enter a target payoff month. The calculator uses a binary search over monthly payment amounts and reports the smallest estimated payment that pays all entered debts by that month.</p>
+          <p>Enter a target payoff month. The calculator searches total monthly payoff amounts and reports the smallest estimated payment that pays all entered debts by that month. If future minimums or fixed loan payments exceed that amount, it shows the higher required monthly payment.</p>
         </details>
         <details>
           <summary>What is the debt avalanche method?</summary>
@@ -5097,7 +5099,7 @@
         }
         var combinedScenario = optimizePayoffScenarioOrder(scenarios[0], cards, loans, payment, methodInput.value, customOrder, 0, currentResult);
         if (combinedScenario.extraAvailable > EPSILON) {
-          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies the lowest modeled-cost offer combination.";
+          optionCapacityNotice.innerHTML = "You entered <strong>" + money(combinedScenario.totalAvailable) + "</strong> in balance transfer/loan capacity for <strong>" + money(cardTotal) + "</strong> in credit card debt. The model uses <strong>" + money(combinedScenario.amount) + "</strong>, leaves <strong>" + money(combinedScenario.extraAvailable) + "</strong> unused, and applies the lowest modeled total-cost offer combination.";
           optionCapacityNotice.classList.remove("hidden");
         } else {
           optionCapacityNotice.classList.add("hidden");
@@ -5131,7 +5133,7 @@
             return;
           }
           var unusedText = scenario.extraAvailable > EPSILON
-            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so the lowest modeled-cost offer combination was applied."
+            ? " You entered " + money(scenario.extraAvailable) + " more available transfer/loan capacity than current card balances, so the lowest modeled total-cost offer combination was applied."
             : "";
           var promoText = model.earliestPromoEnd != null && model.result.months > model.earliestPromoEnd
             ? " At least one balance-transfer promo can expire before payoff; post-promo APR may apply."
@@ -5145,7 +5147,7 @@
             totalCost: model.totalCost,
             currentCost: currentCost,
             currentCapped: currentResult.capped,
-            assumptions: "Applies the lowest modeled-cost offer combination: " + model.optionTerms.join("; ") + ".",
+            assumptions: "Applies the lowest modeled total-cost offer combination: " + model.optionTerms.join("; ") + ".",
             watchout: (model.offerMaxPayment > currentMaxPayment + EPSILON ? "Required monthly payment can rise to " + money(model.offerMaxPayment) + ", which is higher than the current plan." : "Compare fees, promo expirations, and loan terms before applying.") + unusedText + promoText
           });
           renderOptionUsageSummary(scenario, model.allocation, model.result, cardTotal);
@@ -5157,7 +5159,7 @@
           return renderPayoffOptionRow(row, bestCost);
         }).join("");
         payoffOptionNote.textContent = scenarios.length
-          ? "Default amounts use the full current credit card balance. The calculator tests offer combinations and applies the lowest modeled-cost order when available transfer/loan capacity exceeds current card balances. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
+          ? "Default amounts use the full current credit card balance. The calculator tests offer combinations and applies the lowest modeled total-cost order it can evaluate. Existing installment loans stay in the plan. Fees are counted in Interest + Fees."
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 

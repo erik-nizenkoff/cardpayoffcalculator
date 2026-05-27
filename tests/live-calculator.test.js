@@ -383,6 +383,9 @@ assert.equal(live.optionCapacityValue("", 12900), 12900, "empty offer capacity s
 assert(!html.includes("slice(0, 30)"), "shared payoff options no longer allow thirty offer scenarios");
 assert(html.includes("MAX_PAYOFF_OPTIONS"), "payoff option limits use one shared constant");
 assert(!html.includes('optionNumberValue(getOptionField(scenario, "amount"), cardTotal, 0, cardTotal)'), "offer capacity is not clamped before unused capacity is calculated");
+assert(html.includes("Installment loans use the fixed payment you entered"), "methodology distinguishes installment loan payments from card minimums");
+assert(html.includes("unused capacity is reported but not modeled as new borrowing"), "methodology explains excess offer capacity correctly");
+assert(!html.includes("does not include new charges, fees"), "methodology does not say all fees are excluded when offer fees are modeled");
 assert(html.includes("repeat(auto-fit"), "single payoff offer cards fill available space without an empty grid column");
 assert(html.includes("offer-allocation-table"), "offer allocation table has dedicated column sizing");
 assert(html.includes("applied-debt-list"), "applied debts render as stacked lines instead of a cramped comma list");
