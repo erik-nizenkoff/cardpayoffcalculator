@@ -332,6 +332,9 @@ assert(
 );
 
 const html = fs.readFileSync("index.html", "utf8");
+assert.equal(live.maxPayoffOptions, 8, "payoff offers are capped at eight for exhaustive ordering");
+assert(!html.includes("slice(0, 30)"), "shared payoff options no longer allow thirty offer scenarios");
+assert(html.includes("MAX_PAYOFF_OPTIONS"), "payoff option limits use one shared constant");
 assert(!html.includes("lastResult.timeline.slice(0, Math.min(lastResult.timeline.length, 240))"), "print schedule is not capped at 240 rows");
 assert(html.includes("Math.max(result.startingBalance, timeline.reduce"), "chart scale considers balances above the starting balance");
 assert(html.includes("ctx.moveTo(xPos(0), yPos(result.startingBalance))"), "chart total-balance line starts at starting balance");

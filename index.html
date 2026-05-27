@@ -2949,6 +2949,7 @@
       "use strict";
 
       var MAX_CARDS = 20;
+      var MAX_PAYOFF_OPTIONS = 8;
       var MAX_MONTHS = 600;
       var MAX_APR = 79.99;
       var MIN_INTRO_MONTHS = 1;
@@ -4491,8 +4492,25 @@
           '></label>';
       }
 
+      function optionScenarioCount() {
+        return optionScenarioList ? optionScenarioList.querySelectorAll(".option-fieldset").length : 0;
+      }
+
+      function updateOptionScenarioLimitState() {
+        if (!payoffOptions) return;
+        var atLimit = optionScenarioCount() >= MAX_PAYOFF_OPTIONS;
+        Array.prototype.slice.call(payoffOptions.querySelectorAll('[data-action="add-balance-transfer"], [data-action="add-consolidation-loan"]')).forEach(function (button) {
+          button.disabled = atLimit;
+          button.title = atLimit ? "Remove an offer before adding another. Up to " + MAX_PAYOFF_OPTIONS + " offers can be compared exhaustively." : "";
+        });
+      }
+
       function addOptionScenario(type, data) {
         if (!optionScenarioList) return;
+        if (optionScenarioCount() >= MAX_PAYOFF_OPTIONS) {
+          updateOptionScenarioLimitState();
+          return null;
+        }
         var values = data || {};
         var scenario = document.createElement("fieldset");
         scenario.className = "option-fieldset";
@@ -4522,6 +4540,7 @@
           '<p class="option-scenario-help">' + escapeHtml(help) + '</p>' +
           '<div class="option-inputs">' + inputs + '</div>';
         optionScenarioList.appendChild(scenario);
+        updateOptionScenarioLimitState();
         return scenario;
       }
 
@@ -4529,6 +4548,7 @@
         if (!optionScenarioList) return;
         optionScenarioList.innerHTML = "";
         optionScenarioNextId = 1;
+        updateOptionScenarioLimitState();
       }
 
       function getOptionField(scenario, field) {
@@ -4797,7 +4817,7 @@
         var entries = [];
         var balanceTransferCount = 0;
         var consolidationCount = 0;
-        Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset")).forEach(function (scenario) {
+        Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset")).slice(0, MAX_PAYOFF_OPTIONS).forEach(function (scenario) {
           var type = scenario.dataset.optionType;
           if (type === "balance-transfer") {
             balanceTransferCount += 1;
@@ -5652,7 +5672,7 @@
       function sharedOptionScenarios() {
         if (!optionScenarioList) return [];
         return Array.prototype.slice.call(optionScenarioList.querySelectorAll(".option-fieldset"))
-          .slice(0, 30)
+          .slice(0, MAX_PAYOFF_OPTIONS)
           .map(sharedOptionScenario)
           .filter(Boolean);
       }
@@ -5721,7 +5741,7 @@
           if (item.term != null && (!Number.isFinite(item.term) || item.term < 1)) item.term = null;
           return item;
         }).filter(Boolean) : [];
-        var optionScenarios = Array.isArray(state.optionScenarios) ? state.optionScenarios.slice(0, 30).map(function (scenario) {
+        var optionScenarios = Array.isArray(state.optionScenarios) ? state.optionScenarios.slice(0, MAX_PAYOFF_OPTIONS).map(function (scenario) {
           if (!scenario) return null;
           if (scenario.type === "balance-transfer") {
             return {
@@ -5764,6 +5784,7 @@
             addOptionScenario(scenario.type, scenario);
           });
         }
+        updateOptionScenarioLimitState();
         methodInput.value = ["avalanche", "snowball", "minimum", "custom"].indexOf(state.method) !== -1 ? state.method : "avalanche";
         paymentModeInput.value = state.paymentMode === "total" ? "total" : "extra";
         extraInput.value = cleanSharedNumber(state.paymentAmount != null ? state.paymentAmount : state.extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0;
@@ -6121,6 +6142,7 @@
           optionModeledCostScore: optionModeledCostScore,
           optionActualCostScore: optionActualCostScore,
           optionSavingsPerDollar: optionSavingsPerDollar,
+          maxPayoffOptions: MAX_PAYOFF_OPTIONS,
           scorePayoffScenarioEntries: scorePayoffScenarioEntries,
           optimizePayoffScenarioOrder: optimizePayoffScenarioOrder,
           buildPayoffScenarioModel: buildPayoffScenarioModel,
@@ -6188,6 +6210,7 @@
         if (button.dataset.action === "remove-option-scenario") {
           var scenario = button.closest(".option-fieldset");
           if (scenario) scenario.remove();
+          updateOptionScenarioLimitState();
           update();
         }
       });
