@@ -400,7 +400,8 @@ assert(html.includes("Installment loans use the fixed payment you entered"), "me
 assert(html.includes("unused capacity is reported but not modeled as new borrowing"), "methodology explains excess offer capacity correctly");
 assert(!html.includes("does not include new charges, fees"), "methodology does not say all fees are excluded when offer fees are modeled");
 assert(html.includes("Compare new payoff options"), "offer modeling uses user-centered section language");
-assert(html.includes("Share links include debt names/nicknames, balances, APRs, payments, and settings currently shown"), "share link helper explains shared names and inputs are included");
+assert(appSource.includes("Share links include debt names/nicknames, balances, APRs, payments, and settings."), "share link helper explains shared names and inputs are included");
+assert(!html.includes("share-privacy-note"), "share helper is not duplicated in a second static note");
 assert(html.includes("comparison-section td::before"), "method comparison can collapse into labeled mobile rows");
 assert(html.includes("repeat(auto-fit"), "single payoff offer cards fill available space without an empty grid column");
 assert(html.includes("offer-allocation-table"), "offer allocation table has dedicated column sizing");

@@ -671,8 +671,9 @@
         return window.confirm(message);
       }
 
-      function collapseOptionalDetailsOnSmallScreens() {
-        if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
+      function collapseOptionalDetails(options) {
+        var settings = options || {};
+        if (!settings.all && (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches)) return;
         document.querySelectorAll(".optional-details").forEach(function (details) {
           details.open = false;
         });
@@ -1735,11 +1736,11 @@
           var principal = roundCents(payment - interest);
           var balance = firstMonth.balances[index] || 0;
           return "<tr>" +
-            "<td>" + escapeHtml(name) + "</td>" +
-            "<td>" + moneyCents(payment) + "</td>" +
-            "<td>" + moneyCents(interest) + "</td>" +
-            "<td>" + moneyCents(Math.max(0, principal)) + "</td>" +
-            "<td>" + moneyCents(balance) + "</td>" +
+            '<td data-label="Debt">' + escapeHtml(name) + "</td>" +
+            '<td data-label="Payment">' + moneyCents(payment) + "</td>" +
+            '<td data-label="Interest">' + moneyCents(interest) + "</td>" +
+            '<td data-label="Principal">' + moneyCents(Math.max(0, principal)) + "</td>" +
+            '<td data-label="Balance after payment">' + moneyCents(balance) + "</td>" +
             "</tr>";
         }).join("");
       }
@@ -3103,7 +3104,8 @@
         }
         mobilePayoffDate.textContent = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
         mobileTotalInterest.textContent = result.capped ? "Still accruing after 50 years" : money(result.totalInterest) + " interest";
-        mobileMonthlyPayment.textContent = "Payment " + money(result.monthlyPayment) + "/mo";
+        var paymentLabel = paymentMode() === "total" ? "Budget" : result.method === "minimum" ? "Payment" : "Starts";
+        mobileMonthlyPayment.textContent = paymentLabel + " " + money(result.monthlyPayment) + "/mo";
         mobileSummaryBar.classList.remove("hidden");
         updateMobileSummaryContext();
       }
@@ -3392,6 +3394,7 @@
         }
         setSampleMode(false);
         updateAddButton();
+        collapseOptionalDetails({ all: true });
         update({ skipTracking: true, skipUrlUpdate: true });
         return true;
       }
@@ -4081,7 +4084,7 @@
 
       startInput.value = currentMonthValue();
       resetDefaultOptionScenarios();
-      collapseOptionalDetailsOnSmallScreens();
+      collapseOptionalDetails();
       if (!loadSharedState()) {
         loadBlankEntry({ keepUrl: true });
       }

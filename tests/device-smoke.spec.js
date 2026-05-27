@@ -6,6 +6,15 @@ const viewports = [
   { name: "desktop", width: 1440, height: 1000 }
 ];
 
+function sharedUrl(state) {
+  const encoded = Buffer.from(JSON.stringify(state), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  return "/?q=" + encoded + "#monthPlan";
+}
+
 for (const viewport of viewports) {
   test(`core calculator layout works on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -59,11 +68,15 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await page.getByRole("spinbutton", { name: "Visa APR" }).fill("12");
   await page.getByRole("spinbutton", { name: "Visa minimum payment" }).fill("50");
   await page.getByRole("spinbutton", { name: "Extra monthly payment" }).fill("200");
+  await page.locator("#resultsPanel").click();
 
   await expect(page.locator(".supporting-metrics .metric", { hasText: "Starting Monthly Payment" })).toContainText("$250");
   await expect(page.locator("#comparisonSection th").nth(4)).toHaveText("Starting Payment");
   await expect(page.locator("#comparisonRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Starting payment");
   await expect(page.locator("#scheduleModeNote")).toContainText("total monthly payment can decline");
+  await expect(page.locator("#mobileMonthlyPayment")).toContainText("Starts $250/mo");
+  await expect(page.locator("#monthPlanRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Balance after payment");
+  await expect(page.locator(".share-privacy-note")).toHaveCount(0);
 
   await page.locator("#paymentMode").selectOption("total");
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("250");
@@ -71,12 +84,35 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await expect(page.locator("#currentPlanSummary")).toContainText("Using a fixed $250/mo budget");
   await expect(page.locator("#savingsResult")).toContainText("Keeping a $250/mo budget");
   await expect(page.locator("#scheduleModeNote")).toContainText("keeps your payoff budget fixed");
+  await page.locator("#resultsPanel").click();
+  await expect(page.locator("#mobileMonthlyPayment")).toContainText("Budget $250/mo");
 
   await page.locator("#paymentMode").selectOption("extra");
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("200");
   await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("200");
   await expect(page.locator("#currentPlanSummary")).toContainText("With $200 extra");
   await expect(page.locator("#scheduleRows tr").first()).toContainText("Visa $250.00 (+$200 extra)");
+});
+
+test("shared result links collapse optional panels for a cleaner deep link", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(sharedUrl({
+    v: 1,
+    method: "avalanche",
+    paymentMode: "extra",
+    paymentAmount: 200,
+    startMonth: "2026-05",
+    cards: [
+      { id: "card-1", name: "Visa", balance: 1000, apr: 12, minimum: 50 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1"]
+  }));
+
+  await expect(page.locator("#monthPlan")).toBeVisible();
+  await expect.poll(() => page.locator("#targetDateOptions").evaluate((details) => details.open)).toBe(false);
+  await expect.poll(() => page.locator("#payoffOptions").evaluate((details) => details.open)).toBe(false);
 });
 
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {

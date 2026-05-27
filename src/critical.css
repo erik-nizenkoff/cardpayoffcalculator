@@ -543,13 +543,6 @@
       line-height: 1.4;
     }
 
-    .share-privacy-note {
-      margin: 6px 0 0;
-      color: #49627f;
-      font-size: .76rem;
-      line-height: 1.4;
-    }
-
     .privacy-note {
       margin: 7px 0 0;
       color: #7b8798;
@@ -2445,6 +2438,65 @@
       .loan-table td.remove-cell::before {
         content: "";
         display: none;
+      }
+
+      .month-plan {
+        padding-bottom: 110px;
+      }
+
+      .month-plan .table-scroll {
+        overflow-x: visible;
+      }
+
+      .month-plan table,
+      .month-plan tbody,
+      .month-plan tr,
+      .month-plan td {
+        display: block;
+        min-width: 0;
+        width: 100%;
+      }
+
+      .month-plan thead {
+        display: none;
+      }
+
+      .month-plan tr {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        margin-bottom: 10px;
+        padding: 10px;
+      }
+
+      .month-plan td {
+        display: grid;
+        grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+        gap: 8px;
+        border-bottom: 0;
+        padding: 5px 0;
+        text-align: right;
+      }
+
+      .month-plan td:first-child {
+        display: block;
+        color: var(--ink);
+        font-weight: 900;
+        padding-top: 0;
+        text-align: left;
+      }
+
+      .month-plan td:first-child::before {
+        display: none;
+      }
+
+      .month-plan td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: .72rem;
+        font-weight: 900;
+        text-align: left;
+        text-transform: uppercase;
       }
 
       .comparison-section .table-scroll,
