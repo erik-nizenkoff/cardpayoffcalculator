@@ -32,8 +32,8 @@ Build a single static page that answers:
 ## Implementation Shape
 
 - Static HTML/CSS/JS, no backend.
-- Pure payoff math in `src/payoff.js` with Node tests.
-- Browser UI in `app.js`.
+- Live payoff math and browser UI are in `index.html`.
+- Node tests execute the inline calculator engine through `tests/live-calculator.test.js`.
 - No analytics, forms, payments, accounts, cookies, or data collection.
 - Share/export is local only: copy a text summary and download CSV in the browser.
 
