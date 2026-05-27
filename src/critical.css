@@ -1963,6 +1963,33 @@
       padding: 20px;
     }
 
+    .feedback-edit-fields {
+      display: grid;
+      gap: 14px;
+    }
+
+    .feedback-form.feedback-sent .feedback-edit-field {
+      display: none;
+    }
+
+    .feedback-success {
+      border: 1px solid #bfe7cf;
+      border-radius: 8px;
+      background: #f1fbf5;
+      color: #22543d;
+      padding: 14px;
+    }
+
+    .feedback-success h3 {
+      margin: 0 0 4px;
+      color: inherit;
+    }
+
+    .feedback-success p {
+      margin: 0;
+      color: inherit;
+    }
+
     .feedback-head {
       display: flex;
       align-items: start;

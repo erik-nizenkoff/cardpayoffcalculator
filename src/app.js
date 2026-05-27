@@ -32,6 +32,7 @@
       var startInput = document.getElementById("startMonth");
       var targetInput = document.getElementById("targetMonth");
       var telemetryOptOut = document.getElementById("telemetryOptOut");
+      var telemetryOptOutStatus = document.getElementById("telemetryOptOutStatus");
       var resultsPanel = document.getElementById("resultsPanel");
       var emptyResults = document.getElementById("emptyResults");
       var resultsContent = document.getElementById("resultsContent");
@@ -108,6 +109,8 @@
       var feedbackMessage = document.getElementById("feedbackMessage");
       var feedbackEmail = document.getElementById("feedbackEmail");
       var feedbackAttachInputs = document.getElementById("feedbackAttachInputs");
+      var feedbackEditFields = document.getElementById("feedbackEditFields");
+      var feedbackSuccess = document.getElementById("feedbackSuccess");
       var feedbackStatus = document.getElementById("feedbackStatus");
       var feedbackSubmitButton = document.getElementById("feedbackSubmitButton");
       var feedbackCancelButton = document.getElementById("feedbackCancelButton");
@@ -116,7 +119,7 @@
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
         clearAllButton, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
-        targetInput, telemetryOptOut, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
+        targetInput, telemetryOptOut, telemetryOptOutStatus, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, targetResult, targetInlineResult, savingsResult, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
@@ -125,7 +128,7 @@
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
         mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump,
-        reportIssueButton, resultReportIssueButton, feedbackDialog, feedbackForm, feedbackType, feedbackMessage, feedbackEmail, feedbackAttachInputs, feedbackStatus, feedbackSubmitButton,
+        reportIssueButton, resultReportIssueButton, feedbackDialog, feedbackForm, feedbackType, feedbackMessage, feedbackEmail, feedbackAttachInputs, feedbackEditFields, feedbackSuccess, feedbackStatus, feedbackSubmitButton,
         feedbackCancelButton, feedbackCancelSecondaryButton
       ];
 
@@ -255,16 +258,26 @@
         }
       }
 
+      function browserDntEnabled() {
+        return navigator.doNotTrack === "1" || window.doNotTrack === "1";
+      }
+
+      function storedTelemetryOptOut() {
+        try {
+          return localStorage.getItem(window.CP_TELEMETRY_KEY || "cpoc_telemetry_opt_out") === "1";
+        } catch (error) {
+          return false;
+        }
+      }
+
       function telemetryDisabled() {
         try {
           return window.CP_TELEMETRY_DISABLED === true ||
-            localStorage.getItem(window.CP_TELEMETRY_KEY || "cpoc_telemetry_opt_out") === "1" ||
-            navigator.doNotTrack === "1" ||
-            window.doNotTrack === "1";
+            storedTelemetryOptOut() ||
+            browserDntEnabled();
         } catch (error) {
           return window.CP_TELEMETRY_DISABLED === true ||
-            navigator.doNotTrack === "1" ||
-            window.doNotTrack === "1";
+            browserDntEnabled();
         }
       }
 
@@ -281,7 +294,20 @@
 
       function syncTelemetryOptOutControl() {
         if (!telemetryOptOut) return;
+        var dntEnabled = browserDntEnabled();
         telemetryOptOut.checked = telemetryDisabled();
+        telemetryOptOut.disabled = dntEnabled;
+        if (telemetryOptOutStatus) {
+          telemetryOptOutStatus.textContent = dntEnabled
+            ? "Your browser's Do Not Track setting is already opting you out of calculation telemetry."
+            : "";
+          telemetryOptOutStatus.classList.toggle("hidden", !dntEnabled);
+          if (dntEnabled) {
+            telemetryOptOut.setAttribute("aria-describedby", "telemetryOptOutStatus");
+          } else {
+            telemetryOptOut.removeAttribute("aria-describedby");
+          }
+        }
       }
 
       function syncPaymentInputCopy() {
@@ -783,8 +809,17 @@
         setFeedbackStatus("");
       }
 
+      function setFeedbackSentState(sent) {
+        feedbackForm.classList.toggle("feedback-sent", Boolean(sent));
+        feedbackEditFields.classList.toggle("hidden", Boolean(sent));
+        feedbackSuccess.classList.toggle("hidden", !sent);
+        feedbackSubmitButton.classList.toggle("hidden", Boolean(sent));
+        feedbackCancelSecondaryButton.textContent = sent ? "Close" : "Cancel";
+      }
+
       function openFeedbackDialog() {
         clearFeedbackErrors();
+        setFeedbackSentState(false);
         if (feedbackAttachInputs) feedbackAttachInputs.checked = false;
         if (feedbackDialog.showModal) {
           feedbackDialog.showModal();
@@ -798,6 +833,7 @@
 
       function closeFeedbackDialog() {
         clearFeedbackErrors();
+        setFeedbackSentState(false);
         if (feedbackDialog.close) {
           feedbackDialog.close();
         } else {
@@ -911,8 +947,10 @@
           feedbackEmail.value = "";
           feedbackAttachInputs.checked = false;
           feedbackType.value = "issue";
-          setFeedbackStatus("Thanks, your report was sent.");
+          setFeedbackStatus("");
+          setFeedbackSentState(true);
           feedbackSubmitButton.disabled = false;
+          feedbackCancelSecondaryButton.focus();
         }).catch(function () {
           feedbackSubmitButton.disabled = false;
           setFeedbackStatus("Could not send right now. Please try again.");
@@ -3057,13 +3095,16 @@
       }
 
       function sharedLoan(loan, index) {
-        return {
+        var item = {
           id: loan.id || "loan-" + (index + 1),
+          name: cleanSharedName(loan.name),
           balance: cleanSharedNumber(loan.balance, 0, Number.MAX_SAFE_INTEGER),
           rate: cleanSharedNumber(loan.rate, 0, MAX_APR),
           payment: cleanSharedNumber(loan.payment, 0, Number.MAX_SAFE_INTEGER),
           term: loan.term == null ? null : Math.round(Number(loan.term))
         };
+        if (!item.name) delete item.name;
+        return item;
       }
 
       function sharedOptionScenario(scenario) {
@@ -3161,7 +3202,7 @@
         }).filter(Boolean) : [];
         var loans = Array.isArray(state.loans) ? state.loans.map(function (loan, index) {
           var item = sharedLoan(loan || {}, index);
-          item.name = "Loan " + (index + 1);
+          item.name = cleanSharedName(loan && loan.name) || "Loan " + (index + 1);
           if (!item.balance || item.rate === null || !item.payment) return null;
           if (item.term != null && (!Number.isFinite(item.term) || item.term < 1)) item.term = null;
           return item;
@@ -3569,6 +3610,7 @@
           maxPayoffOptions: MAX_PAYOFF_OPTIONS,
           cleanSharedName: cleanSharedName,
           sharedCard: sharedCard,
+          sharedLoan: sharedLoan,
           scorePayoffScenarioEntries: scorePayoffScenarioEntries,
           optimizePayoffScenarioOrder: optimizePayoffScenarioOrder,
           buildPayoffScenarioModel: buildPayoffScenarioModel,

@@ -29,6 +29,23 @@ async function keepTelemetryAvailable(page) {
   });
 }
 
+async function forceDoNotTrack(page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, "doNotTrack", {
+      configurable: true,
+      get() {
+        return "1";
+      }
+    });
+    Object.defineProperty(window, "doNotTrack", {
+      configurable: true,
+      get() {
+        return "1";
+      }
+    });
+  });
+}
+
 test("default sample load does not send calculation telemetry", async ({ page }) => {
   const requests = [];
   await keepTelemetryAvailable(page);
@@ -41,6 +58,16 @@ test("default sample load does not send calculation telemetry", async ({ page })
   await page.waitForTimeout(750);
 
   expect(requests).toEqual([]);
+});
+
+test("do not track locks telemetry opt-out with an explanation", async ({ page }) => {
+  await forceDoNotTrack(page);
+  await page.goto("/");
+
+  const optOut = page.getByLabel("Do not send calculation telemetry");
+  await expect(optOut).toBeChecked();
+  await expect(optOut).toBeDisabled();
+  await expect(page.getByText("Your browser's Do Not Track setting is already opting you out of calculation telemetry.")).toBeVisible();
 });
 
 test("telemetry excludes debt nicknames and opt-out stops later sends", async ({ page }) => {
@@ -93,6 +120,29 @@ test("telemetry excludes debt nicknames and opt-out stops later sends", async ({
   expect(requests).toEqual([]);
 });
 
+test("shared links preserve loan names when reopened", async ({ page }) => {
+  await page.goto(sharedStateUrl({
+    v: 1,
+    method: "avalanche",
+    extraPayment: 0,
+    paymentMode: "extra",
+    paymentAmount: 0,
+    startMonth: "2026-05",
+    targetMonth: "",
+    cards: [
+      { id: "card-1", name: "Visa", balance: 8500, apr: 22.99, minimum: 170 }
+    ],
+    loans: [
+      { id: "loan-1", name: "Auto Loan", balance: 12000, rate: 6.5, payment: 300, term: 48 }
+    ],
+    optionScenarios: [],
+    customOrder: []
+  }));
+
+  await page.locator("#loanSection summary").click();
+  await expect(page.getByRole("textbox", { name: "Auto Loan loan name" })).toHaveValue("Auto Loan");
+});
+
 test("valid calculator edits do not auto-write share state into the page URL", async ({ page }) => {
   await page.goto("/");
 
@@ -133,6 +183,7 @@ test("feedback report defaults to no diagnostic input snapshot", async ({ page }
   expect(JSON.stringify(requests[0])).not.toContain("Private Bank Card");
   await expect(page.getByText("Thanks, your report was sent.")).toBeVisible();
   await expect(page.getByRole("dialog", { name: "Report an Issue" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Close", exact: true })).toBeVisible();
 });
 
 test("feedback report can attach current diagnostic input snapshot", async ({ page }) => {

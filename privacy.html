@@ -124,10 +124,10 @@
       <h2>What May Be Sent</h2>
       <p>Plausible may receive basic page-view analytics when the page loads. After you edit calculator inputs or optional scenarios and the calculator has valid results, anonymous calculator details and result metrics may be sent to Supabase. The default sample calculation is not sent to Supabase on page load.</p>
       <p>Calculator telemetry can include balances, APRs, minimum payments, payoff method, payment entry mode, payment amount, start month, target month, custom payoff order, loan inputs, balance-transfer assumptions, consolidation-loan assumptions, payoff months, and total interest.</p>
-      <p>If you submit the feedback form, your message, optional email address, sanitized page path, and technical page details are sent to Supabase. You can choose whether to attach the current calculator input snapshot and result summary so bugs, comments, and suggestions can be diagnosed. Card nicknames are not included in that diagnostic snapshot.</p>
+      <p>If you submit the feedback form, your message, optional email address, sanitized page path, anonymous browser ID, basic browser/device details, and telemetry opt-out state are sent to Supabase. Feedback submission is separate from calculator telemetry, so it is sent when you choose to submit the form even if calculation telemetry is off. You can choose whether to attach the current calculator input snapshot and result summary so bugs, comments, and suggestions can be diagnosed. Card nicknames are not included in that diagnostic snapshot.</p>
       <p>The app also stores a random anonymous browser ID in local storage so repeated calculations from the same browser can be grouped without asking who you are.</p>
-      <p>You can opt out of anonymous calculator telemetry with the visible checkbox near the calculator inputs. The site also respects browser Do Not Track where available.</p>
-      <p>Copying a share link is different from telemetry. A share link is created only when you click the share button, and it includes the debt nicknames and calculator inputs currently shown so the plan can be reopened from that link.</p>
+      <p>You can opt out of anonymous calculator telemetry with the visible checkbox near the calculator inputs. The site also respects browser Do Not Track where available; when Do Not Track is on, the checkbox may be locked in the opted-out state.</p>
+      <p>Copying a share link is different from telemetry. A share link is created only when you click the share button, and it includes the card nicknames, loan names, and calculator inputs currently shown so the plan can be reopened from that link.</p>
 
       <h2>What Is Not Sent</h2>
       <ul>
