@@ -185,6 +185,11 @@
         return moneyCentsFormatter.format(roundCents(value));
       }
 
+      function moneySmart(value) {
+        var rounded = roundCents(value);
+        return Math.abs(rounded - Math.round(rounded)) <= EPSILON ? money(rounded) : moneyCents(rounded);
+      }
+
       function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, function (char) {
           return {
@@ -1361,11 +1366,13 @@
           if (!activeDebts(allDebts).length) break;
 
           var payments = allDebts.map(function () { return 0; });
+          var extraPayments = allDebts.map(function () { return 0; });
           var interests = allDebts.map(function () { return 0; });
           var minimums = allDebts.map(function () { return 0; });
           var monthInterest = 0;
           var monthPayment = 0;
           var targets = [];
+          var targetIndexForDisplay = null;
 
           allDebts.forEach(function (debt, index) {
             if (debt.balance <= EPSILON) return;
@@ -1397,8 +1404,10 @@
             var targetIndex = allDebts.indexOf(target);
             target.balance = roundCents(target.balance - extra);
             payments[targetIndex] = roundCents(payments[targetIndex] + extra);
+            extraPayments[targetIndex] = roundCents(extraPayments[targetIndex] + extra);
             monthPayment = roundCents(monthPayment + extra);
             remainingExtra = roundCents(remainingExtra - extra);
+            if (targetIndexForDisplay === null && extra > EPSILON) targetIndexForDisplay = targetIndex;
             if (extra > EPSILON && targets.indexOf(target.name) === -1) targets.push(target.name);
           }
 
@@ -1424,9 +1433,11 @@
             principal: principal,
             endingBalance: endingBalance,
             target: targets[0] || firstTarget(allDebts, method, selectedCustomOrder),
+            targetIndex: targetIndexForDisplay,
             balances: allDebts.map(function (d) { return roundCents(Math.max(0, d.balance)); }),
             debtNames: allDebts.map(function (d) { return d.name; }),
             payments: payments,
+            extraPayments: extraPayments,
             interests: interests
           });
         }
@@ -2566,23 +2577,32 @@
           : "Add balance transfer or consolidation loan scenarios to compare them with the current plan.";
       }
 
+      function scheduleTargetText(row) {
+        if (!row || !row.target) return "-";
+        var targetIndex = Number.isInteger(row.targetIndex) ? row.targetIndex : row.debtNames ? row.debtNames.indexOf(row.target) : -1;
+        var extra = targetIndex >= 0 && row.extraPayments ? roundCents(row.extraPayments[targetIndex] || 0) : 0;
+        var payment = targetIndex >= 0 && row.payments ? roundCents(row.payments[targetIndex] || 0) : 0;
+        if (extra <= EPSILON || payment <= EPSILON) return row.target;
+        return row.target + " " + moneyCents(payment) + " (+" + moneySmart(extra) + " extra)";
+      }
+
+      function scheduleRowHtml(row) {
+        return "<tr>" +
+          "<td>" + row.month + "</td>" +
+          "<td>" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
+          "<td>" + moneyCents(row.payment) + "</td>" +
+          "<td>" + moneyCents(row.interest) + "</td>" +
+          "<td>" + moneyCents(row.principal) + "</td>" +
+          "<td>" + moneyCents(row.endingBalance) + "</td>" +
+          "<td>" + escapeHtml(scheduleTargetText(row)) + "</td>" +
+          "</tr>";
+      }
+
       function renderSchedule(result) {
         var generation = ++scheduleRenderGeneration;
         var initialScheduleMonths = 12;
         var maxDisplayRows = showAllSchedule ? Math.min(result.timeline.length, 240) : Math.min(result.timeline.length, initialScheduleMonths);
         var rows = result.timeline.slice(0, maxDisplayRows);
-
-        function scheduleRowHtml(row) {
-          return "<tr>" +
-            "<td>" + row.month + "</td>" +
-            "<td>" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
-            "<td>" + moneyCents(row.payment) + "</td>" +
-            "<td>" + moneyCents(row.interest) + "</td>" +
-            "<td>" + moneyCents(row.principal) + "</td>" +
-            "<td>" + moneyCents(row.endingBalance) + "</td>" +
-            "<td>" + escapeHtml(row.target || "-") + "</td>" +
-            "</tr>";
-        }
 
         function renderRowsSynchronously(targetRows) {
           scheduleRows.innerHTML = targetRows.map(scheduleRowHtml).join("");
@@ -2644,17 +2664,7 @@
         scheduleRenderGeneration += 1;
         showAllSchedule = true;
         var rows = lastResult.timeline.slice();
-        scheduleRows.innerHTML = rows.map(function (row) {
-          return "<tr>" +
-            "<td>" + row.month + "</td>" +
-            "<td>" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
-            "<td>" + moneyCents(row.payment) + "</td>" +
-            "<td>" + moneyCents(row.interest) + "</td>" +
-            "<td>" + moneyCents(row.principal) + "</td>" +
-            "<td>" + moneyCents(row.endingBalance) + "</td>" +
-            "<td>" + escapeHtml(row.target || "-") + "</td>" +
-            "</tr>";
-        }).join("");
+        scheduleRows.innerHTML = rows.map(scheduleRowHtml).join("");
         scheduleNote.textContent = "Showing " + rows.length + " of " + lastResult.timeline.length + " months.";
         scheduleLoading.classList.add("hidden");
       }

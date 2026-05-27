@@ -67,6 +67,7 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await page.locator("#paymentMode").selectOption("extra");
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("200");
   await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("200");
+  await expect(page.locator("#scheduleRows tr").first()).toContainText("Visa $250.00 (+$200 extra)");
 });
 
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {

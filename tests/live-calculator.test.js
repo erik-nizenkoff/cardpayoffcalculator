@@ -103,6 +103,12 @@ assert(
   "extra-payment offer simulations keep fixed extra behavior instead of a fixed total budget"
 );
 
+const extraTargetSchedule = live.simulate([
+  { id: "extra-target", name: "Extra Target", balance: 1000, apr: 12, minimum: 50 }
+], { method: "avalanche", extraPayment: 200 });
+assert.equal(extraTargetSchedule.timeline[0].payments[0], 250, "schedule timeline includes total target payment");
+assert.equal(extraTargetSchedule.timeline[0].extraPayments[0], 200, "schedule timeline includes extra payment applied to target");
+
 const overBudgetOffer = live.simulateWithPaymentPlan([], [
   { id: "loan-b", name: "Short loan", balance: 10000, rate: 20, payment: live.loanPaymentForTerm(10000, 20, 12), term: 12 }
 ], { mode: "total", monthlyBudget: 266.67 }, "avalanche");
