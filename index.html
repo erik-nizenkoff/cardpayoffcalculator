@@ -5719,6 +5719,13 @@
         return isEditableField(document.activeElement);
       }
 
+      function handleEditableFocus(event) {
+        if (isEditableField(event.target)) {
+          document.body.classList.add("input-focused");
+          hideMobileSummary();
+        }
+      }
+
       function updateMobileSummaryContext() {
         if (!mobileSummaryBar || !mobileSummaryLink || mobileSummaryBar.classList.contains("hidden")) return;
         if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
@@ -6562,12 +6569,10 @@
         syncTelemetryOptOutControl();
       });
 
-      document.addEventListener("focusin", function (event) {
-        if (isEditableField(event.target)) {
-          document.body.classList.add("input-focused");
-          hideMobileSummary();
-        }
-      });
+      document.addEventListener("focus", handleEditableFocus, true);
+      document.addEventListener("focusin", handleEditableFocus);
+      document.addEventListener("pointerdown", handleEditableFocus, true);
+      document.addEventListener("click", handleEditableFocus, true);
       document.addEventListener("focusout", function () {
         setTimeout(function () {
           if (!isInputFocused()) {

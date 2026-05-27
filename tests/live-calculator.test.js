@@ -408,6 +408,7 @@ assert(html.includes("ctx.moveTo(xPos(0), yPos(result.startingBalance))"), "char
 assert(!html.includes("firstPayoff.payoffMonth)"), "chart takeaway does not use 1-based payoff month as a zero-based offset");
 assert(!html.includes('simulate(cards, { method: "avalanche", extraPayment: extraPayment }'), "result explainer does not recompute total-budget plans with fixed extra");
 assert(html.includes("!result || isSampleMode || isInputFocused()"), "mobile sticky summary stays hidden while calculator inputs are focused");
+assert(html.includes('document.addEventListener("click", handleEditableFocus, true);'), "mobile sticky summary hides when focused fields are clicked");
 assert(html.includes("if (lastResult) updateMobileSummary(lastResult);"), "mobile sticky summary is restored after input focus leaves");
 assert.equal(live.chartAxisMonthLabel(0, "2026-05"), "May 2026", "chart point 0 labels the starting month");
 assert.equal(live.chartAxisMonthLabel(1, "2026-05"), "May 2026", "chart point 1 matches month-one schedule date");
