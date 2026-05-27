@@ -312,6 +312,12 @@ assert(live.resultPaidText(cappedPrimaryResult).includes("paid before limit"), "
 const cappedSummary = live.buildResultsSummary(cappedPrimaryResult);
 assert(cappedSummary.includes("Interest during 50-year model"), "copied summary labels capped interest as model-window interest");
 assert(!cappedSummary.includes("Total interest:"), "copied summary does not call capped model-window interest total payoff interest");
+const cappedOptionRow = {
+  result: cappedPrimaryResult,
+  totalCost: cappedPrimaryResult.totalInterest + 255
+};
+assert.equal(live.optionCostLabel(cappedOptionRow), "Interest + fees during 50-year model", "capped option cards relabel model-window cost");
+assert(live.optionCostText(cappedOptionRow).includes("still accruing"), "capped option cards do not present model-window cost as final payoff cost");
 
 assert(
   live.loanTermWarning({ name: "Short loan", balance: 10000, rate: 10, payment: 100, term: 12 }).includes("Estimated payment needed"),

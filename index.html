@@ -4857,6 +4857,15 @@
         return moneyCents(value) + "/$";
       }
 
+      function optionCostLabel(row) {
+        return row && row.result && row.result.capped ? "Interest + fees during 50-year model" : "Interest + fees";
+      }
+
+      function optionCostText(row) {
+        if (!row) return "-";
+        return row.result && row.result.capped ? money(row.totalCost) + " and still accruing" : money(row.totalCost);
+      }
+
       function renderPayoffOptionRow(row, bestCost) {
         if (row.unavailable) {
           return '<div class="option-card"><h4>' + escapeHtml(row.name) + '</h4><p class="option-watchout">' + escapeHtml(row.reason) + '</p></div>';
@@ -4883,7 +4892,7 @@
           (row.amount != null ? '<div class="summary-line"><span>Debt covered</span><strong>' + money(row.amount) + "</strong></div>" : "") +
           '<div class="summary-line"><span>Payoff date</span><strong>' + (result.capped ? "50+ years" : escapeHtml(addMonths(startInput.value, result.months - 1))) + "</strong></div>" +
           '<div class="summary-line"><span>Monthly payment</span><strong>' + money(monthlyPayment) + "</strong></div>" +
-          '<div class="summary-line"><span>Interest + fees</span><strong>' + money(row.totalCost) + "</strong></div>" +
+          '<div class="summary-line"><span>' + optionCostLabel(row) + '</span><strong>' + optionCostText(row) + "</strong></div>" +
           '<div class="summary-line"><span>Estimated cost difference vs current plan</span><strong>' + differenceText + "</strong></div>" +
           '<p class="option-watchout">' + escapeHtml(row.watchout || "") + "</p>" +
           '<p class="option-risk">' + escapeHtml(risk) + "</p>" +
@@ -6101,6 +6110,8 @@
           optimizePayoffScenarioOrder: optimizePayoffScenarioOrder,
           buildPayoffScenarioModel: buildPayoffScenarioModel,
           optionDifferenceText: optionDifferenceText,
+          optionCostLabel: optionCostLabel,
+          optionCostText: optionCostText,
           comparisonInterestText: comparisonInterestText,
           resultInterestLabel: resultInterestLabel,
           resultInterestText: resultInterestText,
