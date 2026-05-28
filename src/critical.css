@@ -1298,8 +1298,9 @@
       display: none;
       margin: 6px 0 0;
       color: var(--muted);
-      font-size: .76rem;
-      font-weight: 800;
+      font-size: .74rem;
+      font-weight: 600;
+      line-height: 1.35;
     }
 
     .assumptions-note {
@@ -2461,7 +2462,7 @@
       }
 
       .month-plan.month-plan-collapsed {
-        padding-bottom: 40px;
+        padding-bottom: 4px;
       }
 
       .month-plan .table-scroll {
@@ -2621,7 +2622,7 @@
 
       .mobile-summary-meta {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
         gap: 6px;
       }
 

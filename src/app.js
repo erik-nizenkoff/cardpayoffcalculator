@@ -3135,7 +3135,7 @@
         mobilePayoffDate.textContent = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
         mobileTotalInterest.textContent = result.capped ? "Still accruing after 50 years" : money(result.totalInterest) + " interest";
         var paymentLabel = paymentMode() === "total" ? "Budget" : result.method === "minimum" ? "Payment" : "Starts";
-        var paymentSuffix = paymentMode() === "extra" && result.method !== "minimum" ? ", may drop" : "";
+        var paymentSuffix = paymentMode() === "extra" && result.method !== "minimum" ? ", then may drop" : "";
         mobileMonthlyPayment.textContent = paymentLabel + " " + money(result.monthlyPayment) + "/mo" + paymentSuffix;
         mobileSummaryBar.classList.remove("hidden");
         updateMobileSummaryContext();

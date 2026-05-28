@@ -74,7 +74,7 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await expect(page.locator("#comparisonSection th").nth(4)).toHaveText("Starting Payment");
   await expect(page.locator("#comparisonRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Starting payment");
   await expect(page.locator("#scheduleModeNote")).toContainText("total monthly payment can decline");
-  await expect(page.locator("#mobileMonthlyPayment")).toContainText("Starts $250/mo, may drop");
+  await expect(page.locator("#mobileMonthlyPayment")).toContainText("Starts $250/mo, then may drop");
   await expect(page.locator("#monthPlanRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Balance after payment");
   await expect(page.locator(".share-privacy-note")).toHaveCount(0);
 
