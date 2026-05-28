@@ -44,6 +44,7 @@
       var totalBalanceEl = document.getElementById("totalBalance");
       var totalMinimumsEl = document.getElementById("totalMinimums");
       var payoffDateEl = document.getElementById("payoffDate");
+      var heroMonthlyPaymentEl = document.getElementById("heroMonthlyPayment");
       var payoffSuggestion = document.getElementById("payoffSuggestion");
       var currentPlanSummary = document.getElementById("currentPlanSummary");
       var payoffMonthsEl = document.getElementById("payoffMonths");
@@ -125,7 +126,7 @@
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
         clearAllButton, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
         targetInput, telemetryOptOut, telemetryOptOutStatus, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
-        payoffDateEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
+        payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanRows, toggleMonthPlanRows,
@@ -148,6 +149,7 @@
       var showAllMonthPlan = false;
       var isSampleMode = false;
       var scheduleRenderGeneration = 0;
+      var sharedPlanLoadError = "";
       var updateTimer = null;
       var printPreviousShowAll = false;
       var printSchedulePrepared = false;
@@ -1095,16 +1097,21 @@
         var cards = readCards();
         var loans = readLoans();
         var payment = currentPaymentInput(cards, loans, method);
-        var shareUrl = buildSharedUrl(cards, loans, method, payment.extraPayment, payment.mode, payment.enteredAmount);
+        var anonymizeNames = false;
+        if (shareLinkHasCustomNames(cards, loans)) {
+          anonymizeNames = !window.confirm("Share links include debt nicknames. Select OK to copy with names, or Cancel to copy an anonymized link.");
+        }
+        var shareUrl = buildSharedUrl(cards, loans, method, payment.extraPayment, payment.mode, payment.enteredAmount, { anonymizeNames: anonymizeNames });
+        var copiedText = anonymizeNames ? "Anonymized link copied" : "Link copied";
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareUrl).then(function () {
-            setCopySummaryStatus("Link copied");
+            setCopySummaryStatus(copiedText);
           }).catch(function () {
-            setCopySummaryStatus(fallbackCopyText(shareUrl) ? "Link copied" : "Copy failed");
+            setCopySummaryStatus(fallbackCopyText(shareUrl) ? copiedText : "Copy failed");
           });
           return;
         }
-        setCopySummaryStatus(fallbackCopyText(shareUrl) ? "Link copied" : "Copy failed");
+        setCopySummaryStatus(fallbackCopyText(shareUrl) ? copiedText : "Copy failed");
       }
 
       function validateCards(cards, loans) {
@@ -2629,13 +2636,13 @@
 
       function scheduleRowHtml(row) {
         return "<tr>" +
-          "<td>" + row.month + "</td>" +
-          "<td>" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
-          "<td>" + moneyCents(row.payment) + "</td>" +
-          "<td>" + moneyCents(row.interest) + "</td>" +
-          "<td>" + moneyCents(row.principal) + "</td>" +
-          "<td>" + moneyCents(row.endingBalance) + "</td>" +
-          "<td>" + escapeHtml(scheduleTargetText(row)) + "</td>" +
+          "<td data-label=\"Month\">" + row.month + "</td>" +
+          "<td data-label=\"Date\">" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
+          "<td data-label=\"Payment\">" + moneyCents(row.payment) + "</td>" +
+          "<td data-label=\"Interest\">" + moneyCents(row.interest) + "</td>" +
+          "<td data-label=\"Principal\">" + moneyCents(row.principal) + "</td>" +
+          "<td data-label=\"Ending Balance\">" + moneyCents(row.endingBalance) + "</td>" +
+          "<td data-label=\"Extra Payment Target\">" + escapeHtml(scheduleTargetText(row)) + "</td>" +
           "</tr>";
       }
 
@@ -3268,6 +3275,32 @@
         return item;
       }
 
+      function anonymizedSharedCard(card, index) {
+        var item = sharedCard(card, index);
+        item.name = "Card " + (index + 1);
+        return item;
+      }
+
+      function anonymizedSharedLoan(loan, index) {
+        var item = sharedLoan(loan, index);
+        item.name = "Loan " + (index + 1);
+        return item;
+      }
+
+      function isDefaultDebtName(name, prefix) {
+        return new RegExp("^" + prefix + "\\s+\\d+$", "i").test(cleanSharedName(name));
+      }
+
+      function shareLinkHasCustomNames(cards, loans) {
+        return (cards || []).some(function (card) {
+          var name = cleanSharedName(card && card.name);
+          return Boolean(name && !isDefaultDebtName(name, "Card"));
+        }) || (loans || []).some(function (loan) {
+          var name = cleanSharedName(loan && loan.name);
+          return Boolean(name && !isDefaultDebtName(name, "Loan"));
+        });
+      }
+
       function sharedOptionScenario(scenario) {
         var type = scenario.dataset.optionType;
         var amount = getOptionField(scenario, "amount");
@@ -3302,10 +3335,11 @@
           .filter(Boolean);
       }
 
-      function buildSharedUrl(cards, loans, method, extraPayment, mode, enteredAmount) {
+      function buildSharedUrl(cards, loans, method, extraPayment, mode, enteredAmount, options) {
         try {
           if (!window.URL) return String(window.location.href || "");
           var url = new URL(window.location.href);
+          var settings = options || {};
           var state = {
             v: 1,
             method: method,
@@ -3314,8 +3348,8 @@
             paymentAmount: cleanSharedNumber(enteredAmount, 0, Number.MAX_SAFE_INTEGER),
             startMonth: isValidMonthValue(startInput.value) ? startInput.value : "",
             targetMonth: isValidMonthValue(targetInput.value) ? targetInput.value : "",
-            cards: cards.map(sharedCard),
-            loans: (loans || []).map(sharedLoan),
+            cards: cards.map(settings.anonymizeNames ? anonymizedSharedCard : sharedCard),
+            loans: (loans || []).map(settings.anonymizeNames ? anonymizedSharedLoan : sharedLoan),
             optionScenarios: sharedOptionScenarios(),
             customOrder: customOrder.slice(0, 60)
           };
@@ -3337,11 +3371,29 @@
         } catch (error) {}
       }
 
+      function validSharedTargetHash(hash) {
+        var value = String(hash || "");
+        return /^#[A-Za-z][\w:-]*$/.test(value) ? value : "";
+      }
+
+      function sharedPlanLoadFailed(message) {
+        sharedPlanLoadError = message || "Could not load shared plan. The link may be incomplete or invalid.";
+        setPlanModeStatus(sharedPlanLoadError);
+        clearSharedUrlParam();
+      }
+
       function sharedStateFromUrl() {
         try {
           var hash = String(window.location.hash || "");
           if (hash.indexOf("#q=") === 0) {
-            return { encoded: hash.slice(3), source: "hash" };
+            var encoded = hash.slice(3);
+            var targetHash = "";
+            var targetIndex = encoded.indexOf("#");
+            if (targetIndex !== -1) {
+              targetHash = validSharedTargetHash(encoded.slice(targetIndex));
+              encoded = encoded.slice(0, targetIndex);
+            }
+            return { encoded: encoded, source: "hash", targetHash: targetHash };
           }
           var params = new URLSearchParams(window.location.search);
           var queryValue = params.get("q");
@@ -3356,13 +3408,23 @@
         clearSharedUrlParam();
       }
 
+      function scrollToSharedTarget(sharedState) {
+        if (!sharedState || !sharedState.targetHash) return;
+        setTimeout(function () {
+          try {
+            var target = document.querySelector(sharedState.targetHash);
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch (error) {}
+        }, 0);
+      }
+
       function loadSharedState() {
         var sharedState = sharedStateFromUrl();
         if (!sharedState || !sharedState.encoded) return false;
 
         var state = decodeSharedState(sharedState.encoded);
         if (!state || state.v !== 1) {
-          clearSharedUrlParam();
+          sharedPlanLoadFailed("Could not load shared plan. The link may be incomplete or invalid.");
           return false;
         }
 
@@ -3408,7 +3470,7 @@
         }).filter(Boolean) : null;
 
         if (!cards.length && !loans.length) {
-          clearSharedUrlParam();
+          sharedPlanLoadFailed("Could not load shared plan because it did not include usable debt entries.");
           return false;
         }
 
@@ -3442,7 +3504,9 @@
         updateAddButton();
         collapseOptionalDetails({ all: true });
         update({ skipTracking: true, skipUrlUpdate: true });
+        sharedPlanLoadError = "";
         normalizeLoadedQueryShareUrl(sharedState);
+        scrollToSharedTarget(sharedState);
         return true;
       }
 
@@ -3667,6 +3731,7 @@
         payoffMonthsEl.textContent = duration(result.months, result.capped);
         totalInterestLabel.textContent = resultInterestLabel(result);
         totalInterestEl.textContent = resultInterestText(result);
+        heroMonthlyPaymentEl.textContent = money(result.monthlyPayment);
         monthlyPaymentEl.textContent = money(result.monthlyPayment);
         totalPaidLabel.textContent = resultPaidLabel(result);
         totalPaidEl.textContent = resultPaidText(result);
@@ -4031,15 +4096,15 @@
       bind(sampleEnterCardsButton, "click", replaceSampleWithCards);
       bind(keepSampleButton, "click", confirmSampleData);
       bind(boostExtraButton, "click", function () {
-        if (isSampleMode) {
-          showSampleActionRequired("Replace sample data before trying a higher extra payment on your own plan.");
-          return;
-        }
+        var wasSampleMode = isSampleMode;
         var current = Number(extraInput.value || 0);
         extraInput.value = String(Math.max(0, (Number.isFinite(current) ? current : 0) + 50));
         if (methodInput.value === "minimum") methodInput.value = "avalanche";
         syncPaymentInputCopy();
         update();
+        if (wasSampleMode) {
+          setPlanModeStatus("Sample what-if: extra payment increased by $50. Enter your own cards for a real plan.");
+        }
         try {
           extraInput.focus({ preventScroll: true });
         } catch (error) {
@@ -4149,7 +4214,7 @@
       resetDefaultOptionScenarios();
       collapseOptionalDetails();
       if (!loadSharedState()) {
-        loadBlankEntry({ keepUrl: true });
+        loadBlankEntry({ keepUrl: true, status: sharedPlanLoadError });
       }
       if (hashTargetsDeferredContent()) {
         mountDeferredContent();

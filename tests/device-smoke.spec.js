@@ -15,6 +15,15 @@ function sharedUrl(state) {
   return "/?q=" + encoded + "#monthPlan";
 }
 
+function hashSharedUrl(state) {
+  const encoded = Buffer.from(JSON.stringify(state), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  return "/#q=" + encoded + "#monthPlan";
+}
+
 for (const viewport of viewports) {
   test(`core calculator layout works on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -71,6 +80,8 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await page.locator("#resultsPanel").click();
 
   await expect(page.locator(".supporting-metrics .metric", { hasText: "Starting Monthly Payment" })).toContainText("$250");
+  await expect(page.locator(".result-hero")).toContainText("Starting Monthly Payment");
+  await expect(page.locator("#heroMonthlyPayment")).toHaveText("$250");
   await expect(page.locator("#comparisonSection th").nth(4)).toHaveText("Starting Payment");
   await expect(page.locator("#comparisonRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Starting payment");
   await expect(page.locator("#scheduleModeNote")).toContainText("total monthly payment can decline");
@@ -116,6 +127,33 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   await expect.poll(() => page.locator("#payoffOptions").evaluate((details) => details.open)).toBe(false);
 });
 
+test("hash share links preserve section anchors after the encoded state", async ({ page }) => {
+  await page.goto(hashSharedUrl({
+    v: 1,
+    method: "avalanche",
+    paymentMode: "extra",
+    paymentAmount: 200,
+    startMonth: "2026-05",
+    cards: [
+      { id: "card-1", name: "Visa", balance: 1000, apr: 12, minimum: 50 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1"]
+  }));
+
+  await expect(page.locator("#monthPlan")).toBeVisible();
+  await expect(page.locator("#planModeStatus")).toBeHidden();
+  await expect(page.locator("#monthPlanRows tr")).toHaveCount(1);
+});
+
+test("invalid hash share links show a visible recovery message", async ({ page }) => {
+  await page.goto("/#q=not-a-real-plan#monthPlan");
+
+  await expect(page.locator("#planModeStatus")).toContainText("Could not load shared plan");
+  await expect(page.locator("#emptyResults")).toBeVisible();
+});
+
 test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(sharedUrl({
@@ -154,6 +192,9 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing all 4 debts.");
   await expect(page.locator("#monthPlan")).toContainText("+$200 extra target");
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
+  await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveAttribute("data-label", "Extra Payment Target");
+  await expect(page.locator(".schedule-panel .scroll-hint")).toBeHidden();
+  await expect(page.locator("#scheduleRows tr").first()).toHaveCSS("display", "grid");
 });
 
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {

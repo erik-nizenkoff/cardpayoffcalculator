@@ -545,14 +545,16 @@
 
     .privacy-note {
       margin: 7px 0 0;
-      color: #7b8798;
+      color: #5f6b7d;
       font-size: .76rem;
       line-height: 1.38;
     }
 
     .privacy-disclosure {
-      margin-top: 8px;
-      color: #7b8798;
+      margin-top: 14px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      color: #5f6b7d;
       font-size: .78rem;
     }
 
@@ -713,6 +715,16 @@
       min-height: 2.85em;
     }
 
+    .payoff-inputs-head {
+      margin-top: 16px;
+    }
+
+    .payoff-settings-grid {
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
     .custom-order-panel {
       margin-top: 14px;
       border: 1px solid var(--line);
@@ -867,6 +879,38 @@
       border-color: rgba(255,255,255,.28);
       background: rgba(255,255,255,.12);
       color: #dbeafe;
+    }
+
+    .hero-metric-grid {
+      display: grid;
+      grid-template-columns: 1.25fr minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .hero-metric {
+      min-width: 0;
+      border-left: 1px solid rgba(255,255,255,.14);
+      padding-left: 12px;
+    }
+
+    .hero-metric:first-child {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .hero-metric strong {
+      display: block;
+      margin-top: 4px;
+      color: #fbbf24;
+      font-size: 1.32rem;
+      font-weight: 900;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .hero-primary strong {
+      color: #4ade80;
     }
 
     .sample-inline-note {
@@ -2162,6 +2206,27 @@
         font-size: 2rem;
       }
 
+      .hero-metric-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .hero-metric,
+      .hero-metric:first-child {
+        border-left: 0;
+        border-top: 1px solid rgba(255,255,255,.12);
+        padding: 10px 0 0;
+      }
+
+      .hero-metric:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .hero-metric strong {
+        font-size: 1.18rem;
+      }
+
       .hero-interest strong {
         font-size: 1.2rem;
       }
@@ -2247,6 +2312,11 @@
 
       .scroll-hint {
         display: block;
+      }
+
+      .schedule-panel .scroll-hint,
+      .comparison-section .scroll-hint {
+        display: none;
       }
 
       table {
@@ -2546,25 +2616,29 @@
       }
 
       .comparison-section .table-scroll,
-      .option-summary .table-scroll {
+      .option-summary .table-scroll,
+      .schedule-panel .table-scroll {
         overflow-x: visible;
       }
 
       .comparison-section table,
       .offer-allocation-table,
-      .option-summary .allocation-table:not(.schedule-table) {
+      .option-summary .allocation-table:not(.schedule-table),
+      .schedule-table {
         min-width: 0;
         table-layout: fixed;
         width: 100%;
       }
 
       .comparison-section thead,
-      .option-summary thead {
+      .option-summary thead,
+      .schedule-table thead {
         display: none;
       }
 
       .comparison-section tr,
-      .option-summary tr {
+      .option-summary tr,
+      .schedule-table tr {
         display: grid;
         gap: 7px;
         margin-bottom: 10px;
@@ -2575,17 +2649,21 @@
       }
 
       .comparison-section td,
-      .option-summary td {
+      .option-summary td,
+      .schedule-table td {
         display: grid;
         grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
         gap: 8px;
         border-bottom: 0;
         padding: 0;
         text-align: left;
+        white-space: normal;
+        overflow-wrap: anywhere;
       }
 
       .comparison-section td::before,
-      .option-summary td::before {
+      .option-summary td::before,
+      .schedule-table td::before {
         content: attr(data-label);
         color: var(--muted);
         font-size: .72rem;
@@ -2717,6 +2795,7 @@
 
       .hero-label,
       .hero-date,
+      .hero-metric strong,
       .hero-interest strong,
       .results-disclaimer {
         color: #000 !important;
