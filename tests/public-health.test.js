@@ -31,9 +31,8 @@ const checks = [
     type: "binary"
   },
   {
-    path: "/social-preview.svg",
-    type: "text",
-    includes: "<svg"
+    path: "/social-preview.png",
+    type: "binary"
   },
   {
     path: "/src/app.min.js",

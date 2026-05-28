@@ -390,6 +390,8 @@ assert(
 
 const html = fs.readFileSync("index.html", "utf8");
 const appSource = fs.readFileSync("src/app.js", "utf8");
+const sitemap = fs.readFileSync("sitemap.xml", "utf8");
+const vercelConfig = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
 assert.equal(live.maxPayoffOptions, 8, "payoff offers are capped at eight for exhaustive ordering");
 assert.equal(live.optionCapacityValue("20000", 12900), 20000, "entered offer capacity can exceed eligible card debt");
 assert.equal(live.optionCapacityValue("", 12900), 12900, "empty offer capacity still defaults to eligible card debt");
@@ -405,8 +407,16 @@ assert(appSource.includes('url.hash = "q=" + encodeSharedState(state)'), "new sh
 assert(appSource.includes("sharedStateFromUrl"), "shared-state loading supports hash links and legacy query links");
 assert(!html.includes("share-privacy-note"), "share helper is not duplicated in a second static note");
 assert(html.includes('<title>Credit Card Payoff Calculator - Debt Avalanche &amp; Snowball</title>'), "SEO title stays concise");
-assert(html.includes('<meta property="og:image" content="https://cardpayoffcalculator.com/social-preview.svg">'), "social previews include a branded image");
+assert(html.includes('"@type": "WebApplication"'), "structured data describes the calculator app");
+assert(html.includes('<meta property="og:image" content="https://cardpayoffcalculator.com/social-preview.png">'), "social previews include a branded PNG image");
+assert(html.includes('<meta property="og:image:type" content="image/png">'), "social image metadata declares PNG type");
 assert(html.includes('<meta name="twitter:card" content="summary_large_image">'), "Twitter card uses the large image format");
+assert(!sitemap.includes("privacy.html"), "privacy page is not included in the SEO sitemap");
+assert(!JSON.stringify(vercelConfig.redirects).includes('"type":"query"'), "vercel redirects do not intercept legacy q share URLs");
+assert(
+  vercelConfig.redirects.some((redirect) => redirect.permanent === true && redirect.has && redirect.has.some((condition) => condition.type === "host" && condition.value === "www.cardpayoffcalculator.com")),
+  "www host canonicalization uses a permanent Vercel redirect"
+);
 assert(html.includes("comparison-section td::before"), "method comparison can collapse into labeled mobile rows");
 assert(html.includes("repeat(auto-fit"), "single payoff offer cards fill available space without an empty grid column");
 assert(html.includes("offer-allocation-table"), "offer allocation table has dedicated column sizing");

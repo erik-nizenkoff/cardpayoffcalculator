@@ -3,16 +3,15 @@
   "outputDirectory": "public",
   "redirects": [
     {
-      "source": "/",
+      "source": "/:path*",
       "has": [
         {
-          "type": "query",
-          "key": "q",
-          "value": "(?<state>.*)"
+          "type": "host",
+          "value": "www.cardpayoffcalculator.com"
         }
       ],
-      "destination": "/#q=:state",
-      "permanent": false
+      "destination": "https://cardpayoffcalculator.com/:path*",
+      "permanent": true
     }
   ],
   "headers": [
@@ -35,7 +34,7 @@
       ]
     },
     {
-      "source": "/social-preview.svg",
+      "source": "/social-preview.png",
       "headers": [
         {
           "key": "Cache-Control",
