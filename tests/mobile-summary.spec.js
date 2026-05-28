@@ -10,6 +10,7 @@ function sharedStateUrl(state) {
 }
 
 test("mobile sticky summary hides while editing and restores after focus leaves", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(sharedStateUrl({
     v: 1,
     method: "avalanche",
@@ -28,6 +29,15 @@ test("mobile sticky summary hides while editing and restores after focus leaves"
 
   const mobileSummary = page.locator("#mobileSummaryBar");
   await expect(page.locator(".hero-label", { hasText: "Debt-Free Date" })).toBeVisible();
+  await expect(mobileSummary).toBeHidden();
+
+  await page.locator("#calculatorForm").scrollIntoViewIfNeeded();
+  await expect(mobileSummary).toBeVisible();
+
+  await page.evaluate(() => document.querySelector("#copyLinkButton").click());
+  await expect(page.locator("#sharePrivacyDialog")).toHaveJSProperty("open", true);
+  await expect(mobileSummary).toBeHidden();
+  await page.locator("#shareCopyCancelButton").click();
   await expect(mobileSummary).toBeVisible();
 
   await page.getByRole("button", { name: "Expand card details" }).click();

@@ -132,6 +132,8 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
 
   await expect(page.locator("#monthPlan")).toBeVisible();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-panel/);
+  await expect(page.locator("#sampleButton")).toBeHidden();
+  await expect(page.locator("#planModeStatus")).toContainText("For privacy, the address bar no longer contains this plan");
   await expect.poll(() => page.locator("#targetDateOptions").evaluate((details) => details.open)).toBe(false);
   await expect.poll(() => page.locator("#payoffOptions").evaluate((details) => details.open)).toBe(false);
 });
@@ -223,8 +225,9 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   expect(toggleGap).toBeGreaterThanOrEqual(0);
   await page.locator("#toggleMonthPlanRows").click();
   await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
-  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show first 2 debts");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing all 4 debts.");
+  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Collapse to first 2 debts");
+  await expect(page.locator("#monthPlanIntro")).toContainText("All 4 first-month payments are shown.");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("All 4 first-month payments are shown.");
   await expect(page.locator("#monthPlan")).toContainText("$200 extra");
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveAttribute("data-label", "Extra Payment Target");

@@ -72,6 +72,7 @@
       var criticalWarningsEl = document.getElementById("criticalWarnings");
       var warningsEl = document.getElementById("warnings");
       var monthPlan = document.getElementById("monthPlan");
+      var monthPlanIntro = document.getElementById("monthPlanIntro");
       var monthPlanRows = document.getElementById("monthPlanRows");
       var toggleMonthPlanRows = document.getElementById("toggleMonthPlanRows");
       var monthPlanHint = document.getElementById("monthPlanHint");
@@ -137,7 +138,7 @@
         payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
-        criticalWarningsEl, warningsEl, monthPlan, monthPlanRows, toggleMonthPlanRows,
+        criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanRows, toggleMonthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
@@ -812,11 +813,12 @@
         if (isSharedPlanLoaded) {
           debtSectionTitle.textContent = "Shared plan loaded";
           debtSectionIntro.textContent = "Review the loaded plan, edit any debt details, or clear the form to start over.";
-          setPlanModeStatus("Shared plan loaded: " + count + " " + (count === 1 ? "debt" : "debts") + ".");
+          setPlanModeStatus("Shared plan loaded: " + count + " " + (count === 1 ? "debt" : "debts") + ". For privacy, the address bar no longer contains this plan. Use Copy share link to share it.");
         } else {
           debtSectionTitle.textContent = "Your debts";
           debtSectionIntro.textContent = "Start with your own debt details, or load an example to see how the calculator works.";
         }
+        setTimeout(updateMobileSummaryContext, 0);
       }
 
       function resetSharedPlanLoaded() {
@@ -832,6 +834,11 @@
         if (!planModeStatus) return;
         planModeStatus.textContent = message || "";
         planModeStatus.classList.toggle("hidden", !message);
+      }
+
+      function setModalOpenState(isOpen) {
+        document.body.classList.toggle("modal-open", Boolean(isOpen));
+        updateMobileSummaryContext();
       }
 
       function markRowUpdated(row) {
@@ -915,6 +922,7 @@
         clearFeedbackErrors();
         setFeedbackSentState(false);
         if (feedbackAttachInputs) feedbackAttachInputs.checked = false;
+        setModalOpenState(true);
         if (feedbackDialog.showModal) {
           feedbackDialog.showModal();
         } else {
@@ -933,6 +941,7 @@
         } else {
           feedbackDialog.removeAttribute("open");
         }
+        setModalOpenState(false);
       }
 
       function feedbackResultSnapshot(result) {
@@ -1120,6 +1129,7 @@
         sharePrivacyDetails.textContent = "This link includes " + debtCount + " " + (debtCount === 1 ? "debt" : "debts") + ", balances, APRs, payments, payoff settings, and debt nicknames.";
 
         function cleanup() {
+          setModalOpenState(false);
           shareCopyAnonymizedButton.onclick = null;
           shareCopyWithNamesButton.onclick = null;
           shareCopyCancelButton.onclick = null;
@@ -1143,6 +1153,7 @@
         };
 
         if (sharePrivacyDialog.showModal) {
+          setModalOpenState(true);
           sharePrivacyDialog.showModal();
           try {
             shareCopyAnonymizedButton.focus({ preventScroll: true });
@@ -1152,6 +1163,7 @@
           return;
         }
 
+        setModalOpenState(true);
         finish(!window.confirm("Share links include debt nicknames. Select OK to copy with names, or Cancel to copy an anonymized link."));
       }
 
@@ -1819,6 +1831,7 @@
           monthPlanRows.innerHTML = "";
           toggleMonthPlanRows.classList.add("hidden");
           if (monthPlanHint) monthPlanHint.textContent = "";
+          if (monthPlanIntro) monthPlanIntro.textContent = "Preview the first month's payments; show all debts to review every row.";
           return;
         }
 
@@ -1827,11 +1840,18 @@
         var isCollapsed = canCollapse && !showAllMonthPlan;
         monthPlan.classList.toggle("month-plan-collapsed", isCollapsed);
         toggleMonthPlanRows.classList.toggle("hidden", !canCollapse);
-        toggleMonthPlanRows.textContent = showAllMonthPlan ? "Show first 2 debts" : "Show all " + result.debtNames.length + " debts";
+        toggleMonthPlanRows.textContent = showAllMonthPlan ? "Collapse to first 2 debts" : "Show all " + result.debtNames.length + " debts";
+        if (monthPlanIntro) {
+          monthPlanIntro.textContent = canCollapse && !isCollapsed
+            ? "All " + result.debtNames.length + " first-month payments are shown."
+            : canCollapse
+            ? "Previewing the first 2 debts; show all debts to review every row."
+            : "All first-month payments are shown.";
+        }
         if (monthPlanHint) {
           monthPlanHint.textContent = isCollapsed
             ? "Showing 2 of " + result.debtNames.length + " debts."
-            : "Showing all " + result.debtNames.length + " debts.";
+            : "All " + result.debtNames.length + " first-month payments are shown.";
         }
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
           var payment = firstMonth.payments[index] || 0;
@@ -3200,9 +3220,29 @@
         setTimeout(syncInputFocusState, 0);
       }
 
+      function isMobileViewport() {
+        return Boolean(window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
+      }
+
+      function isModalOpen() {
+        return document.body.classList.contains("modal-open") || Boolean(document.querySelector("dialog[open]"));
+      }
+
+      function isResultHeroVisible() {
+        var hero = resultsPanel ? resultsPanel.querySelector(".result-hero") : null;
+        if (!hero) return false;
+        var rect = hero.getBoundingClientRect();
+        return rect.top < window.innerHeight * 0.88 && rect.bottom > 90;
+      }
+
       function updateMobileSummaryContext() {
-        if (!mobileSummaryBar || !mobileSummaryLink || mobileSummaryBar.classList.contains("hidden")) return;
-        if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
+        if (!mobileSummaryBar || !mobileSummaryLink) return;
+        if (!isMobileViewport()) return;
+        if (!lastResult || isSampleMode || isInputFocused() || isModalOpen() || isResultHeroVisible()) {
+          hideMobileSummary();
+          return;
+        }
+        mobileSummaryBar.classList.remove("hidden");
         var resultsRect = resultsPanel ? resultsPanel.getBoundingClientRect() : null;
         var optionsRect = payoffOptions ? payoffOptions.getBoundingClientRect() : null;
         var monthPlanRect = monthPlan ? monthPlan.getBoundingClientRect() : null;
@@ -3235,7 +3275,6 @@
         var paymentLabel = paymentMode() === "total" ? "Budget" : result.method === "minimum" ? "Payment" : "Starts";
         var paymentSuffix = paymentMode() === "extra" && result.method !== "minimum" ? "; may drop" : "";
         mobileMonthlyPayment.textContent = paymentLabel + " " + money(result.monthlyPayment) + "/mo" + paymentSuffix;
-        mobileSummaryBar.classList.remove("hidden");
         updateMobileSummaryContext();
       }
 
@@ -4294,6 +4333,12 @@
       bind(feedbackCancelSecondaryButton, "click", closeFeedbackDialog);
       bind(feedbackDialog, "click", function (event) {
         if (event.target === feedbackDialog) closeFeedbackDialog();
+      });
+      bind(feedbackDialog, "close", function () {
+        setModalOpenState(false);
+      });
+      bind(sharePrivacyDialog, "close", function () {
+        setModalOpenState(false);
       });
       syncPaymentModeTracker();
 
