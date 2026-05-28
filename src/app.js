@@ -3540,12 +3540,15 @@
 
       function scrollToSharedTarget(sharedState) {
         if (!sharedState || !sharedState.targetHash) return;
-        setTimeout(function () {
+        function scrollTargetIntoView() {
           try {
             var target = document.querySelector(sharedState.targetHash);
             if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
           } catch (error) {}
-        }, 0);
+        }
+        setTimeout(scrollTargetIntoView, 0);
+        setTimeout(scrollTargetIntoView, 250);
+        setTimeout(scrollTargetIntoView, 750);
       }
 
       function loadSharedState() {
