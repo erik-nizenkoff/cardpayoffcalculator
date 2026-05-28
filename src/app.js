@@ -23,6 +23,8 @@
       var sampleButton = document.getElementById("sampleButton");
       var clearAllButton = document.getElementById("clearAllButton");
       var loadExampleButton = document.getElementById("loadExampleButton");
+      var debtSectionTitle = document.getElementById("debtSectionTitle");
+      var debtSectionIntro = document.getElementById("debtSectionIntro");
       var formError = document.getElementById("formError");
       var methodInput = document.getElementById("method");
       var paymentModeInput = document.getElementById("paymentMode");
@@ -99,6 +101,12 @@
       var copySummaryButton = document.getElementById("copySummaryButton");
       var copySummaryStatus = document.getElementById("copySummaryStatus");
       var copyActionsHelp = document.getElementById("copyActionsHelp");
+      var sharePrivacyDialog = document.getElementById("sharePrivacyDialog");
+      var sharePrivacyDetails = document.getElementById("sharePrivacyDetails");
+      var shareCopyAnonymizedButton = document.getElementById("shareCopyAnonymizedButton");
+      var shareCopyWithNamesButton = document.getElementById("shareCopyWithNamesButton");
+      var shareCopyCancelButton = document.getElementById("shareCopyCancelButton");
+      var sharePrivacyCancelButton = document.getElementById("sharePrivacyCancelButton");
       var mobileSummaryBar = document.getElementById("mobileSummaryBar");
       var mobilePayoffDate = document.getElementById("mobilePayoffDate");
       var mobileSampleBadge = document.getElementById("mobileSampleBadge");
@@ -124,7 +132,7 @@
 
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
-        clearAllButton, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
+        clearAllButton, debtSectionTitle, debtSectionIntro, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
         targetInput, telemetryOptOut, telemetryOptOutStatus, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
@@ -133,6 +141,7 @@
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
+        sharePrivacyDialog, sharePrivacyDetails, shareCopyAnonymizedButton, shareCopyWithNamesButton, shareCopyCancelButton, sharePrivacyCancelButton,
         mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump,
         reportIssueButton, resultReportIssueButton, feedbackDialog, feedbackForm, feedbackType, feedbackMessage, feedbackEmail, feedbackAttachInputs, feedbackEditFields, feedbackSuccess, feedbackStatus, feedbackSubmitButton,
         feedbackCancelButton, feedbackCancelSecondaryButton
@@ -148,6 +157,7 @@
       var showAllSchedule = false;
       var showAllMonthPlan = false;
       var isSampleMode = false;
+      var isSharedPlanLoaded = false;
       var scheduleRenderGeneration = 0;
       var sharedPlanLoadError = "";
       var updateTimer = null;
@@ -796,6 +806,23 @@
         if (lastResult) drawCharts(lastResult);
       }
 
+      function setSharedPlanLoaded(count) {
+        isSharedPlanLoaded = count > 0;
+        document.body.classList.toggle("shared-plan-loaded", isSharedPlanLoaded);
+        if (isSharedPlanLoaded) {
+          debtSectionTitle.textContent = "Shared plan loaded";
+          debtSectionIntro.textContent = "Review the loaded plan, edit any debt details, or clear the form to start over.";
+          setPlanModeStatus("Shared plan loaded: " + count + " " + (count === 1 ? "debt" : "debts") + ".");
+        } else {
+          debtSectionTitle.textContent = "Your debts";
+          debtSectionIntro.textContent = "Start with your own debt details, or load an example to see how the calculator works.";
+        }
+      }
+
+      function resetSharedPlanLoaded() {
+        setSharedPlanLoaded(0);
+      }
+
       function confirmSampleData() {
         dismissFirstRunHint();
         setSampleMode(true);
@@ -1084,6 +1111,62 @@
         setCopySummaryStatus(fallbackCopyText(summary) ? "Copied" : "Copy failed");
       }
 
+      function chooseShareNameMode(cards, loans, callback) {
+        if (!shareLinkHasCustomNames(cards, loans)) {
+          callback(false);
+          return;
+        }
+        var debtCount = (cards || []).length + (loans || []).length;
+        sharePrivacyDetails.textContent = "This link includes " + debtCount + " " + (debtCount === 1 ? "debt" : "debts") + ", balances, APRs, payments, payoff settings, and debt nicknames.";
+
+        function cleanup() {
+          shareCopyAnonymizedButton.onclick = null;
+          shareCopyWithNamesButton.onclick = null;
+          shareCopyCancelButton.onclick = null;
+          sharePrivacyCancelButton.onclick = null;
+          sharePrivacyDialog.oncancel = null;
+        }
+
+        function finish(choice) {
+          cleanup();
+          if (sharePrivacyDialog.open) sharePrivacyDialog.close();
+          callback(choice);
+        }
+
+        shareCopyAnonymizedButton.onclick = function () { finish(true); };
+        shareCopyWithNamesButton.onclick = function () { finish(false); };
+        shareCopyCancelButton.onclick = function () { finish(null); };
+        sharePrivacyCancelButton.onclick = function () { finish(null); };
+        sharePrivacyDialog.oncancel = function (event) {
+          event.preventDefault();
+          finish(null);
+        };
+
+        if (sharePrivacyDialog.showModal) {
+          sharePrivacyDialog.showModal();
+          try {
+            shareCopyAnonymizedButton.focus({ preventScroll: true });
+          } catch (error) {
+            shareCopyAnonymizedButton.focus();
+          }
+          return;
+        }
+
+        finish(!window.confirm("Share links include debt nicknames. Select OK to copy with names, or Cancel to copy an anonymized link."));
+      }
+
+      function writeShareLink(shareUrl, copiedText) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareUrl).then(function () {
+            setCopySummaryStatus(copiedText);
+          }).catch(function () {
+            setCopySummaryStatus(fallbackCopyText(shareUrl) ? copiedText : "Copy failed");
+          });
+          return;
+        }
+        setCopySummaryStatus(fallbackCopyText(shareUrl) ? copiedText : "Copy failed");
+      }
+
       function copyShareLink() {
         if (isSampleMode) {
           showSampleActionRequired("Replace sample data before sharing a real payoff plan.");
@@ -1097,21 +1180,14 @@
         var cards = readCards();
         var loans = readLoans();
         var payment = currentPaymentInput(cards, loans, method);
-        var anonymizeNames = false;
-        if (shareLinkHasCustomNames(cards, loans)) {
-          anonymizeNames = !window.confirm("Share links include debt nicknames. Select OK to copy with names, or Cancel to copy an anonymized link.");
-        }
-        var shareUrl = buildSharedUrl(cards, loans, method, payment.extraPayment, payment.mode, payment.enteredAmount, { anonymizeNames: anonymizeNames });
-        var copiedText = anonymizeNames ? "Anonymized link copied" : "Link copied";
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(shareUrl).then(function () {
-            setCopySummaryStatus(copiedText);
-          }).catch(function () {
-            setCopySummaryStatus(fallbackCopyText(shareUrl) ? copiedText : "Copy failed");
-          });
-          return;
-        }
-        setCopySummaryStatus(fallbackCopyText(shareUrl) ? copiedText : "Copy failed");
+        chooseShareNameMode(cards, loans, function (anonymizeNames) {
+          if (anonymizeNames === null) {
+            setCopySummaryStatus("Share cancelled");
+            return;
+          }
+          var shareUrl = buildSharedUrl(cards, loans, method, payment.extraPayment, payment.mode, payment.enteredAmount, { anonymizeNames: anonymizeNames });
+          writeShareLink(shareUrl, anonymizeNames ? "Anonymized link copied" : "Link copied");
+        });
       }
 
       function validateCards(cards, loans) {
@@ -1760,12 +1836,13 @@
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
           var payment = firstMonth.payments[index] || 0;
           var extra = firstMonth.extraPayments ? roundCents(firstMonth.extraPayments[index] || 0) : 0;
+          var requiredPayment = Math.max(0, roundCents(payment - extra));
           var interest = firstMonth.interests[index] || 0;
           var principal = roundCents(payment - interest);
           var balance = firstMonth.balances[index] || 0;
-          var paymentHtml = moneyCents(payment) + (extra > EPSILON
-            ? '<span class="month-plan-extra-badge">+' + moneySmart(extra) + " extra target</span>"
-            : "");
+          var paymentHtml = extra > EPSILON
+            ? moneyCents(payment) + ' total <span class="month-plan-extra-badge">' + moneyCents(requiredPayment) + " minimum + " + moneySmart(extra) + " extra</span>"
+            : moneyCents(payment);
           return "<tr>" +
             '<td data-label="Debt">' + escapeHtml(name) + "</td>" +
             '<td data-label="Payment">' + paymentHtml + "</td>" +
@@ -1849,6 +1926,20 @@
       function resultPaidText(result) {
         if (!result) return "-";
         return result.capped ? money(result.totalPaid) + " paid before limit" : money(result.totalPaid);
+      }
+
+      function boostDeltaText(before, after) {
+        if (!before || !after) return "Extra payment increased by $50/mo.";
+        var pieces = ["+$50/mo updated the plan"];
+        if (!before.capped && !after.capped) {
+          var monthsSaved = before.months - after.months;
+          if (monthsSaved > 0) pieces.push("moves payoff up " + duration(monthsSaved, false));
+        }
+        if (!after.capped) {
+          var interestSaved = roundCents((before.totalInterest || 0) - (after.totalInterest || 0));
+          if (interestSaved > EPSILON) pieces.push("saves about " + money(interestSaved) + " interest");
+        }
+        return pieces.join(" and ") + ".";
       }
 
       function renderDecisionSnapshot(rows, selectedResult) {
@@ -2631,7 +2722,7 @@
         var extra = targetIndex >= 0 && row.extraPayments ? roundCents(row.extraPayments[targetIndex] || 0) : 0;
         var payment = targetIndex >= 0 && row.payments ? roundCents(row.payments[targetIndex] || 0) : 0;
         if (extra <= EPSILON || payment <= EPSILON) return row.target;
-        return row.target + " " + moneyCents(payment) + " (+" + moneySmart(extra) + " extra)";
+        return row.target + " " + moneyCents(payment) + " total (" + moneyCents(Math.max(0, roundCents(payment - extra))) + " minimum + " + moneySmart(extra) + " extra)";
       }
 
       function scheduleRowHtml(row) {
@@ -3397,7 +3488,7 @@
           }
           var params = new URLSearchParams(window.location.search);
           var queryValue = params.get("q");
-          return queryValue ? { encoded: queryValue, source: "query" } : null;
+          return queryValue ? { encoded: queryValue, source: "query", targetHash: validSharedTargetHash(hash) } : null;
         } catch (error) {
           return null;
         }
@@ -3501,10 +3592,12 @@
           }).slice(0, 60);
         }
         setSampleMode(false);
+        if (sharedState.targetHash === "#monthPlan") showAllMonthPlan = true;
         updateAddButton();
         collapseOptionalDetails({ all: true });
         update({ skipTracking: true, skipUrlUpdate: true });
         sharedPlanLoadError = "";
+        setSharedPlanLoaded(cards.length + loans.length);
         normalizeLoadedQueryShareUrl(sharedState);
         scrollToSharedTarget(sharedState);
         return true;
@@ -3735,7 +3828,7 @@
         monthlyPaymentEl.textContent = money(result.monthlyPayment);
         totalPaidLabel.textContent = resultPaidLabel(result);
         totalPaidEl.textContent = resultPaidText(result);
-        firstTargetEl.textContent = result.timeline[0] ? (result.timeline[0].target || "-") : "-";
+        firstTargetEl.textContent = result.timeline[0] ? scheduleTargetText(result.timeline[0]) : "-";
         renderCurrentPlanSummary(result, payment);
         renderPaymentModeSummary(payment, result);
         updateMobileSummary(result);
@@ -3772,6 +3865,7 @@
 
       function loadSample(options) {
         var settings = options || {};
+        resetSharedPlanLoaded();
         setSampleMode(true);
         setPlanModeStatus("");
         cardRows.innerHTML = "";
@@ -3821,6 +3915,7 @@
 
       function loadBlankEntry(options) {
         var settings = options || {};
+        resetSharedPlanLoaded();
         setSampleMode(false);
         setPlanModeStatus(settings.status || "");
         cardRows.innerHTML = "";
@@ -4097,11 +4192,13 @@
       bind(keepSampleButton, "click", confirmSampleData);
       bind(boostExtraButton, "click", function () {
         var wasSampleMode = isSampleMode;
+        var before = lastResult;
         var current = Number(extraInput.value || 0);
         extraInput.value = String(Math.max(0, (Number.isFinite(current) ? current : 0) + 50));
         if (methodInput.value === "minimum") methodInput.value = "avalanche";
         syncPaymentInputCopy();
         update();
+        setPlanModeStatus(boostDeltaText(before, lastResult));
         if (wasSampleMode) {
           setPlanModeStatus("Sample what-if: extra payment increased by $50. Enter your own cards for a real plan.");
         }

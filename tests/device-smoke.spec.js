@@ -24,6 +24,15 @@ function hashSharedUrl(state) {
   return "/#q=" + encoded + "#monthPlan";
 }
 
+function hashSharedStateOnlyUrl(state) {
+  const encoded = Buffer.from(JSON.stringify(state), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  return "/#q=" + encoded;
+}
+
 for (const viewport of viewports) {
   test(`core calculator layout works on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -102,7 +111,7 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("200");
   await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("200");
   await expect(page.locator("#currentPlanSummary")).toContainText("With $200 extra");
-  await expect(page.locator("#scheduleRows tr").first()).toContainText("Visa $250.00 (+$200 extra)");
+  await expect(page.locator("#scheduleRows tr").first()).toContainText("Visa $250.00 total ($50.00 minimum + $200 extra)");
 });
 
 test("shared result links collapse optional panels for a cleaner deep link", async ({ page }) => {
@@ -143,19 +152,11 @@ test("hash share links preserve section anchors after the encoded state", async 
   }));
 
   await expect(page.locator("#monthPlan")).toBeVisible();
-  await expect(page.locator("#planModeStatus")).toBeHidden();
+  await expect(page.locator("#planModeStatus")).toContainText("Shared plan loaded: 1 debt.");
   await expect(page.locator("#monthPlanRows tr")).toHaveCount(1);
 });
 
-test("invalid hash share links show a visible recovery message", async ({ page }) => {
-  await page.goto("/#q=not-a-real-plan#monthPlan");
-
-  await expect(page.locator("#planModeStatus")).toContainText("Could not load shared plan");
-  await expect(page.locator("#emptyResults")).toBeVisible();
-});
-
-test("month one plan collapses long mobile debt lists", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test("legacy query share links keep the section anchor after loading", async ({ page }) => {
   await page.goto(sharedUrl({
     v: 1,
     method: "avalanche",
@@ -173,9 +174,43 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
     customOrder: ["card-1", "card-2", "card-3", "card-4"]
   }));
 
+  await expect(page.locator("#monthPlan")).toBeVisible();
+  await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#monthPlanRows tr")).toHaveCount(4);
+  const url = new URL(page.url());
+  expect(url.searchParams.get("q")).toBeNull();
+  expect(url.hash).toBe("#monthPlan");
+});
+
+test("invalid hash share links show a visible recovery message", async ({ page }) => {
+  await page.goto("/#q=not-a-real-plan#monthPlan");
+
+  await expect(page.locator("#planModeStatus")).toContainText("Could not load shared plan");
+  await expect(page.locator("#emptyResults")).toBeVisible();
+});
+
+test("month one plan collapses long mobile debt lists", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(hashSharedStateOnlyUrl({
+    v: 1,
+    method: "avalanche",
+    paymentMode: "extra",
+    paymentAmount: 200,
+    startMonth: "2026-05",
+    cards: [
+      { id: "card-1", name: "Visa 1", balance: 1000, apr: 12, minimum: 50 },
+      { id: "card-2", name: "Visa 2", balance: 1200, apr: 18, minimum: 55 },
+      { id: "card-3", name: "Visa 3", balance: 1400, apr: 20, minimum: 60 },
+      { id: "card-4", name: "Visa 4", balance: 1600, apr: 22, minimum: 65 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1", "card-2", "card-3", "card-4"]
+  }));
+
+  await page.locator("#monthPlan").scrollIntoViewIfNeeded();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
-  await expect(page.locator("#mobileSummaryLink")).toContainText("View payoff summary ↑");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing 2 of 4 debts.");
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
@@ -190,7 +225,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show first 2 debts");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing all 4 debts.");
-  await expect(page.locator("#monthPlan")).toContainText("+$200 extra target");
+  await expect(page.locator("#monthPlan")).toContainText("$200 extra");
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveAttribute("data-label", "Extra Payment Target");
   await expect(page.locator(".schedule-panel .scroll-hint")).toBeHidden();

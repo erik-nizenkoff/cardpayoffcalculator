@@ -2107,6 +2107,24 @@
       flex-wrap: wrap;
     }
 
+    .share-data-summary {
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f7fbff;
+      padding: 12px;
+      color: #173d70;
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+
+    .share-data-summary p {
+      margin: 0;
+    }
+
+    .share-actions {
+      align-items: stretch;
+    }
+
     .mobile-summary-bar {
       display: none;
     }
@@ -2185,7 +2203,7 @@
 
       main {
         padding-top: 14px;
-        padding-bottom: 220px;
+        padding-bottom: 260px;
         overflow-x: hidden;
       }
 
@@ -2262,6 +2280,14 @@
 
       body.sample-mode #sampleButton {
         display: none;
+      }
+
+      body.shared-plan-loaded #sampleButton {
+        display: none;
+      }
+
+      body.shared-plan-loaded .results-panel {
+        order: -1;
       }
 
       .sample-data-banner {
