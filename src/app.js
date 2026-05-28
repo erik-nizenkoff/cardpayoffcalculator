@@ -1856,8 +1856,7 @@
           '<div class="month-plan-summary-item"><span>Debt-free date</span><strong>' + escapeHtml(payoffDate) + "</strong></div>" +
           '<div class="month-plan-summary-item"><span>' + escapeHtml(interestLabel) + "</span><strong>" + escapeHtml(resultInterestText(result)) + "</strong></div>" +
           '<div class="month-plan-summary-item"><span>Starting payment</span><strong>' + escapeHtml(money(result.monthlyPayment)) + "/mo</strong></div>" +
-          '<div class="month-plan-summary-item"><span>Strategy</span><strong>' + escapeHtml(methodLabel(result.method)) + "</strong></div>" +
-          '<a class="month-plan-summary-link" href="#resultsPanel">Back to payoff summary</a>';
+          '<div class="month-plan-summary-item"><span>Strategy</span><strong>' + escapeHtml(methodLabel(result.method)) + "</strong></div>";
         monthPlanSummary.classList.remove("hidden");
       }
 
@@ -3721,7 +3720,7 @@
           }).slice(0, 60);
         }
         setSampleMode(false);
-        if (sharedState.targetHash === "#monthPlan") showAllMonthPlan = true;
+        showAllMonthPlan = sharedState.targetHash === "#monthPlan" && !isMobileViewport();
         updateAddButton();
         collapseOptionalDetails({ all: true });
         update({ skipTracking: true, skipUrlUpdate: true });

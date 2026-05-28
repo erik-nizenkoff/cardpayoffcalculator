@@ -140,6 +140,7 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   await expect(page.locator("#monthPlanSummary")).toContainText("Debt-free date");
   await expect(page.locator("#monthPlanSummary")).toContainText("Starting payment");
   await expect(page.locator(".month-plan-back-link")).toBeVisible();
+  await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   await expect(page.locator("#sampleButton")).toBeHidden();
   await expect(page.locator("#planModeStatus")).toContainText("For privacy, the address bar no longer contains this plan");
   await expect.poll(() => page.locator("#targetDateOptions").evaluate((details) => details.open)).toBe(false);
@@ -167,6 +168,7 @@ test("hash share links preserve section anchors after the encoded state", async 
 });
 
 test("legacy query share links keep the section anchor after loading", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(sharedUrl({
     v: 1,
     method: "avalanche",
@@ -201,7 +203,7 @@ test("invalid hash share links show a visible recovery message", async ({ page }
 
 test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(hashSharedStateOnlyUrl({
+  await page.goto(sharedUrl({
     v: 1,
     method: "avalanche",
     paymentMode: "extra",
@@ -223,8 +225,11 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 debts");
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing 2 of 4 debts.");
+  await expect(page.locator(".month-plan-back-link")).toHaveText("Summary");
+  await expect(page.locator(".month-plan-chart-link")).toHaveText("Chart");
   await expect(page.locator(".month-plan-chart-link")).toBeVisible();
   await expect(page.locator("#monthPlanSummary")).toContainText("Avalanche");
+  await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
       .filter((row) => getComputedStyle(row).display !== "none");

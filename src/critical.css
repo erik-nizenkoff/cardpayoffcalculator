@@ -1363,7 +1363,7 @@
 
     .month-plan-summary {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
       align-items: stretch;
       margin: 12px 0 14px;
@@ -1395,28 +1395,6 @@
       font-size: .92rem;
       line-height: 1.2;
       overflow-wrap: anywhere;
-    }
-
-    .month-plan-summary-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--green);
-      border-radius: 7px;
-      background: #f1fbf5;
-      color: var(--green-dark);
-      padding: 8px 10px;
-      font-size: .78rem;
-      font-weight: 900;
-      text-align: center;
-      text-decoration: none;
-    }
-
-    .month-plan-summary-link:hover,
-    .month-plan-summary-link:focus-visible {
-      background: #e4f6ec;
-      outline: 0;
-      box-shadow: 0 0 0 3px rgba(32,141,84,.12);
     }
 
     .month-plan table {
@@ -1955,6 +1933,10 @@
     }
 
     .mobile-chart-summary {
+      display: none;
+    }
+
+    .chart-copy-mobile {
       display: none;
     }
 
@@ -2727,7 +2709,7 @@
 
       .month-plan-actions {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 8px;
         margin-top: 10px;
       }
@@ -2736,6 +2718,29 @@
       .month-plan-actions button {
         width: 100%;
         margin-top: 0;
+      }
+
+      .month-plan-actions .month-plan-toggle-top {
+        grid-column: 1 / -1;
+        justify-self: start;
+        width: auto;
+        min-height: auto;
+        border: 0;
+        background: transparent;
+        color: var(--navy);
+        padding: 2px 0;
+        box-shadow: none;
+        font-size: .82rem;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .month-plan-actions .month-plan-toggle-top:hover,
+      .month-plan-actions .month-plan-toggle-top:focus-visible {
+        background: transparent;
+        box-shadow: none;
+        color: var(--green-dark);
+        transform: none;
       }
 
       .month-plan-summary {
@@ -2747,11 +2752,6 @@
         border-right: 0;
         border-bottom: 1px solid #d6e8ff;
         padding: 0 0 8px;
-      }
-
-      .month-plan-summary-link {
-        grid-column: 1 / -1;
-        min-height: 40px;
       }
 
       .month-plan table,
@@ -2838,6 +2838,14 @@
 
       .visual-panel {
         scroll-margin-top: 12px;
+      }
+
+      .chart-copy-desktop {
+        display: none;
+      }
+
+      .chart-copy-mobile {
+        display: block;
       }
 
       .mobile-chart-summary {
