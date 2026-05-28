@@ -390,6 +390,7 @@ assert(
 
 const html = fs.readFileSync("index.html", "utf8");
 const appSource = fs.readFileSync("src/app.js", "utf8");
+const middlewareSource = fs.readFileSync("middleware.js", "utf8");
 const sitemap = fs.readFileSync("sitemap.xml", "utf8");
 const vercelConfig = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
 assert.equal(live.maxPayoffOptions, 8, "payoff offers are capped at eight for exhaustive ordering");
@@ -405,6 +406,8 @@ assert(html.includes("Compare new payoff options"), "offer modeling uses user-ce
 assert(appSource.includes("Share links include debt names/nicknames, balances, APRs, payments, and settings."), "share link helper explains shared names and inputs are included");
 assert(appSource.includes('url.hash = "q=" + encodeSharedState(state)'), "new share links keep calculator state out of crawlable query strings");
 assert(appSource.includes("sharedStateFromUrl"), "shared-state loading supports hash links and legacy query links");
+assert(middlewareSource.includes('url.hash = "q=" + sharedState'), "legacy q links are redirected to hash state at the edge");
+assert(middlewareSource.includes("Response.redirect(url, 308)"), "legacy q cleanup uses a permanent edge redirect");
 assert(!html.includes("share-privacy-note"), "share helper is not duplicated in a second static note");
 assert(html.includes('<title>Credit Card Payoff Calculator - Debt Avalanche &amp; Snowball</title>'), "SEO title stays concise");
 assert(html.includes('"@type": "WebApplication"'), "structured data describes the calculator app");
