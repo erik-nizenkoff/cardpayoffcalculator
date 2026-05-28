@@ -73,7 +73,9 @@
       var warningsEl = document.getElementById("warnings");
       var monthPlan = document.getElementById("monthPlan");
       var monthPlanIntro = document.getElementById("monthPlanIntro");
+      var monthPlanSummary = document.getElementById("monthPlanSummary");
       var monthPlanRows = document.getElementById("monthPlanRows");
+      var toggleMonthPlanRowsTop = document.getElementById("toggleMonthPlanRowsTop");
       var toggleMonthPlanRows = document.getElementById("toggleMonthPlanRows");
       var monthPlanHint = document.getElementById("monthPlanHint");
       var comparisonRows = document.getElementById("comparisonRows");
@@ -138,7 +140,7 @@
         payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
-        criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanRows, toggleMonthPlanRows,
+        criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanSummary, monthPlanRows, toggleMonthPlanRowsTop, toggleMonthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
@@ -682,6 +684,13 @@
         });
       }
 
+      function syncClearFormState() {
+        if (!clearAllButton) return;
+        var shouldShow = isSampleMode || isSharedPlanLoaded || hasEnteredCalculatorData();
+        clearAllButton.classList.toggle("hidden", !shouldShow);
+        clearAllButton.disabled = !shouldShow;
+      }
+
       function confirmReplacingInputs(message) {
         if (isSampleMode || !hasEnteredCalculatorData()) return true;
         return window.confirm(message);
@@ -736,7 +745,11 @@
         monthPlan.classList.add("hidden");
         monthPlan.classList.remove("month-plan-collapsed");
         monthPlanRows.innerHTML = "";
-        toggleMonthPlanRows.classList.add("hidden");
+        syncMonthPlanToggles(false, 0);
+        if (monthPlanSummary) {
+          monthPlanSummary.classList.add("hidden");
+          monthPlanSummary.innerHTML = "";
+        }
         scheduleRows.innerHTML = "";
         scheduleModeNote.classList.add("hidden");
         scheduleModeNote.textContent = "";
@@ -762,6 +775,7 @@
         setCopySummaryAvailable(false);
         hideMobileSummary();
         updateMobilePayoffJump(false);
+        syncClearFormState();
       }
 
       function updateMobilePayoffJump(show, label) {
@@ -804,6 +818,7 @@
           updateMobileSummary(lastResult);
           updateMobilePayoffJump(true, "View payoff plan");
         }
+        syncClearFormState();
         if (lastResult) drawCharts(lastResult);
       }
 
@@ -818,6 +833,7 @@
           debtSectionTitle.textContent = "Your debts";
           debtSectionIntro.textContent = "Start with your own debt details, or load an example to see how the calculator works.";
         }
+        syncClearFormState();
         setTimeout(updateMobileSummaryContext, 0);
       }
 
@@ -1823,13 +1839,39 @@
         fixedBudgetNudge.classList.remove("hidden");
       }
 
+      function syncMonthPlanToggles(canCollapse, count) {
+        var label = showAllMonthPlan ? "Collapse to first 2 debts" : "Show all " + count + " debts";
+        [toggleMonthPlanRowsTop, toggleMonthPlanRows].forEach(function (button) {
+          if (!button) return;
+          button.classList.toggle("hidden", !canCollapse);
+          button.textContent = label;
+        });
+      }
+
+      function renderMonthPlanSummary(result) {
+        if (!monthPlanSummary || !result) return;
+        var payoffDate = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
+        var interestLabel = result.capped ? "Modeled interest" : "Total interest";
+        monthPlanSummary.innerHTML =
+          '<div class="month-plan-summary-item"><span>Debt-free date</span><strong>' + escapeHtml(payoffDate) + "</strong></div>" +
+          '<div class="month-plan-summary-item"><span>' + escapeHtml(interestLabel) + "</span><strong>" + escapeHtml(resultInterestText(result)) + "</strong></div>" +
+          '<div class="month-plan-summary-item"><span>Starting payment</span><strong>' + escapeHtml(money(result.monthlyPayment)) + "/mo</strong></div>" +
+          '<div class="month-plan-summary-item"><span>Strategy</span><strong>' + escapeHtml(methodLabel(result.method)) + "</strong></div>" +
+          '<a class="month-plan-summary-link" href="#resultsPanel">Back to payoff summary</a>';
+        monthPlanSummary.classList.remove("hidden");
+      }
+
       function renderMonthPlan(result) {
         var firstMonth = result.timeline[0];
         if (!firstMonth || !result.debtNames.length) {
           monthPlan.classList.add("hidden");
           monthPlan.classList.remove("month-plan-collapsed");
           monthPlanRows.innerHTML = "";
-          toggleMonthPlanRows.classList.add("hidden");
+          syncMonthPlanToggles(false, 0);
+          if (monthPlanSummary) {
+            monthPlanSummary.classList.add("hidden");
+            monthPlanSummary.innerHTML = "";
+          }
           if (monthPlanHint) monthPlanHint.textContent = "";
           if (monthPlanIntro) monthPlanIntro.textContent = "Preview the first month's payments; show all debts to review every row.";
           return;
@@ -1839,8 +1881,8 @@
         var canCollapse = result.debtNames.length > 3;
         var isCollapsed = canCollapse && !showAllMonthPlan;
         monthPlan.classList.toggle("month-plan-collapsed", isCollapsed);
-        toggleMonthPlanRows.classList.toggle("hidden", !canCollapse);
-        toggleMonthPlanRows.textContent = showAllMonthPlan ? "Collapse to first 2 debts" : "Show all " + result.debtNames.length + " debts";
+        syncMonthPlanToggles(canCollapse, result.debtNames.length);
+        renderMonthPlanSummary(result);
         if (monthPlanIntro) {
           monthPlanIntro.textContent = canCollapse && !isCollapsed
             ? "All " + result.debtNames.length + " first-month payments are shown."
@@ -2862,6 +2904,7 @@
       var comboTooltip = document.getElementById("comboTooltip");
       var chartLegend = document.getElementById("chartLegend");
       var chartTakeaway = document.getElementById("chartTakeaway");
+      var mobileChartSummary = document.getElementById("mobileChartSummary");
 
       function clearCharts() {
         if (comboCanvas && comboCanvas.getContext) {
@@ -2875,6 +2918,10 @@
         if (chartTakeaway) {
           chartTakeaway.classList.add("hidden");
           chartTakeaway.textContent = "";
+        }
+        if (mobileChartSummary) {
+          mobileChartSummary.classList.add("hidden");
+          mobileChartSummary.innerHTML = "";
         }
       }
 
@@ -2947,6 +2994,7 @@
         if (!comboCanvas || !comboCanvas.getContext) return;
         if (!result || !result.timeline || result.timeline.length === 0) return;
         var currentWidth = comboCanvas.parentElement ? comboCanvas.parentElement.getBoundingClientRect().width : 0;
+        var mobileChart = isMobileViewport();
         var midIdx = Math.floor(result.timeline.length / 2);
         var midBal = result.timeline[midIdx] ? result.timeline[midIdx].endingBalance : 0;
         var sig = result.timeline.length + "|" + result.method + "|" + result.startingBalance + "|" +
@@ -2954,13 +3002,14 @@
           midBal + "|" +
           (result.timeline[result.timeline.length - 1] ? result.timeline[result.timeline.length - 1].endingBalance : "") + "|" +
           (isSampleMode ? "sample" : "real") + "|" +
+          (mobileChart ? "mobile" : "desktop") + "|" +
           startInput.value + "|" +
           currentWidth;
         if (sig === comboCanvas._lastSig) {
           return;
         }
         comboCanvas._lastSig = sig;
-        setCanvasSize(comboCanvas, 360);
+        setCanvasSize(comboCanvas, mobileChart ? 260 : 360);
         var dpr = window.devicePixelRatio;
         var ctx = comboCanvas.getContext("2d");
         var W = comboCanvas.width / dpr;
@@ -2975,7 +3024,7 @@
 
         if (!timeline || timeline.length === 0) { ctx.restore(); return; }
 
-        var pad = chartPad();
+        var pad = mobileChart ? { top: 20, right: 14, bottom: 52, left: 54 } : chartPad();
         var innerW = W - pad.left - pad.right;
         var innerH = H - pad.top - pad.bottom;
         var maxBalance = Math.max(result.startingBalance, timeline.reduce(function (max, row) {
@@ -3002,8 +3051,8 @@
         function yPos(v) { return pad.top + innerH - (v / Math.max(1, maxBalance)) * innerH; }
 
         // Y gridlines
-        var yStep = niceTickStep(maxBalance, 6);
-        ctx.font = "11px system-ui, sans-serif";
+        var yStep = niceTickStep(maxBalance, mobileChart ? 4 : 6);
+        ctx.font = (mobileChart ? "10px" : "11px") + " system-ui, sans-serif";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
         for (var yv = 0; yv <= maxBalance * 1.05; yv += yStep) {
@@ -3017,7 +3066,7 @@
         }
 
         // X gridlines + labels
-        var xStep = Math.max(1, niceTickStep(months, 7));
+        var xStep = Math.max(1, niceTickStep(months, mobileChart ? 3 : 7));
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         for (var mo = 0; mo <= months; mo += xStep) {
@@ -3055,16 +3104,18 @@
         var pointGap = innerW / Math.max(1, totalPoints - 1);
         var barWidth = Math.max(1, Math.min(18, pointGap * 0.72 * 0.85) - 2);
 
-        for (var i = 0; i < totalPoints; i++) {
-          var xp = xPos(i);
-          var barX = Math.max(pad.left, Math.min(W - pad.right - barWidth, xp - barWidth / 2));
-          for (var di = 0; di < numDebts; di++) {
-            var segment = series[di][i] || 0;
-            if (segment <= 0) continue;
-            var topY = yPos(stacks[i][di + 1]);
-            var bottomY = yPos(stacks[i][di]);
-            ctx.fillStyle = CHART_COLORS[di % CHART_COLORS.length];
-            roundedTopRect(ctx, barX, topY, barWidth, Math.max(1, bottomY - topY), Math.min(4, barWidth / 2));
+        if (!mobileChart) {
+          for (var i = 0; i < totalPoints; i++) {
+            var xp = xPos(i);
+            var barX = Math.max(pad.left, Math.min(W - pad.right - barWidth, xp - barWidth / 2));
+            for (var di = 0; di < numDebts; di++) {
+              var segment = series[di][i] || 0;
+              if (segment <= 0) continue;
+              var topY = yPos(stacks[i][di + 1]);
+              var bottomY = yPos(stacks[i][di]);
+              ctx.fillStyle = CHART_COLORS[di % CHART_COLORS.length];
+              roundedTopRect(ctx, barX, topY, barWidth, Math.max(1, bottomY - topY), Math.min(4, barWidth / 2));
+            }
           }
         }
 
@@ -3075,10 +3126,20 @@
           ctx.lineTo(xPos(i + 1), yPos(Math.max(0, row.endingBalance)));
         });
         ctx.strokeStyle = "#0f2444";
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = mobileChart ? 3 : 2.5;
         ctx.lineJoin = "round";
         ctx.setLineDash([]);
         ctx.stroke();
+        if (mobileChart) {
+          ctx.fillStyle = "#0f2444";
+          ctx.beginPath();
+          ctx.arc(xPos(0), yPos(result.startingBalance), 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          var finalBalance = timeline[timeline.length - 1] ? Math.max(0, timeline[timeline.length - 1].endingBalance) : 0;
+          ctx.beginPath();
+          ctx.arc(xPos(totalPoints - 1), yPos(finalBalance), 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         drawSampleChartWatermark(ctx, W, H, pad);
 
@@ -3086,11 +3147,12 @@
 
         // Legend
         if (chartLegend) {
-          chartLegend.innerHTML =
-            '<span class="legend-item"><span class="legend-swatch" style="background:#0f2444;height:3px;border-radius:2px"></span>Total Balance</span>' +
-            debtNames.map(function (name, di) {
-              return '<span class="legend-item"><span class="legend-swatch" style="background:' + CHART_COLORS[di % CHART_COLORS.length] + '"></span>' + escapeHtml(name) + '</span>';
-            }).join("");
+          chartLegend.innerHTML = mobileChart
+            ? '<span class="legend-item"><span class="legend-swatch" style="background:#0f2444;height:3px;border-radius:2px"></span>Total Balance</span><span class="legend-note">Debt-level balances are in the schedule below.</span>'
+            : '<span class="legend-item"><span class="legend-swatch" style="background:#0f2444;height:3px;border-radius:2px"></span>Total Balance</span>' +
+              debtNames.map(function (name, di) {
+                return '<span class="legend-item"><span class="legend-swatch" style="background:' + CHART_COLORS[di % CHART_COLORS.length] + '"></span>' + escapeHtml(name) + '</span>';
+              }).join("");
         }
 
         // Store for tooltip
@@ -3151,12 +3213,28 @@
       function drawCharts(result) {
         drawComboChart(result);
         renderChartTakeaway(result);
+        renderMobileChartSummary(result);
       }
 
       function renderChartTakeaway(result) {
         if (!chartTakeaway || !result || !result.timeline || !result.timeline.length) return;
         chartTakeaway.textContent = chartTakeawayText(result, startInput.value);
         chartTakeaway.classList.remove("hidden");
+      }
+
+      function renderMobileChartSummary(result) {
+        if (!mobileChartSummary || !result || !result.timeline || !result.timeline.length) return;
+        var firstPayoff = (result.summaries || []).filter(function (summary) {
+          return summary.payoffMonth !== null;
+        }).sort(function (a, b) {
+          return a.payoffMonth - b.payoffMonth;
+        })[0];
+        var payoffDate = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
+        mobileChartSummary.innerHTML =
+          '<div><span>Start</span><strong>' + escapeHtml(money(result.startingBalance)) + "</strong></div>" +
+          '<div><span>Payoff</span><strong>' + escapeHtml(payoffDate) + "</strong></div>" +
+          '<div><span>First payoff</span><strong>' + escapeHtml(firstPayoff ? firstPayoff.name : "None modeled") + "</strong></div>";
+        mobileChartSummary.classList.remove("hidden");
       }
 
       function chartTakeawayText(result, startMonth) {
@@ -3235,10 +3313,19 @@
         return rect.top < window.innerHeight * 0.88 && rect.bottom > 90;
       }
 
+      function isDetailedResultSectionVisible() {
+        return ["#monthPlan", "#balanceChart", ".compare-panel", ".schedule-panel"].some(function (selector) {
+          var section = document.querySelector(selector);
+          if (!section || section.classList.contains("hidden")) return false;
+          var rect = section.getBoundingClientRect();
+          return rect.top < window.innerHeight - 96 && rect.bottom > 120;
+        });
+      }
+
       function updateMobileSummaryContext() {
         if (!mobileSummaryBar || !mobileSummaryLink) return;
         if (!isMobileViewport()) return;
-        if (!lastResult || isSampleMode || isInputFocused() || isModalOpen() || isResultHeroVisible()) {
+        if (!lastResult || isSampleMode || isInputFocused() || isModalOpen() || isResultHeroVisible() || isDetailedResultSectionVisible()) {
           hideMobileSummary();
           return;
         }
@@ -3805,6 +3892,7 @@
         clearFieldErrors();
         var cards = readCards();
         var loans = readLoans();
+        syncClearFormState();
         var onlyZeroBalances = !cards.length && !loans.length && hasOnlyZeroBalanceEntries();
         var error = onlyZeroBalances ? "" : validateCards(cards, loans);
         if (!error && !onlyZeroBalances) error = validateLoans(loans);
@@ -4317,10 +4405,13 @@
         if (lastResult) renderSchedule(lastResult);
       });
 
-      bind(toggleMonthPlanRows, "click", function () {
+      function toggleMonthPlanVisibility() {
         showAllMonthPlan = !showAllMonthPlan;
         if (lastResult) renderMonthPlan(lastResult);
-      });
+      }
+
+      bind(toggleMonthPlanRowsTop, "click", toggleMonthPlanVisibility);
+      bind(toggleMonthPlanRows, "click", toggleMonthPlanVisibility);
 
       bind(printButton, "click", function () {
         prepareScheduleForPrint();

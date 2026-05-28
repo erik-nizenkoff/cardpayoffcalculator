@@ -52,6 +52,11 @@ test("mobile sticky summary hides while editing and restores after focus leaves"
   await expect(mobileSummary).toBeVisible();
   await expect(mobileSummary).toContainText("Feb 2034");
 
+  await page.locator("#balanceChart").scrollIntoViewIfNeeded();
+  await expect(page.locator("#mobileChartSummary")).toBeVisible();
+  await expect(page.locator("#chartLegend .legend-item")).toHaveCount(1);
+  await expect(mobileSummary).toBeHidden();
+
   const pageWidths = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
     scrollWidth: document.documentElement.scrollWidth

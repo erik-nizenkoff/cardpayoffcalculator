@@ -702,6 +702,32 @@
       display: none;
     }
 
+    .start-entry-link {
+      display: none;
+    }
+
+    .secondary-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid #b8c6d9;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--navy);
+      padding: 9px 14px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .secondary-link:hover,
+    .secondary-link:focus-visible {
+      background: #eef4fb;
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(32,141,84,.1);
+    }
+
     body.shared-plan-loaded #sampleButton,
     body.modal-open .mobile-summary-bar {
       display: none !important;
@@ -1315,6 +1341,84 @@
       border-top-color: var(--green);
     }
 
+    .month-plan-head {
+      align-items: center;
+    }
+
+    .month-plan-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 0 0 auto;
+    }
+
+    .month-plan-actions .secondary-link,
+    .month-plan-actions button {
+      min-height: 38px;
+      padding: 7px 10px;
+      font-size: .82rem;
+    }
+
+    .month-plan-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0 14px;
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f7fbff;
+      padding: 10px;
+    }
+
+    .month-plan-summary-item {
+      min-width: 0;
+      border-right: 1px solid #d6e8ff;
+      padding-right: 8px;
+    }
+
+    .month-plan-summary-item span {
+      display: block;
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 900;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+
+    .month-plan-summary-item strong {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink);
+      font-size: .92rem;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .month-plan-summary-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--green);
+      border-radius: 7px;
+      background: #f1fbf5;
+      color: var(--green-dark);
+      padding: 8px 10px;
+      font-size: .78rem;
+      font-weight: 900;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .month-plan-summary-link:hover,
+    .month-plan-summary-link:focus-visible {
+      background: #e4f6ec;
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(32,141,84,.12);
+    }
+
     .month-plan table {
       min-width: 0;
       font-size: .84rem;
@@ -1327,6 +1431,10 @@
 
     .month-plan-toggle {
       display: none;
+    }
+
+    .month-plan-toggle-top {
+      display: inline-flex;
     }
 
     .month-plan-extra-badge {
@@ -1846,6 +1954,10 @@
       line-height: 1.45;
     }
 
+    .mobile-chart-summary {
+      display: none;
+    }
+
     .chart-legend {
       display: flex;
       gap: 8px 14px;
@@ -1866,6 +1978,11 @@
       height: 10px;
       border-radius: 2px;
       flex: 0 0 auto;
+    }
+
+    .legend-note {
+      color: var(--muted);
+      font-weight: 700;
     }
 
     .best-row {
@@ -2203,11 +2320,27 @@
       }
 
       .site-header {
-        padding: 24px 0;
+        padding: 16px 0;
+      }
+
+      h1 {
+        margin-bottom: 7px;
+        font-size: 1.8rem;
+        line-height: 1.08;
+      }
+
+      .eyebrow {
+        margin-bottom: 5px;
+        font-size: .72rem;
+      }
+
+      .subtitle {
+        font-size: .92rem;
+        line-height: 1.42;
       }
 
       main {
-        padding-top: 14px;
+        padding-top: 10px;
         padding-bottom: 260px;
         overflow-x: hidden;
       }
@@ -2266,6 +2399,28 @@
       .section-head button,
       .schedule-head button {
         margin-top: 10px;
+      }
+
+      .start-entry-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 42px;
+        margin-top: 10px;
+        border: 1px solid var(--green);
+        border-radius: 7px;
+        background: var(--green);
+        color: #fff;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .start-entry-link:hover,
+      .start-entry-link:focus-visible {
+        background: var(--green-dark);
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(32,141,84,.18);
       }
 
       .mobile-payoff-jump {
@@ -2335,6 +2490,10 @@
       .table-scroll {
         overflow-x: auto;
         width: 100%;
+      }
+
+      .card-table-wrap {
+        scroll-margin-top: 12px;
       }
 
       .scroll-hint {
@@ -2555,7 +2714,7 @@
       }
 
       .month-plan {
-        padding-bottom: 88px;
+        padding-bottom: 18px;
       }
 
       .month-plan.month-plan-collapsed {
@@ -2564,6 +2723,35 @@
 
       .month-plan .table-scroll {
         overflow-x: visible;
+      }
+
+      .month-plan-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .month-plan-actions .secondary-link,
+      .month-plan-actions button {
+        width: 100%;
+        margin-top: 0;
+      }
+
+      .month-plan-summary {
+        grid-template-columns: 1fr 1fr;
+        margin-top: 10px;
+      }
+
+      .month-plan-summary-item {
+        border-right: 0;
+        border-bottom: 1px solid #d6e8ff;
+        padding: 0 0 8px;
+      }
+
+      .month-plan-summary-link {
+        grid-column: 1 / -1;
+        min-height: 40px;
       }
 
       .month-plan table,
@@ -2646,6 +2834,51 @@
       .option-summary .table-scroll,
       .schedule-panel .table-scroll {
         overflow-x: visible;
+      }
+
+      .visual-panel {
+        scroll-margin-top: 12px;
+      }
+
+      .mobile-chart-summary {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin: 8px 0 10px;
+      }
+
+      .mobile-chart-summary div {
+        border: 1px solid #d6e8ff;
+        border-radius: 7px;
+        background: #f7fbff;
+        padding: 8px 10px;
+      }
+
+      .mobile-chart-summary span {
+        display: block;
+        color: var(--muted);
+        font-size: .7rem;
+        font-weight: 900;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .mobile-chart-summary strong {
+        display: block;
+        margin-top: 3px;
+        color: var(--ink);
+        font-size: .96rem;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      .chart-canvas {
+        height: 260px;
+      }
+
+      .chart-legend {
+        display: grid;
+        gap: 6px;
       }
 
       .comparison-section table,

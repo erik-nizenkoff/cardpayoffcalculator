@@ -39,7 +39,11 @@ for (const viewport of viewports) {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { name: "Credit Card and Debt Payoff Calculator" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Clear form" })).toBeVisible();
+    await expect(page.locator("#clearAllButton")).toBeHidden();
+    await expect(page.getByRole("button", { name: "Load example" })).toBeVisible();
+    if (viewport.name === "phone") {
+      await expect(page.getByRole("link", { name: "Start entering debts" })).toBeVisible();
+    }
     await expect(page.getByRole("spinbutton", { name: "Card balance" })).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Payoff Strategy" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Payoff results" })).toBeVisible();
@@ -64,7 +68,7 @@ test("keyboard users can reach primary calculator actions", async ({ page }) => 
     }));
   }
 
-  expect(focusedLabels.join(" ")).toContain("Clear form");
+  expect(focusedLabels.join(" ")).toContain("Load example");
   expect(focusedLabels.join(" ")).toContain("Card balance");
   expect(focusedLabels.join(" ")).toContain("Payoff Strategy");
 });
@@ -82,6 +86,7 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await page.goto("/");
 
   await page.getByRole("textbox", { name: "Card name" }).fill("Visa");
+  await expect(page.getByRole("button", { name: "Clear form" })).toBeVisible();
   await page.getByRole("spinbutton", { name: "Visa balance" }).fill("1000");
   await page.getByRole("spinbutton", { name: "Visa APR" }).fill("12");
   await page.getByRole("spinbutton", { name: "Visa minimum payment" }).fill("50");
@@ -132,6 +137,9 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
 
   await expect(page.locator("#monthPlan")).toBeVisible();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-panel/);
+  await expect(page.locator("#monthPlanSummary")).toContainText("Debt-free date");
+  await expect(page.locator("#monthPlanSummary")).toContainText("Starting payment");
+  await expect(page.locator(".month-plan-back-link")).toBeVisible();
   await expect(page.locator("#sampleButton")).toBeHidden();
   await expect(page.locator("#planModeStatus")).toContainText("For privacy, the address bar no longer contains this plan");
   await expect.poll(() => page.locator("#targetDateOptions").evaluate((details) => details.open)).toBe(false);
@@ -212,8 +220,11 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
 
   await page.locator("#monthPlan").scrollIntoViewIfNeeded();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 debts");
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing 2 of 4 debts.");
+  await expect(page.locator(".month-plan-chart-link")).toBeVisible();
+  await expect(page.locator("#monthPlanSummary")).toContainText("Avalanche");
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
       .filter((row) => getComputedStyle(row).display !== "none");
@@ -225,6 +236,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   expect(toggleGap).toBeGreaterThanOrEqual(0);
   await page.locator("#toggleMonthPlanRows").click();
   await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Collapse to first 2 debts");
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Collapse to first 2 debts");
   await expect(page.locator("#monthPlanIntro")).toContainText("All 4 first-month payments are shown.");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("All 4 first-month payments are shown.");
