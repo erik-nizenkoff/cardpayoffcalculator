@@ -1281,9 +1281,9 @@
     }
 
     .month-plan-extra-badge {
-      display: inline-flex;
+      display: block;
       width: fit-content;
-      margin-left: 6px;
+      margin-top: 4px;
       border-radius: 999px;
       background: #f1fbf5;
       color: var(--green-dark);
@@ -2457,7 +2457,7 @@
       }
 
       .month-plan {
-        padding-bottom: 126px;
+        padding-bottom: 88px;
       }
 
       .month-plan .table-scroll {

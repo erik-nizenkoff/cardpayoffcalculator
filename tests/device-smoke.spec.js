@@ -138,6 +138,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
   await expect(page.locator("#mobileSummaryLink")).toContainText("View payoff summary ↑");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Show all debts to review the full month-one breakdown.");
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
       .filter((row) => getComputedStyle(row).display !== "none");
@@ -151,6 +152,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show first 2 debts");
   await expect(page.locator("#monthPlan")).toContainText("+$200 extra target");
+  await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
 });
 
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {
