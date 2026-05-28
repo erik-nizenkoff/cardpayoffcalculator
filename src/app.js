@@ -1741,15 +1741,19 @@
         var canCollapse = result.debtNames.length > 3;
         monthPlan.classList.toggle("month-plan-collapsed", canCollapse && !showAllMonthPlan);
         toggleMonthPlanRows.classList.toggle("hidden", !canCollapse);
-        toggleMonthPlanRows.textContent = showAllMonthPlan ? "Show first 3 debts" : "Show all " + result.debtNames.length + " debts";
+        toggleMonthPlanRows.textContent = showAllMonthPlan ? "Show first 2 debts" : "Show all " + result.debtNames.length + " debts";
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
           var payment = firstMonth.payments[index] || 0;
+          var extra = firstMonth.extraPayments ? roundCents(firstMonth.extraPayments[index] || 0) : 0;
           var interest = firstMonth.interests[index] || 0;
           var principal = roundCents(payment - interest);
           var balance = firstMonth.balances[index] || 0;
+          var paymentHtml = moneyCents(payment) + (extra > EPSILON
+            ? '<span class="month-plan-extra-badge">+' + moneySmart(extra) + " extra target</span>"
+            : "");
           return "<tr>" +
             '<td data-label="Debt">' + escapeHtml(name) + "</td>" +
-            '<td data-label="Payment">' + moneyCents(payment) + "</td>" +
+            '<td data-label="Payment">' + paymentHtml + "</td>" +
             '<td data-label="Interest">' + moneyCents(interest) + "</td>" +
             '<td data-label="Principal">' + moneyCents(Math.max(0, principal)) + "</td>" +
             '<td data-label="Balance after payment">' + moneyCents(balance) + "</td>" +

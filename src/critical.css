@@ -1280,6 +1280,20 @@
       display: none;
     }
 
+    .month-plan-extra-badge {
+      display: inline-flex;
+      width: fit-content;
+      margin-left: 6px;
+      border-radius: 999px;
+      background: #f1fbf5;
+      color: var(--green-dark);
+      padding: 3px 7px;
+      font-size: .72rem;
+      font-weight: 900;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
     .scroll-hint {
       display: none;
       margin: 6px 0 0;
@@ -2443,7 +2457,7 @@
       }
 
       .month-plan {
-        padding-bottom: 180px;
+        padding-bottom: 126px;
       }
 
       .month-plan .table-scroll {
@@ -2471,7 +2485,7 @@
         padding: 10px;
       }
 
-      .month-plan.month-plan-collapsed tr:nth-child(n+4) {
+      .month-plan.month-plan-collapsed tr:nth-child(n+3) {
         display: none;
       }
 
@@ -2505,15 +2519,25 @@
         text-transform: uppercase;
       }
 
+      .month-plan-extra-badge {
+        display: block;
+        width: fit-content;
+        margin: 4px 0 0 auto;
+        border-radius: 999px;
+        background: #f1fbf5;
+        color: var(--green-dark);
+        padding: 3px 7px;
+        font-size: .72rem;
+        font-weight: 900;
+        line-height: 1.2;
+        text-align: right;
+      }
+
       .month-plan-toggle {
         display: inline-flex;
         justify-content: center;
         width: 100%;
-        margin-top: 2px;
-        position: sticky;
-        bottom: 108px;
-        z-index: 3;
-        box-shadow: 0 8px 20px rgba(15, 36, 68, .12);
+        margin: 4px 0 0;
       }
 
       .comparison-section .table-scroll,
