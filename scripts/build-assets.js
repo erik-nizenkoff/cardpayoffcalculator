@@ -46,6 +46,7 @@ async function main() {
   fs.copyFileSync(path.join(root, "robots.txt"), path.join(publicDir, "robots.txt"));
   fs.copyFileSync(path.join(root, "sitemap.xml"), path.join(publicDir, "sitemap.xml"));
   fs.copyFileSync(path.join(root, "favicon.ico"), path.join(publicDir, "favicon.ico"));
+  fs.copyFileSync(path.join(root, "social-preview.svg"), path.join(publicDir, "social-preview.svg"));
   fs.copyFileSync(appMinPath, path.join(publicDir, "src", "app.min.js"));
 }
 

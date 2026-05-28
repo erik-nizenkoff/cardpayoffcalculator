@@ -9,6 +9,15 @@ function sharedStateUrl(state) {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
+  return "/#q=" + encoded;
+}
+
+function legacySharedStateUrl(state) {
+  const encoded = Buffer.from(JSON.stringify(state), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
   return "/?q=" + encoded;
 }
 
@@ -141,6 +150,29 @@ test("shared links preserve loan names when reopened", async ({ page }) => {
 
   await page.locator("#loanSection summary").click();
   await expect(page.getByRole("textbox", { name: "Auto Loan loan name" })).toHaveValue("Auto Loan");
+});
+
+test("legacy query shared links load and are removed from the visible URL", async ({ page }) => {
+  await page.goto(legacySharedStateUrl({
+    v: 1,
+    method: "avalanche",
+    extraPayment: 0,
+    paymentMode: "extra",
+    paymentAmount: 0,
+    startMonth: "2026-05",
+    targetMonth: "",
+    cards: [
+      { id: "card-1", name: "Visa", balance: 8500, apr: 22.99, minimum: 170 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: []
+  }));
+
+  await expect(page.locator(".hero-label", { hasText: "Debt-Free Date" })).toBeVisible();
+  const url = new URL(page.url());
+  expect(url.searchParams.get("q")).toBeNull();
+  expect(url.hash).toBe("");
 });
 
 test("valid calculator edits do not auto-write share state into the page URL", async ({ page }) => {

@@ -3319,7 +3319,8 @@
             optionScenarios: sharedOptionScenarios(),
             customOrder: customOrder.slice(0, 60)
           };
-          url.searchParams.set("q", encodeSharedState(state));
+          url.searchParams.delete("q");
+          url.hash = "q=" + encodeSharedState(state);
           return url.toString();
         } catch (error) {
           return String(window.location.href || "");
@@ -3331,21 +3332,35 @@
           if (!window.history || !window.history.replaceState || !window.URL) return;
           var url = new URL(window.location.href);
           url.searchParams.delete("q");
+          if (String(url.hash || "").indexOf("#q=") === 0) url.hash = "";
           window.history.replaceState(null, "", url.toString());
         } catch (error) {}
       }
 
-      function loadSharedState() {
-        var params;
+      function sharedStateFromUrl() {
         try {
-          params = new URLSearchParams(window.location.search);
+          var hash = String(window.location.hash || "");
+          if (hash.indexOf("#q=") === 0) {
+            return { encoded: hash.slice(3), source: "hash" };
+          }
+          var params = new URLSearchParams(window.location.search);
+          var queryValue = params.get("q");
+          return queryValue ? { encoded: queryValue, source: "query" } : null;
         } catch (error) {
-          return false;
+          return null;
         }
-        var encoded = params.get("q");
-        if (!encoded) return false;
+      }
 
-        var state = decodeSharedState(encoded);
+      function normalizeLoadedQueryShareUrl(sharedState) {
+        if (!sharedState || sharedState.source !== "query") return;
+        clearSharedUrlParam();
+      }
+
+      function loadSharedState() {
+        var sharedState = sharedStateFromUrl();
+        if (!sharedState || !sharedState.encoded) return false;
+
+        var state = decodeSharedState(sharedState.encoded);
         if (!state || state.v !== 1) {
           clearSharedUrlParam();
           return false;
@@ -3427,6 +3442,7 @@
         updateAddButton();
         collapseOptionalDetails({ all: true });
         update({ skipTracking: true, skipUrlUpdate: true });
+        normalizeLoadedQueryShareUrl(sharedState);
         return true;
       }
 
@@ -3763,6 +3779,17 @@
         if (!settings.keepUrl) clearSharedUrlParam();
         if (settings.focus) {
           setTimeout(function () { focusFirstCardField(settings.focusField || "name"); }, 0);
+        }
+      }
+
+      function hashTargetsDeferredContent() {
+        try {
+          var hash = String(window.location.hash || "");
+          if (!hash || hash.indexOf("#q=") === 0) return false;
+          var template = document.getElementById("deferredContentTemplate");
+          return Boolean(template && template.content.querySelector(hash));
+        } catch (error) {
+          return false;
         }
       }
 
@@ -4124,7 +4151,7 @@
       if (!loadSharedState()) {
         loadBlankEntry({ keepUrl: true });
       }
-      if (window.location.hash && document.getElementById("deferredContentTemplate") && document.getElementById("deferredContentTemplate").content.querySelector(window.location.hash)) {
+      if (hashTargetsDeferredContent()) {
         mountDeferredContent();
       } else {
         scheduleIdle(mountDeferredContent);

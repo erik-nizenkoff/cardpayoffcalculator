@@ -6,7 +6,7 @@ function sharedStateUrl(state) {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
-  return "/?q=" + encoded;
+  return "/#q=" + encoded;
 }
 
 test("mobile sticky summary hides while editing and restores after focus leaves", async ({ page }) => {

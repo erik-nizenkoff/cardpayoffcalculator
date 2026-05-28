@@ -9,7 +9,7 @@ const checks = [
   {
     path: "/",
     type: "text",
-    includes: "<title>Credit Card and Debt Payoff Calculator"
+    includes: "<title>Credit Card Payoff Calculator - Debt Avalanche &amp; Snowball</title>"
   },
   {
     path: "/privacy.html",
@@ -29,6 +29,11 @@ const checks = [
   {
     path: "/favicon.ico",
     type: "binary"
+  },
+  {
+    path: "/social-preview.svg",
+    type: "text",
+    includes: "<svg"
   },
   {
     path: "/src/app.min.js",

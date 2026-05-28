@@ -401,7 +401,12 @@ assert(html.includes("unused capacity is reported but not modeled as new borrowi
 assert(!html.includes("does not include new charges, fees"), "methodology does not say all fees are excluded when offer fees are modeled");
 assert(html.includes("Compare new payoff options"), "offer modeling uses user-centered section language");
 assert(appSource.includes("Share links include debt names/nicknames, balances, APRs, payments, and settings."), "share link helper explains shared names and inputs are included");
+assert(appSource.includes('url.hash = "q=" + encodeSharedState(state)'), "new share links keep calculator state out of crawlable query strings");
+assert(appSource.includes("sharedStateFromUrl"), "shared-state loading supports hash links and legacy query links");
 assert(!html.includes("share-privacy-note"), "share helper is not duplicated in a second static note");
+assert(html.includes('<title>Credit Card Payoff Calculator - Debt Avalanche &amp; Snowball</title>'), "SEO title stays concise");
+assert(html.includes('<meta property="og:image" content="https://cardpayoffcalculator.com/social-preview.svg">'), "social previews include a branded image");
+assert(html.includes('<meta name="twitter:card" content="summary_large_image">'), "Twitter card uses the large image format");
 assert(html.includes("comparison-section td::before"), "method comparison can collapse into labeled mobile rows");
 assert(html.includes("repeat(auto-fit"), "single payoff offer cards fill available space without an empty grid column");
 assert(html.includes("offer-allocation-table"), "offer allocation table has dedicated column sizing");
