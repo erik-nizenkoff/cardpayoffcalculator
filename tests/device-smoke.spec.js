@@ -74,7 +74,7 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await expect(page.locator("#comparisonSection th").nth(4)).toHaveText("Starting Payment");
   await expect(page.locator("#comparisonRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Starting payment");
   await expect(page.locator("#scheduleModeNote")).toContainText("total monthly payment can decline");
-  await expect(page.locator("#mobileMonthlyPayment")).toContainText("Starts $250/mo, then may drop");
+  await expect(page.locator("#mobileMonthlyPayment")).toContainText("Starts $250/mo; may drop");
   await expect(page.locator("#monthPlanRows tr").first().locator("td").nth(4)).toHaveAttribute("data-label", "Balance after payment");
   await expect(page.locator(".share-privacy-note")).toHaveCount(0);
 
@@ -138,7 +138,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
   await expect(page.locator("#mobileSummaryLink")).toContainText("View payoff summary ↑");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing the first 2 debts. Tap Show all 4 debts for the full month-one breakdown.");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing 2 of 4 debts.");
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
       .filter((row) => getComputedStyle(row).display !== "none");
@@ -151,7 +151,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await page.locator("#toggleMonthPlanRows").click();
   await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show first 2 debts");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing all 4 debts in the month-one breakdown.");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing all 4 debts.");
   await expect(page.locator("#monthPlan")).toContainText("+$200 extra target");
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
 });

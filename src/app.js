@@ -1747,8 +1747,8 @@
         toggleMonthPlanRows.textContent = showAllMonthPlan ? "Show first 2 debts" : "Show all " + result.debtNames.length + " debts";
         if (monthPlanHint) {
           monthPlanHint.textContent = isCollapsed
-            ? "Showing the first 2 debts. Tap Show all " + result.debtNames.length + " debts for the full month-one breakdown."
-            : "Showing all " + result.debtNames.length + " debts in the month-one breakdown.";
+            ? "Showing 2 of " + result.debtNames.length + " debts."
+            : "Showing all " + result.debtNames.length + " debts.";
         }
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
           var payment = firstMonth.payments[index] || 0;
@@ -3135,7 +3135,7 @@
         mobilePayoffDate.textContent = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
         mobileTotalInterest.textContent = result.capped ? "Still accruing after 50 years" : money(result.totalInterest) + " interest";
         var paymentLabel = paymentMode() === "total" ? "Budget" : result.method === "minimum" ? "Payment" : "Starts";
-        var paymentSuffix = paymentMode() === "extra" && result.method !== "minimum" ? ", then may drop" : "";
+        var paymentSuffix = paymentMode() === "extra" && result.method !== "minimum" ? "; may drop" : "";
         mobileMonthlyPayment.textContent = paymentLabel + " " + money(result.monthlyPayment) + "/mo" + paymentSuffix;
         mobileSummaryBar.classList.remove("hidden");
         updateMobileSummaryContext();
