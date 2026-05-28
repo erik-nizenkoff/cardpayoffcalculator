@@ -2443,7 +2443,7 @@
       }
 
       .month-plan {
-        padding-bottom: 145px;
+        padding-bottom: 180px;
       }
 
       .month-plan .table-scroll {
@@ -2510,6 +2510,10 @@
         justify-content: center;
         width: 100%;
         margin-top: 2px;
+        position: sticky;
+        bottom: 108px;
+        z-index: 3;
+        box-shadow: 0 8px 20px rgba(15, 36, 68, .12);
       }
 
       .comparison-section .table-scroll,

@@ -3095,9 +3095,15 @@
         if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
         var resultsRect = resultsPanel ? resultsPanel.getBoundingClientRect() : null;
         var optionsRect = payoffOptions ? payoffOptions.getBoundingClientRect() : null;
+        var monthPlanRect = monthPlan ? monthPlan.getBoundingClientRect() : null;
         if (payoffOptions && optionsRect && optionsRect.top < window.innerHeight * 0.72 && optionsRect.bottom > 90) {
           mobileSummaryLink.textContent = "Edit options ↓";
           mobileSummaryLink.setAttribute("href", "#payoffOptions");
+          return;
+        }
+        if (monthPlanRect && monthPlanRect.top < window.innerHeight * 0.72 && monthPlanRect.bottom > 120) {
+          mobileSummaryLink.textContent = "View payoff summary ↑";
+          mobileSummaryLink.setAttribute("href", "#resultsPanel");
           return;
         }
         if (resultsRect && resultsRect.top < 80 && resultsRect.bottom > 140) {

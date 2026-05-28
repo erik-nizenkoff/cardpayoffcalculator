@@ -137,6 +137,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
 
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
+  await expect(page.locator("#mobileSummaryLink")).toContainText("View payoff summary ↑");
   await page.locator("#toggleMonthPlanRows").click();
   await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show first 3 debts");
