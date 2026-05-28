@@ -2460,6 +2460,10 @@
         padding-bottom: 88px;
       }
 
+      .month-plan.month-plan-collapsed {
+        padding-bottom: 40px;
+      }
+
       .month-plan .table-scroll {
         overflow-x: visible;
       }

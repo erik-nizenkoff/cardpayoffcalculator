@@ -71,6 +71,7 @@
       var monthPlan = document.getElementById("monthPlan");
       var monthPlanRows = document.getElementById("monthPlanRows");
       var toggleMonthPlanRows = document.getElementById("toggleMonthPlanRows");
+      var monthPlanHint = document.getElementById("monthPlanHint");
       var comparisonRows = document.getElementById("comparisonRows");
       var comparisonSection = document.getElementById("comparisonSection");
       var decisionSnapshot = document.getElementById("decisionSnapshot");
@@ -1734,14 +1735,21 @@
           monthPlan.classList.remove("month-plan-collapsed");
           monthPlanRows.innerHTML = "";
           toggleMonthPlanRows.classList.add("hidden");
+          if (monthPlanHint) monthPlanHint.textContent = "";
           return;
         }
 
         monthPlan.classList.remove("hidden");
         var canCollapse = result.debtNames.length > 3;
-        monthPlan.classList.toggle("month-plan-collapsed", canCollapse && !showAllMonthPlan);
+        var isCollapsed = canCollapse && !showAllMonthPlan;
+        monthPlan.classList.toggle("month-plan-collapsed", isCollapsed);
         toggleMonthPlanRows.classList.toggle("hidden", !canCollapse);
         toggleMonthPlanRows.textContent = showAllMonthPlan ? "Show first 2 debts" : "Show all " + result.debtNames.length + " debts";
+        if (monthPlanHint) {
+          monthPlanHint.textContent = isCollapsed
+            ? "Showing the first 2 debts. Tap Show all " + result.debtNames.length + " debts for the full month-one breakdown."
+            : "Showing all " + result.debtNames.length + " debts in the month-one breakdown.";
+        }
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
           var payment = firstMonth.payments[index] || 0;
           var extra = firstMonth.extraPayments ? roundCents(firstMonth.extraPayments[index] || 0) : 0;
@@ -3127,7 +3135,8 @@
         mobilePayoffDate.textContent = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
         mobileTotalInterest.textContent = result.capped ? "Still accruing after 50 years" : money(result.totalInterest) + " interest";
         var paymentLabel = paymentMode() === "total" ? "Budget" : result.method === "minimum" ? "Payment" : "Starts";
-        mobileMonthlyPayment.textContent = paymentLabel + " " + money(result.monthlyPayment) + "/mo";
+        var paymentSuffix = paymentMode() === "extra" && result.method !== "minimum" ? ", may drop" : "";
+        mobileMonthlyPayment.textContent = paymentLabel + " " + money(result.monthlyPayment) + "/mo" + paymentSuffix;
         mobileSummaryBar.classList.remove("hidden");
         updateMobileSummaryContext();
       }
