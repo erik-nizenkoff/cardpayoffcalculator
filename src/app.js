@@ -86,6 +86,7 @@
       var scheduleRows = document.getElementById("scheduleRows");
       var scheduleNote = document.getElementById("scheduleNote");
       var scheduleModeNote = document.getElementById("scheduleModeNote");
+      var targetMonthJump = document.getElementById("targetMonthJump");
       var toggleSchedule = document.getElementById("toggleSchedule");
       var scheduleLoading = document.getElementById("scheduleLoading");
       var firstRunHint = document.getElementById("firstRunHint");
@@ -142,7 +143,7 @@
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanSummary, monthPlanFocus, monthPlanRows, toggleMonthPlanRowsTop, toggleMonthPlanRows,
-        comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, toggleSchedule,
+        comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, targetMonthJump, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
         sharePrivacyDialog, sharePrivacyDetails, shareCopyAnonymizedButton, shareCopyWithNamesButton, shareCopyCancelButton, sharePrivacyCancelButton,
@@ -754,6 +755,7 @@
         scheduleRows.innerHTML = "";
         scheduleModeNote.classList.add("hidden");
         scheduleModeNote.textContent = "";
+        targetMonthJump.classList.add("hidden");
         scheduleLoading.classList.add("hidden");
         methodRecommendation.classList.add("hidden");
         methodRecommendation.textContent = "";
@@ -2851,9 +2853,18 @@
         return row.target + " " + moneyCents(payment) + " total (" + moneyCents(Math.max(0, roundCents(payment - extra))) + " minimum + " + moneySmart(extra) + " extra)";
       }
 
-      function scheduleRowHtml(row) {
-        return "<tr>" +
-          "<td data-label=\"Month\">" + row.month + "</td>" +
+      function getTargetScheduleMonth(result) {
+        var targetMonths = monthsBetweenInclusive(startInput.value, targetInput.value);
+        if (!targetMonths || targetMonths <= 1 || !result || !result.timeline || targetMonths > result.timeline.length) return null;
+        return targetMonths;
+      }
+
+      function scheduleRowHtml(row, targetMonth) {
+        var isTargetMonth = Boolean(targetMonth && row.month === targetMonth);
+        var rowAttributes = isTargetMonth ? " class=\"schedule-target-row\" id=\"scheduleTargetMonth\"" : "";
+        var targetBadge = isTargetMonth ? " <span class=\"schedule-target-badge\">Target month</span>" : "";
+        return "<tr" + rowAttributes + ">" +
+          "<td data-label=\"Month\">" + row.month + targetBadge + "</td>" +
           "<td data-label=\"Date\">" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
           "<td data-label=\"Payment\">" + moneyCents(row.payment) + "</td>" +
           "<td data-label=\"Interest\">" + moneyCents(row.interest) + "</td>" +
@@ -2866,17 +2877,29 @@
       function renderSchedule(result) {
         var generation = ++scheduleRenderGeneration;
         var initialScheduleMonths = 12;
+        var targetMonth = getTargetScheduleMonth(result);
         var maxDisplayRows = showAllSchedule ? Math.min(result.timeline.length, 240) : Math.min(result.timeline.length, initialScheduleMonths);
         var rows = result.timeline.slice(0, maxDisplayRows);
+        if (!showAllSchedule && targetMonth && targetMonth > maxDisplayRows) {
+          rows.push(result.timeline[targetMonth - 1]);
+        }
+        var targetIsVisible = Boolean(targetMonth && rows.some(function (row) { return row.month === targetMonth; }));
+        targetMonthJump.classList.toggle("hidden", !targetIsVisible);
+        if (targetIsVisible) {
+          targetMonthJump.textContent = "Jump to target month (" + addMonths(startInput.value, targetMonth - 1) + ")";
+        }
 
         function renderRowsSynchronously(targetRows) {
-          scheduleRows.innerHTML = targetRows.map(scheduleRowHtml).join("");
+          scheduleRows.innerHTML = targetRows.map(function (row) { return scheduleRowHtml(row, targetMonth); }).join("");
           scheduleNote.textContent = scheduleStatus(targetRows.length);
           scheduleLoading.classList.add("hidden");
         }
 
         function scheduleStatus(count) {
-          var note = "Showing " + count + " of " + result.timeline.length + " months.";
+          var targetMonthDate = targetMonth ? addMonths(startInput.value, targetMonth - 1) : "";
+          var note = !showAllSchedule && targetMonth && targetMonth > initialScheduleMonths
+            ? "Showing first " + Math.min(initialScheduleMonths, result.timeline.length) + " months plus target month " + targetMonthDate + "."
+            : "Showing " + count + " of " + result.timeline.length + " months.";
           if (showAllSchedule && result.timeline.length > 240) {
             note += " Schedule capped at 20 years for display. Full payoff timeline shown in the results above.";
           }
@@ -2903,7 +2926,7 @@
         function renderBatch() {
           if (generation !== scheduleRenderGeneration) return;
           var nextRows = rows.slice(rendered, rendered + 100);
-          scheduleRows.insertAdjacentHTML("beforeend", nextRows.map(scheduleRowHtml).join(""));
+          scheduleRows.insertAdjacentHTML("beforeend", nextRows.map(function (row) { return scheduleRowHtml(row, targetMonth); }).join(""));
           rendered += nextRows.length;
           scheduleNote.textContent = scheduleStatus(rendered);
           if (rendered < rows.length) {
@@ -2943,7 +2966,8 @@
         scheduleRenderGeneration += 1;
         showAllSchedule = true;
         var rows = lastResult.timeline.slice();
-        scheduleRows.innerHTML = rows.map(scheduleRowHtml).join("");
+        var targetMonth = getTargetScheduleMonth(lastResult);
+        scheduleRows.innerHTML = rows.map(function (row) { return scheduleRowHtml(row, targetMonth); }).join("");
         scheduleNote.textContent = "Showing " + rows.length + " of " + lastResult.timeline.length + " months.";
         scheduleLoading.classList.add("hidden");
       }

@@ -1450,6 +1450,10 @@
       padding: 8px 6px;
     }
 
+    .month-plan.month-plan-collapsed #monthPlanRows tr:nth-child(n+3) {
+      display: none;
+    }
+
     .month-plan-toggle {
       display: none;
     }
@@ -2043,6 +2047,25 @@
       margin-bottom: 12px;
     }
 
+    .schedule-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-actions .secondary-link,
+    .schedule-actions button {
+      min-height: 38px;
+      padding: 7px 10px;
+      font-size: .82rem;
+    }
+
+    .schedule-target-jump {
+      white-space: nowrap;
+    }
+
     .schedule-note {
       color: var(--muted);
       font-size: .9rem;
@@ -2071,6 +2094,27 @@
 
     .schedule-table tbody tr:nth-child(even) {
       background: #fbfdff;
+    }
+
+    .schedule-table tbody tr.schedule-target-row {
+      background: #f1fbf5;
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    .schedule-target-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      margin-left: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      color: #fff;
+      padding: 3px 7px;
+      font-size: .68rem;
+      font-weight: 900;
+      line-height: 1.2;
+      white-space: nowrap;
+      vertical-align: middle;
     }
 
     .schedule-table td,
@@ -2447,6 +2491,16 @@
         margin-top: 10px;
       }
 
+      .schedule-actions {
+        justify-content: stretch;
+      }
+
+      .schedule-actions .secondary-link,
+      .schedule-actions button {
+        width: 100%;
+        margin-top: 0;
+      }
+
       .start-entry-link {
         display: inline-flex;
         align-items: center;
@@ -2485,6 +2539,11 @@
       }
 
       body.sample-mode #sampleButton {
+        display: none;
+      }
+
+      body.sample-mode .start-entry-link,
+      body.sample-mode #keepSampleButton {
         display: none;
       }
 
@@ -3030,6 +3089,11 @@
         line-height: 1.3;
       }
 
+      .schedule-target-badge {
+        display: flex;
+        margin: 6px 0 0;
+      }
+
       .intro-fields {
         display: grid;
         grid-template-columns: 1fr;
@@ -3098,6 +3162,7 @@
       .chart-tooltip,
       .calc-method-link,
       #toggleSchedule,
+      #targetMonthJump,
       #printButton,
       #copySummaryButton,
       #copyLinkButton,

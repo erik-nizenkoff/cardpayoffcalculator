@@ -73,6 +73,14 @@ test("keyboard users can reach primary calculator actions", async ({ page }) => 
   expect(focusedLabels.join(" ")).toContain("Payoff Strategy");
 });
 
+test("optional section toggles expose clear accessible labels", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator('summary[aria-label="Show or hide installment loan inputs"]')).toBeVisible();
+  await expect(page.locator('summary[aria-label="Show or hide target payoff month options"]')).toBeVisible();
+  await expect(page.locator('summary[aria-label="Show or hide payoff option comparison inputs"]')).toBeVisible();
+});
+
 test("tabbing from credit card APR moves to minimum payment", async ({ page }) => {
   await page.goto("/");
 
@@ -193,6 +201,14 @@ test("legacy query share links keep the section anchor after loading", async ({ 
   await expect(page.locator("#monthPlan")).toBeVisible();
   await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
   await expect(page.locator("#monthPlanRows tr")).toHaveCount(4);
+  await page.locator("#toggleMonthPlanRowsTop").click();
+  await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("2 payments hidden - show all 4 before paying");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments are hidden");
+  const visibleRows = await page.locator("#monthPlanRows tr").evaluateAll((rows) =>
+    rows.filter((row) => getComputedStyle(row).display !== "none").length
+  );
+  expect(visibleRows).toBe(2);
   const url = new URL(page.url());
   expect(url.searchParams.get("q")).toBeNull();
   expect(url.hash).toBe("#monthPlan");
@@ -260,6 +276,50 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveAttribute("data-label", "Extra Payment Target");
   await expect(page.locator(".schedule-panel .scroll-hint")).toBeHidden();
   await expect(page.locator("#scheduleRows tr").first()).toHaveCSS("display", "grid");
+});
+
+test("collapsed schedule includes and highlights target payoff month", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(sharedUrl({
+    v: 1,
+    method: "avalanche",
+    paymentMode: "extra",
+    paymentAmount: 50,
+    startMonth: "2026-05",
+    targetMonth: "2027-12",
+    cards: [
+      { id: "card-1", name: "Visa", balance: 10000, apr: 20, minimum: 200 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1"]
+  }));
+
+  await expect(page.locator("#scheduleRows tr")).toHaveCount(13);
+  await expect(page.locator("#scheduleNote")).toContainText("plus target month Dec 2027");
+  await expect(page.locator("#targetMonthJump")).toBeVisible();
+  await expect(page.locator("#targetMonthJump")).toContainText("Dec 2027");
+  await expect(page.locator("#scheduleTargetMonth")).toContainText("20");
+  await expect(page.locator("#scheduleTargetMonth")).toContainText("Dec 2027");
+  await expect(page.locator("#scheduleTargetMonth")).toContainText("Target month");
+
+  await page.locator("#toggleSchedule").click();
+  await expect(page.locator("#scheduleLoading")).toBeHidden();
+  await expect(page.locator("#scheduleTargetMonth")).toHaveCount(1);
+});
+
+test("mobile sample mode prioritizes the sample payoff plan action", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Load example" }).click();
+
+  await expect(page.locator("#mobilePayoffJump")).toBeVisible();
+  await expect(page.locator("#mobilePayoffJump")).toHaveText("View sample payoff plan");
+  await expect(page.locator("#startEntryButton")).toBeHidden();
+  await expect(page.locator("#sampleEnterCardsButton")).toBeVisible();
+  await expect(page.locator("#sampleEnterCardsButton")).toHaveClass(/secondary/);
+  await expect(page.locator("#keepSampleButton")).toBeHidden();
 });
 
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {
