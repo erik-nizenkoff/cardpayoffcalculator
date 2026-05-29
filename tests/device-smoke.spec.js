@@ -76,6 +76,13 @@ test("keyboard users can reach primary calculator actions", async ({ page }) => 
 test("optional section toggles expose clear accessible labels", async ({ page }) => {
   await page.goto("/");
 
+  await expect(page.getByLabel("Privacy option: Do not use my calculator inputs to improve this site")).toBeVisible();
+  const privacyBeforeDebtInputs = await page.evaluate(() => {
+    const privacy = document.querySelector(".privacy-disclosure");
+    const cardInputs = document.querySelector("#cardInputs");
+    return Boolean(privacy && cardInputs && (privacy.compareDocumentPosition(cardInputs) & Node.DOCUMENT_POSITION_FOLLOWING));
+  });
+  expect(privacyBeforeDebtInputs).toBe(true);
   await expect(page.locator('summary[aria-label="Show or hide installment loan inputs"]')).toBeVisible();
   await expect(page.locator('summary[aria-label="Show or hide target payoff month options"]')).toBeVisible();
   await expect(page.locator('summary[aria-label="Show or hide payoff option comparison inputs"]')).toBeVisible();
@@ -153,10 +160,18 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   await expect(page.locator(".month-plan-target-row")).toHaveCount(1);
   await expect(page.locator(".month-plan-back-link")).toBeVisible();
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
+  await expect(page.locator("#entryGuide")).toContainText("Loaded shared plan");
+  await expect(page.locator("#startEntryButton")).toHaveText("Review loaded debts");
   await expect(page.locator("#sampleButton")).toBeHidden();
   await expect(page.locator("#planModeStatus")).toContainText("For privacy, the address bar no longer contains this plan");
+  await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.id)).toBe("monthPlan");
   await expect.poll(() => page.locator("#targetDateOptions").evaluate((details) => details.open)).toBe(false);
   await expect.poll(() => page.locator("#payoffOptions").evaluate((details) => details.open)).toBe(false);
+
+  await page.reload();
+  await expect(page.locator("#monthPlan")).toBeVisible();
+  await expect(page.locator("#planModeStatus")).toContainText("Shared plan loaded: 1 debt.");
+  await expect(page.locator("#monthPlanRows tr")).toHaveCount(1);
 });
 
 test("hash share links preserve section anchors after the encoded state", async ({ page }) => {
@@ -203,8 +218,8 @@ test("legacy query share links keep the section anchor after loading", async ({ 
   await expect(page.locator("#monthPlanRows tr")).toHaveCount(4);
   await page.locator("#toggleMonthPlanRowsTop").click();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
-  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("2 payments hidden - show all 4 before paying");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments are hidden");
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 debts");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments hidden before paying");
   const visibleRows = await page.locator("#monthPlanRows tr").evaluateAll((rows) =>
     rows.filter((row) => getComputedStyle(row).display !== "none").length
   );
@@ -241,11 +256,13 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   }));
 
   await page.locator("#monthPlan").scrollIntoViewIfNeeded();
+  await expect(page.locator("#sharedPlanResultNotice")).toContainText("4 debts loaded from a link");
+  await expect(page.locator("#sharedPlanResultNotice")).toContainText("Review loaded debts");
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
-  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("2 payments hidden - show all 4 before paying");
-  await expect(page.locator("#toggleMonthPlanRows")).toContainText("2 payments hidden - show all 4 before paying");
-  await expect(page.locator("#monthPlanIntro")).toContainText("Use the show-all control before paying");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments are hidden");
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 debts");
+  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
+  await expect(page.locator("#monthPlanIntro")).toContainText("2 payments are hidden before paying");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments hidden before paying");
   await expect(page.locator(".month-plan-back-link")).toHaveText("Back to summary");
   await expect(page.locator(".month-plan-chart-link")).toHaveText("Jump to chart");
   await expect(page.locator(".month-plan-chart-link")).toBeVisible();
@@ -274,6 +291,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlan")).toContainText("$200 extra");
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveAttribute("data-label", "Extra Payment Target");
+  await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveCSS("white-space", "normal");
   await expect(page.locator(".schedule-panel .scroll-hint")).toBeHidden();
   await expect(page.locator("#scheduleRows tr").first()).toHaveCSS("display", "grid");
 });
@@ -305,7 +323,40 @@ test("collapsed schedule includes and highlights target payoff month", async ({ 
 
   await page.locator("#toggleSchedule").click();
   await expect(page.locator("#scheduleLoading")).toBeHidden();
+  await expect(page.locator("#toggleSchedule")).toContainText("Show first 12 months");
   await expect(page.locator("#scheduleTargetMonth")).toHaveCount(1);
+});
+
+test("schedule marks and compresses target changes on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(sharedUrl({
+    v: 1,
+    method: "avalanche",
+    paymentMode: "extra",
+    paymentAmount: 300,
+    startMonth: "2026-05",
+    cards: [
+      { id: "card-1", name: "High APR Card", balance: 700, apr: 29.99, minimum: 35 },
+      { id: "card-2", name: "Large Visa", balance: 10000, apr: 15.99, minimum: 200 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1", "card-2"]
+  }));
+
+  await page.locator("#schedulePanel").scrollIntoViewIfNeeded();
+  await expect(page.locator("#toggleSchedule")).toContainText("Show all");
+  await page.locator("#toggleSchedule").click();
+
+  await expect(page.locator(".schedule-target-change-row").first()).toBeVisible();
+  await expect(page.locator(".schedule-target-change-row").first()).toContainText("New target");
+  await expect(page.locator(".schedule-target-change-row").first()).toContainText("Target:");
+  await expect(page.locator(".schedule-target-name").first()).toContainText("Target:");
+  await expect(page.locator(".schedule-target-detail").first()).toContainText("total");
+  await expect(page.locator(".schedule-target-change-row").first().locator("td").nth(6)).toHaveAttribute("aria-label", /New target/);
+  await expect(page.locator("#scheduleJumpLinks")).toContainText("Target changes");
+  await expect(page.locator("#scheduleJumpLinks")).toContainText("First payoff");
+  await expect(page.locator("#scheduleJumpLinks")).toContainText("Final month");
 });
 
 test("mobile sample mode prioritizes the sample payoff plan action", async ({ page }) => {
@@ -320,6 +371,61 @@ test("mobile sample mode prioritizes the sample payoff plan action", async ({ pa
   await expect(page.locator("#sampleEnterCardsButton")).toBeVisible();
   await expect(page.locator("#sampleEnterCardsButton")).toHaveClass(/secondary/);
   await expect(page.locator("#keepSampleButton")).toBeHidden();
+});
+
+test("desktop sample mode removes redundant example and share CTAs", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Load example" }).click();
+
+  await expect(page.locator("#sampleButton")).toBeHidden();
+  await expect(page.locator("#sampleShareNote")).toBeHidden();
+  await expect(page.locator("#copyActionsHelp")).toContainText("Sample plan only");
+  await expect(page.locator("#resultEnterCardsButton")).toBeVisible();
+});
+
+test("try plus 50 action confirms the change and supports undo", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("textbox", { name: "Card name" }).fill("Visa");
+  await page.getByRole("spinbutton", { name: "Visa balance" }).fill("1000");
+  await page.getByRole("spinbutton", { name: "Visa APR" }).fill("12");
+  await page.getByRole("spinbutton", { name: "Visa minimum payment" }).fill("50");
+  await page.getByRole("spinbutton", { name: "Extra monthly payment" }).fill("200");
+  await expect(page.locator(".hero-label", { hasText: "Debt-Free Date" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Try +$50/mo" }).click();
+  await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("250");
+  await expect(page.locator("#boostExtraStatus")).toContainText("Extra payment is now $250/mo");
+  await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+  await expect(page.locator("#boostExtraButton")).toBeFocused();
+
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("200");
+  await expect(page.locator("#boostExtraStatus")).toContainText("reverted to $200/mo");
+});
+
+test("card row action labels include the debt name", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(sharedUrl({
+    v: 1,
+    method: "avalanche",
+    paymentMode: "extra",
+    paymentAmount: 200,
+    startMonth: "2026-05",
+    cards: [
+      { id: "card-1", name: "Citi Costco", balance: 22096, apr: 24.74, minimum: 677 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1"]
+  }));
+
+  await expect(page.getByRole("button", { name: "Add promo APR for Citi Costco" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove Citi Costco" })).toBeVisible();
+  await page.getByRole("button", { name: "Add promo APR for Citi Costco" }).click();
+  await expect(page.getByRole("button", { name: "Hide promo APR for Citi Costco" })).toBeVisible();
 });
 
 test("tabbing from final credit card minimum adds a card row", async ({ page }) => {

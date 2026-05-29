@@ -13,6 +13,7 @@
       var PAYOFF_OPTION_TELEMETRY_ENABLED = true;
       var DEFAULT_EMPTY_MESSAGE = "Enter at least one card or loan with a balance, rate, and payment to see live results.";
       var ZERO_BALANCE_MESSAGE = "All entered balances are $0. You do not have any active debt to model.";
+      var SHARED_PLAN_STORAGE_KEY = "cpoc_shared_plan_restore";
 
       var cardRows = document.getElementById("cardRows");
       // ── DOM refs ──────────────────────────────────────────────────────────
@@ -25,6 +26,8 @@
       var loadExampleButton = document.getElementById("loadExampleButton");
       var debtSectionTitle = document.getElementById("debtSectionTitle");
       var debtSectionIntro = document.getElementById("debtSectionIntro");
+      var entryGuide = document.getElementById("entryGuide");
+      var startEntryButton = document.getElementById("startEntryButton");
       var formError = document.getElementById("formError");
       var methodInput = document.getElementById("method");
       var paymentModeInput = document.getElementById("paymentMode");
@@ -38,6 +41,7 @@
       var resultsPanel = document.getElementById("resultsPanel");
       var emptyResults = document.getElementById("emptyResults");
       var resultsContent = document.getElementById("resultsContent");
+      var sharedPlanResultNotice = document.getElementById("sharedPlanResultNotice");
       var sampleResultBadge = document.getElementById("sampleResultBadge");
       var sampleResultActions = document.getElementById("sampleResultActions");
       var sampleHeroBadge = document.getElementById("sampleHeroBadge");
@@ -88,6 +92,7 @@
       var scheduleModeNote = document.getElementById("scheduleModeNote");
       var targetMonthJump = document.getElementById("targetMonthJump");
       var toggleSchedule = document.getElementById("toggleSchedule");
+      var scheduleJumpLinks = document.getElementById("scheduleJumpLinks");
       var scheduleLoading = document.getElementById("scheduleLoading");
       var firstRunHint = document.getElementById("firstRunHint");
       var sampleDataBanner = document.getElementById("sampleDataBanner");
@@ -98,6 +103,7 @@
       var keepSampleButton = document.getElementById("keepSampleButton");
       var dismissHint = document.getElementById("dismissHint");
       var boostExtraButton = document.getElementById("boostExtraButton");
+      var boostExtraStatus = document.getElementById("boostExtraStatus");
       var methodDescription = document.getElementById("methodDescription");
       var customOrderPanel = document.getElementById("customOrderPanel");
       var customOrderList = document.getElementById("customOrderList");
@@ -137,14 +143,14 @@
 
       var requiredElements = [
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
-        clearAllButton, debtSectionTitle, debtSectionIntro, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
-        targetInput, telemetryOptOut, telemetryOptOutStatus, resultsPanel, emptyResults, resultsContent, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
+        clearAllButton, debtSectionTitle, debtSectionIntro, entryGuide, startEntryButton, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
+        targetInput, telemetryOptOut, telemetryOptOutStatus, resultsPanel, emptyResults, resultsContent, sharedPlanResultNotice, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
         payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
         criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanSummary, monthPlanFocus, monthPlanRows, toggleMonthPlanRowsTop, toggleMonthPlanRows,
-        comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, targetMonthJump, toggleSchedule,
-        scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
+        comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, targetMonthJump, toggleSchedule, scheduleJumpLinks,
+        scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, boostExtraStatus, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
         sharePrivacyDialog, sharePrivacyDetails, shareCopyAnonymizedButton, shareCopyWithNamesButton, shareCopyCancelButton, sharePrivacyCancelButton,
         mobileSummaryBar, mobilePayoffDate, mobileSampleBadge, mobileTotalInterest, mobileMonthlyPayment, mobileSummaryLink, mobilePayoffJump,
@@ -518,6 +524,16 @@
         setFieldLabel(row, "minimum", name + " minimum payment");
         setFieldLabel(row, "introApr", name + " intro APR");
         setFieldLabel(row, "introMonths", name + " intro promotional months");
+        var introButton = row.querySelector("button[data-action='toggle-intro']");
+        if (introButton) {
+          var introExpanded = introButton.getAttribute("aria-expanded") === "true";
+          introButton.setAttribute("aria-label", (introExpanded ? "Hide promo APR for " : "Add promo APR for ") + name);
+        }
+        var removeButton = row.querySelector("button[data-action='remove']");
+        if (removeButton) {
+          removeButton.setAttribute("aria-label", "Remove " + name);
+          removeButton.setAttribute("title", "Remove " + name);
+        }
       }
 
       function addCardRow(card, options) {
@@ -756,7 +772,12 @@
         scheduleModeNote.classList.add("hidden");
         scheduleModeNote.textContent = "";
         targetMonthJump.classList.add("hidden");
+        if (scheduleJumpLinks) {
+          scheduleJumpLinks.classList.add("hidden");
+          scheduleJumpLinks.innerHTML = "";
+        }
         scheduleLoading.classList.add("hidden");
+        clearBoostExtraStatus();
         methodRecommendation.classList.add("hidden");
         methodRecommendation.textContent = "";
         if (currentPlanSummary) {
@@ -805,11 +826,13 @@
       function setSampleMode(enabled) {
         isSampleMode = Boolean(enabled);
         document.body.classList.toggle("sample-mode", isSampleMode);
-        [sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, mobileSampleBadge].forEach(function (element) {
+        [sampleResultBadge, sampleResultActions, sampleHeroBadge, mobileSampleBadge].forEach(function (element) {
           if (!element) return;
           element.classList.toggle("hidden", !isSampleMode);
         });
+        if (sampleShareNote) sampleShareNote.classList.add("hidden");
         if (sampleChartBadge) sampleChartBadge.classList.add("hidden");
+        sampleButton.textContent = isSampleMode ? "Reset example" : "Load example";
         if (copyActionsHelp && isSampleMode) {
           copyActionsHelp.textContent = "Sample plan only. Replace sample data before sharing a real payoff plan.";
         }
@@ -830,17 +853,24 @@
         document.body.classList.toggle("shared-plan-loaded", isSharedPlanLoaded);
         if (isSharedPlanLoaded) {
           debtSectionTitle.textContent = "Shared plan loaded";
-          debtSectionIntro.textContent = "Review the loaded plan, edit any debt details, or clear the form to start over.";
+          debtSectionIntro.textContent = "Review these " + count + " loaded " + (count === 1 ? "debt" : "debts") + ", edit any details, or jump to the payoff plan.";
+          entryGuide.textContent = "Loaded shared plan: confirm balances, APRs, and minimum payments before using the results.";
+          startEntryButton.textContent = "Review loaded debts";
+          setSharedPlanResultNotice(count);
           setPlanModeStatus("Shared plan loaded: " + count + " " + (count === 1 ? "debt" : "debts") + ". For privacy, the address bar no longer contains this plan. Use Copy share link to share it.");
         } else {
           debtSectionTitle.textContent = "Your debts";
           debtSectionIntro.textContent = "Start with your own debt details, or load an example to see how the calculator works.";
+          entryGuide.textContent = "To get your first answer, enter three numbers per card: balance, APR, and minimum payment.";
+          startEntryButton.textContent = "Start entering debts";
+          setSharedPlanResultNotice(0);
         }
         syncClearFormState();
         setTimeout(updateMobileSummaryContext, 0);
       }
 
       function resetSharedPlanLoaded() {
+        clearPersistedSharedPlan();
         setSharedPlanLoaded(0);
       }
 
@@ -853,6 +883,24 @@
         if (!planModeStatus) return;
         planModeStatus.textContent = message || "";
         planModeStatus.classList.toggle("hidden", !message);
+      }
+
+      function setSharedPlanResultNotice(count) {
+        if (!sharedPlanResultNotice) return;
+        if (!count) {
+          sharedPlanResultNotice.classList.add("hidden");
+          sharedPlanResultNotice.innerHTML = "";
+          return;
+        }
+        var debtText = count + " " + (count === 1 ? "debt" : "debts");
+        sharedPlanResultNotice.innerHTML =
+          "<strong>" + debtText + " loaded from a link.</strong>" +
+          " <p>Confirm balances, APRs, and minimum payments before relying on this payoff date.</p> " +
+          '<div class="shared-plan-result-actions">' +
+          '<a class="secondary-link" href="#cardInputs">Review loaded debts</a> ' +
+          '<a class="secondary-link" href="#monthPlan">Continue to payment plan</a>' +
+          "</div>";
+        sharedPlanResultNotice.classList.remove("hidden");
       }
 
       function setModalOpenState(isOpen) {
@@ -1844,11 +1892,14 @@
 
       function syncMonthPlanToggles(canCollapse, count) {
         var hiddenCount = Math.max(0, count - 2);
-        var label = showAllMonthPlan ? "Collapse to first 2 debts" : hiddenCount + " payments hidden - show all " + count + " before paying";
+        var helper = hiddenCount + " payments hidden before paying.";
+        var label = showAllMonthPlan ? "Collapse to first 2 debts" : "Show all " + count + " debts";
         [toggleMonthPlanRowsTop, toggleMonthPlanRows].forEach(function (button) {
           if (!button) return;
           button.classList.toggle("hidden", !canCollapse);
           button.textContent = label;
+          button.title = showAllMonthPlan ? "" : helper;
+          button.setAttribute("aria-label", showAllMonthPlan ? label : label + ". " + helper);
         });
       }
 
@@ -1950,12 +2001,12 @@
           monthPlanIntro.textContent = canCollapse && !isCollapsed
             ? "All " + result.debtNames.length + " first-month payments are shown."
             : canCollapse
-            ? "Previewing the first 2 debts. Use the show-all control before paying to review every row."
+            ? "Previewing the first 2 debts. " + (result.debtNames.length - 2) + " payments are hidden before paying."
             : "All first-month payments are shown.";
         }
         if (monthPlanHint) {
           monthPlanHint.textContent = isCollapsed
-            ? "Showing 2 of " + result.debtNames.length + " debts; " + (result.debtNames.length - 2) + " payments are hidden."
+            ? (result.debtNames.length - 2) + " payments hidden before paying. Show all " + result.debtNames.length + " debts to review the full month-one breakdown."
             : "All " + result.debtNames.length + " first-month payments are shown.";
         }
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
@@ -2068,6 +2119,32 @@
           if (interestSaved > EPSILON) pieces.push("saves about " + money(interestSaved) + " interest");
         }
         return pieces.join(" and ") + ".";
+      }
+
+      function clearBoostExtraStatus() {
+        boostExtraStatus.classList.add("hidden");
+        boostExtraStatus.innerHTML = "";
+        delete boostExtraStatus.dataset.previousValue;
+        delete boostExtraStatus.dataset.previousMethod;
+      }
+
+      function setBoostExtraStatus(message, previousValue, previousMethod) {
+        if (!message) {
+          clearBoostExtraStatus();
+          return;
+        }
+        var undo = previousValue != null
+          ? ' <button type="button" class="text-button quick-action-undo" data-action="undo-boost-extra">Undo</button>'
+          : "";
+        boostExtraStatus.innerHTML = escapeHtml(message) + undo;
+        boostExtraStatus.classList.remove("hidden");
+        if (previousValue != null) {
+          boostExtraStatus.dataset.previousValue = String(previousValue);
+          boostExtraStatus.dataset.previousMethod = previousMethod || methodInput.value;
+        } else {
+          delete boostExtraStatus.dataset.previousValue;
+          delete boostExtraStatus.dataset.previousMethod;
+        }
       }
 
       function renderDecisionSnapshot(rows, selectedResult) {
@@ -2845,12 +2922,89 @@
       }
 
       function scheduleTargetText(row) {
-        if (!row || !row.target) return "-";
+        var parts = scheduleTargetParts(row);
+        if (!parts) return "-";
+        if (parts.extra <= EPSILON || parts.payment <= EPSILON) return parts.name;
+        return parts.name + " " + moneyCents(parts.payment) + " total (" + moneyCents(parts.minimum) + " minimum + " + moneySmart(parts.extra) + " extra)";
+      }
+
+      function scheduleTargetParts(row) {
+        if (!row || !row.target) return null;
         var targetIndex = Number.isInteger(row.targetIndex) ? row.targetIndex : row.debtNames ? row.debtNames.indexOf(row.target) : -1;
         var extra = targetIndex >= 0 && row.extraPayments ? roundCents(row.extraPayments[targetIndex] || 0) : 0;
         var payment = targetIndex >= 0 && row.payments ? roundCents(row.payments[targetIndex] || 0) : 0;
-        if (extra <= EPSILON || payment <= EPSILON) return row.target;
-        return row.target + " " + moneyCents(payment) + " total (" + moneyCents(Math.max(0, roundCents(payment - extra))) + " minimum + " + moneySmart(extra) + " extra)";
+        return {
+          name: row.target,
+          extra: extra,
+          payment: payment,
+          minimum: Math.max(0, roundCents(payment - extra))
+        };
+      }
+
+      function scheduleTargetHtml(row, targetChanged) {
+        var parts = scheduleTargetParts(row);
+        if (!parts) return "-";
+        var changeBadge = targetChanged ? '<span class="schedule-target-change-badge">New target</span> ' : "";
+        if (parts.extra <= EPSILON || parts.payment <= EPSILON) {
+          return changeBadge + '<span class="schedule-target-name">Target: ' + escapeHtml(parts.name) + '</span>';
+        }
+        return changeBadge +
+          '<span class="schedule-target-name">Target: ' + escapeHtml(parts.name) + '</span> ' +
+          '<span class="schedule-target-detail">' + moneyCents(parts.payment) + ' total (' + moneyCents(parts.minimum) + ' minimum + ' + moneySmart(parts.extra) + ' extra)</span>';
+      }
+
+      function scheduleTargetAriaLabel(row, targetChanged) {
+        var target = scheduleTargetText(row);
+        return "Extra payment target: " + (targetChanged ? "New target, " : "") + target;
+      }
+
+      function scheduleShortcutMarkers(result, targetMonth) {
+        var markers = {};
+        var links = [];
+        function addMarker(month, id, label) {
+          if (!month || month < 1 || !id) return;
+          if (!markers[month]) markers[month] = [];
+          markers[month].push(id);
+          links.push({ id: id, label: label, month: month });
+        }
+        var firstTargetChange = null;
+        if (result && result.timeline) {
+          for (var index = 1; index < result.timeline.length; index += 1) {
+            if (result.timeline[index].target && result.timeline[index].target !== result.timeline[index - 1].target) {
+              firstTargetChange = result.timeline[index].month;
+              break;
+            }
+          }
+        }
+        var firstPayoff = result && result.summaries ? result.summaries.filter(function (summary) {
+          return summary.payoffMonth !== null;
+        }).sort(function (a, b) {
+          return a.payoffMonth - b.payoffMonth;
+        })[0] : null;
+
+        if (targetMonth) addMarker(targetMonth, "scheduleTargetMonth", "Target month");
+        addMarker(firstTargetChange, "scheduleFirstTargetChange", "Target changes");
+        addMarker(firstPayoff ? firstPayoff.payoffMonth : null, "scheduleFirstPayoff", "First payoff");
+        addMarker(result && result.timeline && result.timeline.length ? result.timeline[result.timeline.length - 1].month : null, "scheduleFinalMonth", "Final month");
+        return { markers: markers, links: links };
+      }
+
+      function renderScheduleJumpLinks(markerData, showLinks) {
+        if (!scheduleJumpLinks) return;
+        if (!showLinks || !markerData || !markerData.links.length) {
+          scheduleJumpLinks.classList.add("hidden");
+          scheduleJumpLinks.innerHTML = "";
+          return;
+        }
+        var seen = {};
+        scheduleJumpLinks.innerHTML = markerData.links.filter(function (link) {
+          if (seen[link.id]) return false;
+          seen[link.id] = true;
+          return true;
+        }).map(function (link) {
+          return '<a href="#' + escapeHtml(link.id) + '">' + escapeHtml(link.label) + '</a>';
+        }).join("");
+        scheduleJumpLinks.classList.remove("hidden");
       }
 
       function getTargetScheduleMonth(result) {
@@ -2859,18 +3013,26 @@
         return targetMonths;
       }
 
-      function scheduleRowHtml(row, targetMonth) {
+      function scheduleRowHtml(row, targetMonth, previousRow, markerData) {
         var isTargetMonth = Boolean(targetMonth && row.month === targetMonth);
-        var rowAttributes = isTargetMonth ? " class=\"schedule-target-row\" id=\"scheduleTargetMonth\"" : "";
+        var targetChanged = Boolean(previousRow && row.target && row.target !== previousRow.target);
+        var rowClasses = [];
+        if (isTargetMonth) rowClasses.push("schedule-target-row");
+        if (targetChanged) rowClasses.push("schedule-target-change-row");
+        var markerIds = markerData && markerData.markers && markerData.markers[row.month] ? markerData.markers[row.month] : [];
+        var rowAttributes = (rowClasses.length ? " class=\"" + rowClasses.join(" ") + "\"" : "") + (markerIds.length ? " id=\"" + escapeHtml(markerIds[0]) + "\"" : "");
+        var extraAnchors = markerIds.slice(1).map(function (id) {
+          return '<span id="' + escapeHtml(id) + '" class="schedule-row-anchor" aria-hidden="true"></span>';
+        }).join("");
         var targetBadge = isTargetMonth ? " <span class=\"schedule-target-badge\">Target month</span>" : "";
         return "<tr" + rowAttributes + ">" +
-          "<td data-label=\"Month\">" + row.month + targetBadge + "</td>" +
+          "<td data-label=\"Month\">" + extraAnchors + row.month + targetBadge + "</td>" +
           "<td data-label=\"Date\">" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
           "<td data-label=\"Payment\">" + moneyCents(row.payment) + "</td>" +
           "<td data-label=\"Interest\">" + moneyCents(row.interest) + "</td>" +
           "<td data-label=\"Principal\">" + moneyCents(row.principal) + "</td>" +
           "<td data-label=\"Ending Balance\">" + moneyCents(row.endingBalance) + "</td>" +
-          "<td data-label=\"Extra Payment Target\">" + escapeHtml(scheduleTargetText(row)) + "</td>" +
+          "<td data-label=\"Extra Payment Target\" aria-label=\"" + escapeHtml(scheduleTargetAriaLabel(row, targetChanged)) + "\">" + scheduleTargetHtml(row, targetChanged) + "</td>" +
           "</tr>";
       }
 
@@ -2883,14 +3045,22 @@
         if (!showAllSchedule && targetMonth && targetMonth > maxDisplayRows) {
           rows.push(result.timeline[targetMonth - 1]);
         }
+        var markerData = scheduleShortcutMarkers(result, targetMonth);
+        renderScheduleJumpLinks(markerData, showAllSchedule && result.timeline.length > initialScheduleMonths);
         var targetIsVisible = Boolean(targetMonth && rows.some(function (row) { return row.month === targetMonth; }));
         targetMonthJump.classList.toggle("hidden", !targetIsVisible);
         if (targetIsVisible) {
           targetMonthJump.textContent = "Jump to target month (" + addMonths(startInput.value, targetMonth - 1) + ")";
         }
 
+        function scheduleRowsHtml(targetRows) {
+          return targetRows.map(function (row, index) {
+            return scheduleRowHtml(row, targetMonth, targetRows[index - 1], markerData);
+          }).join("");
+        }
+
         function renderRowsSynchronously(targetRows) {
-          scheduleRows.innerHTML = targetRows.map(function (row) { return scheduleRowHtml(row, targetMonth); }).join("");
+          scheduleRows.innerHTML = scheduleRowsHtml(targetRows);
           scheduleNote.textContent = scheduleStatus(targetRows.length);
           scheduleLoading.classList.add("hidden");
         }
@@ -2908,7 +3078,7 @@
 
         if (result.timeline.length > initialScheduleMonths) {
           toggleSchedule.classList.remove("hidden");
-          toggleSchedule.textContent = showAllSchedule ? "Show First 12" : "Show All";
+          toggleSchedule.textContent = showAllSchedule ? "Show first 12 months" : "Show all " + result.timeline.length + " months";
         } else {
           toggleSchedule.classList.add("hidden");
         }
@@ -2926,7 +3096,9 @@
         function renderBatch() {
           if (generation !== scheduleRenderGeneration) return;
           var nextRows = rows.slice(rendered, rendered + 100);
-          scheduleRows.insertAdjacentHTML("beforeend", nextRows.map(function (row) { return scheduleRowHtml(row, targetMonth); }).join(""));
+          scheduleRows.insertAdjacentHTML("beforeend", nextRows.map(function (row, index) {
+            return scheduleRowHtml(row, targetMonth, rows[rendered + index - 1], markerData);
+          }).join(""));
           rendered += nextRows.length;
           scheduleNote.textContent = scheduleStatus(rendered);
           if (rendered < rows.length) {
@@ -2967,7 +3139,9 @@
         showAllSchedule = true;
         var rows = lastResult.timeline.slice();
         var targetMonth = getTargetScheduleMonth(lastResult);
-        scheduleRows.innerHTML = rows.map(function (row) { return scheduleRowHtml(row, targetMonth); }).join("");
+        var markerData = scheduleShortcutMarkers(lastResult, targetMonth);
+        renderScheduleJumpLinks(markerData, false);
+        scheduleRows.innerHTML = rows.map(function (row, index) { return scheduleRowHtml(row, targetMonth, rows[index - 1], markerData); }).join("");
         scheduleNote.textContent = "Showing " + rows.length + " of " + lastResult.timeline.length + " months.";
         scheduleLoading.classList.add("hidden");
       }
@@ -3640,24 +3814,28 @@
           .filter(Boolean);
       }
 
+      function buildSharedState(cards, loans, method, extraPayment, mode, enteredAmount, options) {
+        var settings = options || {};
+        return {
+          v: 1,
+          method: method,
+          extraPayment: cleanSharedNumber(extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0,
+          paymentMode: mode === "total" ? "total" : "extra",
+          paymentAmount: cleanSharedNumber(enteredAmount, 0, Number.MAX_SAFE_INTEGER),
+          startMonth: isValidMonthValue(startInput.value) ? startInput.value : "",
+          targetMonth: isValidMonthValue(targetInput.value) ? targetInput.value : "",
+          cards: cards.map(settings.anonymizeNames ? anonymizedSharedCard : sharedCard),
+          loans: (loans || []).map(settings.anonymizeNames ? anonymizedSharedLoan : sharedLoan),
+          optionScenarios: sharedOptionScenarios(),
+          customOrder: customOrder.slice(0, 60)
+        };
+      }
+
       function buildSharedUrl(cards, loans, method, extraPayment, mode, enteredAmount, options) {
         try {
           if (!window.URL) return String(window.location.href || "");
           var url = new URL(window.location.href);
-          var settings = options || {};
-          var state = {
-            v: 1,
-            method: method,
-            extraPayment: cleanSharedNumber(extraPayment, 0, Number.MAX_SAFE_INTEGER) || 0,
-            paymentMode: mode === "total" ? "total" : "extra",
-            paymentAmount: cleanSharedNumber(enteredAmount, 0, Number.MAX_SAFE_INTEGER),
-            startMonth: isValidMonthValue(startInput.value) ? startInput.value : "",
-            targetMonth: isValidMonthValue(targetInput.value) ? targetInput.value : "",
-            cards: cards.map(settings.anonymizeNames ? anonymizedSharedCard : sharedCard),
-            loans: (loans || []).map(settings.anonymizeNames ? anonymizedSharedLoan : sharedLoan),
-            optionScenarios: sharedOptionScenarios(),
-            customOrder: customOrder.slice(0, 60)
-          };
+          var state = buildSharedState(cards, loans, method, extraPayment, mode, enteredAmount, options);
           url.searchParams.delete("q");
           url.hash = "q=" + encodeSharedState(state);
           return url.toString();
@@ -3666,13 +3844,115 @@
         }
       }
 
-      function clearSharedUrlParam() {
+      function isReloadNavigation() {
+        try {
+          var entries = window.performance && window.performance.getEntriesByType
+            ? window.performance.getEntriesByType("navigation")
+            : [];
+          return Boolean(entries && entries[0] && entries[0].type === "reload");
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function visibleSharedHref(targetHash) {
+        try {
+          var url = new URL(window.location.href);
+          url.searchParams.delete("q");
+          if (String(url.hash || "").indexOf("#q=") === 0) {
+            url.hash = validSharedTargetHash(targetHash) || "";
+          }
+          return url.toString();
+        } catch (error) {
+          return String(window.location.href || "");
+        }
+      }
+
+      function sharedHistoryState(record) {
+        var current = {};
+        try {
+          current = window.history && window.history.state && typeof window.history.state === "object"
+            ? Object.assign({}, window.history.state)
+            : {};
+        } catch (error) {
+          current = {};
+        }
+        current.cardPayoffSharedPlan = record;
+        return current;
+      }
+
+      function persistSharedPlanRestore(encoded, targetHash, visibleHref) {
+        var record = {
+          encoded: String(encoded || ""),
+          targetHash: validSharedTargetHash(targetHash),
+          visibleHref: visibleHref || visibleSharedHref(targetHash),
+          savedAt: Date.now()
+        };
+        if (!record.encoded) return;
+        try {
+          sessionStorage.setItem(SHARED_PLAN_STORAGE_KEY, JSON.stringify(record));
+        } catch (error) {}
+        try {
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(sharedHistoryState(record), "", record.visibleHref);
+          }
+        } catch (error) {}
+      }
+
+      function clearPersistedSharedPlan() {
+        try {
+          sessionStorage.removeItem(SHARED_PLAN_STORAGE_KEY);
+        } catch (error) {}
+        try {
+          if (!window.history || !window.history.replaceState || !window.history.state || typeof window.history.state !== "object") return;
+          var nextState = Object.assign({}, window.history.state);
+          delete nextState.cardPayoffSharedPlan;
+          window.history.replaceState(nextState, "", window.location.href);
+        } catch (error) {}
+      }
+
+      function persistedSharedStateFromHistory() {
+        try {
+          var record = window.history && window.history.state ? window.history.state.cardPayoffSharedPlan : null;
+          if (record && record.encoded) {
+            return {
+              encoded: record.encoded,
+              source: "restored",
+              targetHash: validSharedTargetHash(record.targetHash || window.location.hash)
+            };
+          }
+        } catch (error) {}
+        try {
+          if (!isReloadNavigation()) return null;
+          var stored = JSON.parse(sessionStorage.getItem(SHARED_PLAN_STORAGE_KEY) || "null");
+          if (stored && stored.encoded && stored.visibleHref === window.location.href) {
+            return {
+              encoded: stored.encoded,
+              source: "restored",
+              targetHash: validSharedTargetHash(stored.targetHash || window.location.hash)
+            };
+          }
+        } catch (error) {}
+        return null;
+      }
+
+      function persistCurrentSharedPlan(cards, loans, method, payment) {
+        if (!isSharedPlanLoaded || !payment) return;
+        try {
+          var state = buildSharedState(cards, loans, method, payment.extraPayment, payment.mode, payment.enteredAmount, { anonymizeNames: false });
+          var targetHash = validSharedTargetHash(window.location.hash);
+          persistSharedPlanRestore(encodeSharedState(state), targetHash, visibleSharedHref(targetHash));
+        } catch (error) {}
+      }
+
+      function clearSharedUrlParam(historyState) {
         try {
           if (!window.history || !window.history.replaceState || !window.URL) return;
           var url = new URL(window.location.href);
           url.searchParams.delete("q");
           if (String(url.hash || "").indexOf("#q=") === 0) url.hash = "";
-          window.history.replaceState(null, "", url.toString());
+          var state = arguments.length ? historyState : window.history.state;
+          window.history.replaceState(state || null, "", url.toString());
         } catch (error) {}
       }
 
@@ -3684,7 +3964,8 @@
       function sharedPlanLoadFailed(message) {
         sharedPlanLoadError = message || "Could not load shared plan. The link may be incomplete or invalid.";
         setPlanModeStatus(sharedPlanLoadError);
-        clearSharedUrlParam();
+        clearPersistedSharedPlan();
+        clearSharedUrlParam(null);
       }
 
       function sharedStateFromUrl() {
@@ -3702,7 +3983,7 @@
           }
           var params = new URLSearchParams(window.location.search);
           var queryValue = params.get("q");
-          return queryValue ? { encoded: queryValue, source: "query", targetHash: validSharedTargetHash(hash) } : null;
+          return queryValue ? { encoded: queryValue, source: "query", targetHash: validSharedTargetHash(hash) } : persistedSharedStateFromHistory();
         } catch (error) {
           return null;
         }
@@ -3710,12 +3991,12 @@
 
       function normalizeLoadedQueryShareUrl(sharedState) {
         if (!sharedState || sharedState.source !== "query") return;
-        clearSharedUrlParam();
+        persistSharedPlanRestore(sharedState.encoded, sharedState.targetHash, visibleSharedHref(sharedState.targetHash));
       }
 
       function scrollToSharedTarget(sharedState) {
         if (!sharedState || !sharedState.targetHash) return;
-        function scrollTargetIntoView() {
+        function scrollTargetIntoView(shouldFocus) {
           try {
             var target = document.querySelector(sharedState.targetHash);
             if (!target) return;
@@ -3724,11 +4005,19 @@
             root.style.scrollBehavior = "auto";
             target.scrollIntoView({ behavior: "auto", block: "start" });
             root.style.scrollBehavior = previousScrollBehavior;
+            if (shouldFocus && target.focus) {
+              if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+              try {
+                target.focus({ preventScroll: true });
+              } catch (error) {
+                target.focus();
+              }
+            }
           } catch (error) {}
         }
         setTimeout(scrollTargetIntoView, 0);
         setTimeout(scrollTargetIntoView, 250);
-        setTimeout(scrollTargetIntoView, 750);
+        setTimeout(function () { scrollTargetIntoView(true); }, 750);
       }
 
       function loadSharedState() {
@@ -4032,6 +4321,9 @@
           : { method: method, extraPayment: extra, customOrder: customOrder.slice() }, loans);
         var baseline = simulate(cards, { method: "minimum", extraPayment: 0 }, loans);
         lastResult = result;
+        if (!options.skipUrlUpdate) {
+          persistCurrentSharedPlan(cards, loans, method, payment);
+        }
         setCopySummaryAvailable(true);
         updateMobilePayoffJump(Boolean(result), isSampleMode ? "View sample payoff plan" : "View payoff plan");
 
@@ -4091,6 +4383,7 @@
         resetSharedPlanLoaded();
         setSampleMode(true);
         setPlanModeStatus("");
+        clearBoostExtraStatus();
         cardRows.innerHTML = "";
         loanRows.innerHTML = "";
         nextId = 1;
@@ -4335,6 +4628,8 @@
           if (introDiv) introDiv.classList.toggle("hidden", expanded);
           toggleBtn.setAttribute("aria-expanded", String(!expanded));
           toggleBtn.textContent = expanded ? "Add promo APR" : "Hide promo APR";
+          var introRow = toggleBtn.closest("tr");
+          if (introRow) updateCardSummary(introRow);
         }
       });
 
@@ -4417,18 +4712,38 @@
         var wasSampleMode = isSampleMode;
         var before = lastResult;
         var current = Number(extraInput.value || 0);
+        var previousValue = Number.isFinite(current) ? current : 0;
+        var previousMethod = methodInput.value;
         extraInput.value = String(Math.max(0, (Number.isFinite(current) ? current : 0) + 50));
         if (methodInput.value === "minimum") methodInput.value = "avalanche";
         syncPaymentInputCopy();
         update();
-        setPlanModeStatus(boostDeltaText(before, lastResult));
+        var label = paymentMode() === "total" ? "Total monthly budget" : "Extra payment";
+        setBoostExtraStatus(label + " is now " + money(Number(extraInput.value || 0)) + "/mo. " + boostDeltaText(before, lastResult), previousValue, previousMethod);
         if (wasSampleMode) {
-          setPlanModeStatus("Sample what-if: extra payment increased by $50. Enter your own cards for a real plan.");
+          setBoostExtraStatus("Sample what-if: " + label.toLowerCase() + " is now " + money(Number(extraInput.value || 0)) + "/mo. Enter your own cards for a real plan.", previousValue, previousMethod);
         }
         try {
-          extraInput.focus({ preventScroll: true });
+          boostExtraButton.focus({ preventScroll: true });
         } catch (error) {
-          extraInput.focus();
+          boostExtraButton.focus();
+        }
+      });
+      bind(boostExtraStatus, "click", function (event) {
+        var undoButton = event.target.closest("button[data-action='undo-boost-extra']");
+        if (!undoButton) return;
+        var previousValue = Number(boostExtraStatus.dataset.previousValue);
+        if (!Number.isFinite(previousValue)) return;
+        methodInput.value = boostExtraStatus.dataset.previousMethod || methodInput.value;
+        extraInput.value = String(previousValue);
+        syncPaymentInputCopy();
+        update();
+        var label = paymentMode() === "total" ? "Total monthly budget" : "Extra payment";
+        setBoostExtraStatus(label + " reverted to " + money(previousValue) + "/mo.", null, null);
+        try {
+          boostExtraButton.focus({ preventScroll: true });
+        } catch (error) {
+          boostExtraButton.focus();
         }
       });
       bind(fixedBudgetNudge, "click", function (event) {

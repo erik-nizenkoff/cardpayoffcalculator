@@ -558,6 +558,14 @@
       font-size: .78rem;
     }
 
+    .payoff-settings-grid + .privacy-disclosure {
+      margin: -4px 0 14px;
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f7fbff;
+      padding: 11px 12px;
+    }
+
     .entry-guide {
       margin: 8px 0 0;
       color: var(--navy);
@@ -729,6 +737,7 @@
     }
 
     body.shared-plan-loaded #sampleButton,
+    body.sample-mode #sampleButton,
     body.modal-open .mobile-summary-bar {
       display: none !important;
     }
@@ -1064,6 +1073,23 @@
       box-shadow: 0 0 0 3px rgba(32,141,84,0.1);
     }
 
+    .quick-action-status {
+      margin: -2px 0 12px;
+      border: 1px solid #bfe7cf;
+      border-radius: 7px;
+      background: #f1fbf5;
+      color: #22543d;
+      padding: 8px 10px;
+      font-size: .82rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .quick-action-undo {
+      margin-left: 8px;
+      color: #164b31;
+    }
+
     .estimate-details {
       margin-top: 10px;
       border-top: 1px solid var(--line);
@@ -1228,6 +1254,42 @@
     .first-run-hint button:focus-visible {
       box-shadow: none;
       transform: none;
+    }
+
+    .shared-plan-result-notice {
+      display: none;
+      gap: 7px;
+      margin: 0 0 12px;
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f7fbff;
+      color: #173d70;
+      padding: 11px 12px;
+      font-size: .86rem;
+      line-height: 1.42;
+    }
+
+    .shared-plan-result-notice strong {
+      color: #123968;
+    }
+
+    .shared-plan-result-notice p {
+      margin: 0;
+      color: inherit;
+    }
+
+    .shared-plan-result-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .shared-plan-result-actions .secondary-link {
+      min-height: 38px;
+      padding: 7px 9px;
+      font-size: .8rem;
+      white-space: normal;
     }
 
     .loan-section,
@@ -2062,6 +2124,37 @@
       font-size: .82rem;
     }
 
+    .schedule-jump-links {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    .schedule-jump-links a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      border: 1px solid #cbd8e8;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--navy);
+      padding: 5px 9px;
+      font-size: .74rem;
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .schedule-jump-links a:hover,
+    .schedule-jump-links a:focus-visible {
+      background: #eef4fb;
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(32,141,84,.1);
+    }
+
     .schedule-target-jump {
       white-space: nowrap;
     }
@@ -2101,6 +2194,38 @@
       box-shadow: inset 3px 0 0 var(--green);
     }
 
+    .schedule-table tbody tr.schedule-target-change-row {
+      box-shadow: inset 0 3px 0 #bfe7cf;
+    }
+
+    .schedule-table tbody tr.schedule-target-row.schedule-target-change-row {
+      box-shadow: inset 3px 0 0 var(--green), inset 0 3px 0 #bfe7cf;
+    }
+
+    .schedule-target-name {
+      display: block;
+      color: var(--ink);
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .schedule-target-detail {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .schedule-row-anchor {
+      display: block;
+      position: relative;
+      top: -16px;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
     .schedule-target-badge {
       display: inline-flex;
       align-items: center;
@@ -2117,9 +2242,58 @@
       vertical-align: middle;
     }
 
+    .schedule-target-change-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      margin: 0 7px 0 0;
+      border-radius: 999px;
+      background: #fff8ed;
+      color: #7b341e;
+      padding: 3px 7px;
+      font-size: .68rem;
+      font-weight: 900;
+      line-height: 1.2;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
     .schedule-table td,
     .schedule-table th {
       white-space: nowrap;
+    }
+
+    .schedule-table {
+      table-layout: fixed;
+      min-width: 900px;
+    }
+
+    .schedule-table th:nth-child(1),
+    .schedule-table td:nth-child(1) {
+      width: 7%;
+    }
+
+    .schedule-table th:nth-child(2),
+    .schedule-table td:nth-child(2) {
+      width: 11%;
+    }
+
+    .schedule-table th:nth-child(3),
+    .schedule-table td:nth-child(3),
+    .schedule-table th:nth-child(4),
+    .schedule-table td:nth-child(4),
+    .schedule-table th:nth-child(5),
+    .schedule-table td:nth-child(5),
+    .schedule-table th:nth-child(6),
+    .schedule-table td:nth-child(6) {
+      width: 12%;
+    }
+
+    .schedule-table th:nth-child(7),
+    .schedule-table td:nth-child(7) {
+      width: 34%;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     .content-grid {
@@ -2289,10 +2463,16 @@
     }
 
     .feedback-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
       display: flex;
       align-items: start;
       justify-content: space-between;
       gap: 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      padding-bottom: 10px;
     }
 
     .feedback-head h2 {
@@ -2331,6 +2511,27 @@
 
     .share-data-summary p {
       margin: 0;
+    }
+
+    .feedback-privacy-summary {
+      display: grid;
+      gap: 7px;
+      border: 1px solid #bdd7ff;
+      border-radius: 8px;
+      background: #f7fbff;
+      color: #173d70;
+      padding: 10px 12px;
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .feedback-privacy-summary p {
+      margin: 0;
+      color: inherit;
+    }
+
+    .feedback-privacy-summary strong {
+      color: #123968;
     }
 
     .share-actions {
@@ -2501,6 +2702,15 @@
         margin-top: 0;
       }
 
+      .schedule-jump-links {
+        justify-content: stretch;
+      }
+
+      .schedule-jump-links a {
+        flex: 1 1 100%;
+        min-height: 36px;
+      }
+
       .start-entry-link {
         display: inline-flex;
         align-items: center;
@@ -2549,6 +2759,14 @@
 
       body.shared-plan-loaded .results-panel {
         order: -1;
+      }
+
+      body.shared-plan-loaded .shared-plan-result-notice:not(.hidden) {
+        display: grid;
+      }
+
+      .shared-plan-result-actions {
+        grid-template-columns: 1fr;
       }
 
       .sample-data-banner {
@@ -3092,6 +3310,24 @@
       .schedule-target-badge {
         display: flex;
         margin: 6px 0 0;
+      }
+
+      .schedule-target-change-row {
+        border-top: 3px solid #bfe7cf;
+      }
+
+      .schedule-target-name,
+      .schedule-target-detail {
+        display: block;
+      }
+
+      .schedule-target-detail {
+        margin-top: 3px;
+      }
+
+      .schedule-target-change-badge {
+        display: flex;
+        margin: 0 0 5px;
       }
 
       .intro-fields {

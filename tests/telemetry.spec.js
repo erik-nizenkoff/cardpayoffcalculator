@@ -204,6 +204,9 @@ test("feedback report defaults to no diagnostic input snapshot", async ({ page }
 
   await page.getByRole("button", { name: "Report an issue" }).first().click();
   await expect(page.getByRole("dialog", { name: "Report an Issue" })).toBeVisible();
+  await expect(page.getByText("Always sent:")).toBeVisible();
+  await expect(page.getByText("Only if checked:")).toBeVisible();
+  await expect(page.getByText("calculation telemetry opt-out does not block feedback submission")).toBeVisible();
   await expect(page.getByLabel("Attach current calculator inputs and result summary")).not.toBeChecked();
   await page.getByLabel("Issue or comment").fill("This is a general comment.");
   await page.getByRole("button", { name: "Submit report" }).click();
@@ -261,4 +264,25 @@ test("feedback report can attach current diagnostic input snapshot", async ({ pa
     capped: false,
     startingBalance: 8500
   });
+});
+
+test("mobile feedback validation keeps the dialog header visible", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Report an issue" }).first().click();
+  await expect(page.getByRole("dialog", { name: "Report an Issue" })).toBeVisible();
+  await page.getByRole("button", { name: "Submit report" }).click();
+
+  await expect(page.locator("#feedbackMessage-error")).toContainText("Enter at least 5 characters.");
+  await expect(page.locator("#feedbackDialog .feedback-head")).toBeVisible();
+  const headerStaysInsideDialog = await page.evaluate(() => {
+    const dialog = document.querySelector("#feedbackDialog");
+    const head = document.querySelector("#feedbackDialog .feedback-head");
+    if (!dialog || !head) return false;
+    const dialogRect = dialog.getBoundingClientRect();
+    const headRect = head.getBoundingClientRect();
+    return headRect.top >= dialogRect.top - 1 && headRect.bottom <= dialogRect.bottom + 1;
+  });
+  expect(headerStaysInsideDialog).toBe(true);
 });
