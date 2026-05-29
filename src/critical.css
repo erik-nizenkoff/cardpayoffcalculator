@@ -1397,6 +1397,49 @@
       overflow-wrap: anywhere;
     }
 
+    .month-plan-summary-item small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .month-plan-focus {
+      display: grid;
+      gap: 4px;
+      margin: 0 0 12px;
+      border: 1px solid #bfe7cf;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      background: #f1fbf5;
+      color: #22543d;
+      padding: 11px 12px;
+    }
+
+    .month-plan-focus span {
+      color: var(--green-dark);
+      font-size: .72rem;
+      font-weight: 900;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .month-plan-focus strong {
+      color: var(--ink);
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .month-plan-focus p {
+      margin: 0;
+      color: #2f5f45;
+      font-size: .84rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
     .month-plan table {
       min-width: 0;
       font-size: .84rem;
@@ -1427,6 +1470,27 @@
       font-weight: 900;
       line-height: 1.2;
       white-space: nowrap;
+    }
+
+    .month-plan-target-row {
+      background: #f1fbf5;
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    .month-plan-target-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      margin-left: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      color: #fff;
+      padding: 3px 7px;
+      font-size: .68rem;
+      font-weight: 900;
+      line-height: 1.2;
+      white-space: nowrap;
+      vertical-align: middle;
     }
 
     .scroll-hint {
@@ -2743,6 +2807,27 @@
         transform: none;
       }
 
+      .month-plan.month-plan-collapsed .month-plan-actions .month-plan-toggle-top {
+        justify-self: stretch;
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--green);
+        border-radius: 7px;
+        background: var(--green);
+        color: #fff;
+        padding: 9px 10px;
+        box-shadow: 0 2px 8px rgba(39,103,73,.22);
+        text-align: center;
+        text-decoration: none;
+      }
+
+      .month-plan.month-plan-collapsed .month-plan-actions .month-plan-toggle-top:hover,
+      .month-plan.month-plan-collapsed .month-plan-actions .month-plan-toggle-top:focus-visible {
+        background: var(--green-dark);
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(32,141,84,.16);
+      }
+
       .month-plan-summary {
         grid-template-columns: 1fr 1fr;
         margin-top: 10px;
@@ -2773,6 +2858,11 @@
         background: #fff;
         margin-bottom: 10px;
         padding: 10px;
+      }
+
+      .month-plan-target-badge {
+        display: flex;
+        margin: 6px 0 0;
       }
 
       .month-plan.month-plan-collapsed tr:nth-child(n+3) {

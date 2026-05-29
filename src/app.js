@@ -74,6 +74,7 @@
       var monthPlan = document.getElementById("monthPlan");
       var monthPlanIntro = document.getElementById("monthPlanIntro");
       var monthPlanSummary = document.getElementById("monthPlanSummary");
+      var monthPlanFocus = document.getElementById("monthPlanFocus");
       var monthPlanRows = document.getElementById("monthPlanRows");
       var toggleMonthPlanRowsTop = document.getElementById("toggleMonthPlanRowsTop");
       var toggleMonthPlanRows = document.getElementById("toggleMonthPlanRows");
@@ -140,7 +141,7 @@
         payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
-        criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanSummary, monthPlanRows, toggleMonthPlanRowsTop, toggleMonthPlanRows,
+        criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanSummary, monthPlanFocus, monthPlanRows, toggleMonthPlanRowsTop, toggleMonthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, toggleSchedule,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
@@ -1840,7 +1841,8 @@
       }
 
       function syncMonthPlanToggles(canCollapse, count) {
-        var label = showAllMonthPlan ? "Collapse to first 2 debts" : "Show all " + count + " debts";
+        var hiddenCount = Math.max(0, count - 2);
+        var label = showAllMonthPlan ? "Collapse to first 2 debts" : hiddenCount + " payments hidden - show all " + count + " before paying";
         [toggleMonthPlanRowsTop, toggleMonthPlanRows].forEach(function (button) {
           if (!button) return;
           button.classList.toggle("hidden", !canCollapse);
@@ -1848,16 +1850,71 @@
         });
       }
 
-      function renderMonthPlanSummary(result) {
+      function monthPlanTotals(firstMonth) {
+        var payment = firstMonth ? roundCents(firstMonth.payment || 0) : 0;
+        var extra = firstMonth && firstMonth.extraPayments
+          ? roundCents(firstMonth.extraPayments.reduce(function (sum, amount) {
+            return roundCents(sum + (amount || 0));
+          }, 0))
+          : 0;
+        return {
+          payment: payment,
+          extra: extra,
+          required: Math.max(0, roundCents(payment - extra))
+        };
+      }
+
+      function monthPlanPrimaryTarget(firstMonth, result) {
+        if (!firstMonth || !firstMonth.extraPayments || !result || !result.debtNames) return null;
+        var targetIndex = Number.isInteger(firstMonth.targetIndex) ? firstMonth.targetIndex : -1;
+        if (targetIndex < 0 || roundCents(firstMonth.extraPayments[targetIndex] || 0) <= EPSILON) {
+          targetIndex = firstMonth.extraPayments.reduce(function (bestIndex, amount, index) {
+            return roundCents(amount || 0) > roundCents(firstMonth.extraPayments[bestIndex] || 0) ? index : bestIndex;
+          }, 0);
+        }
+        if (targetIndex < 0 || targetIndex >= result.debtNames.length) return null;
+        var extra = roundCents(firstMonth.extraPayments[targetIndex] || 0);
+        var payment = roundCents(firstMonth.payments[targetIndex] || 0);
+        if (targetIndex < 0 || extra <= EPSILON || payment <= EPSILON) return null;
+        return {
+          index: targetIndex,
+          name: result.debtNames[targetIndex],
+          payment: payment,
+          extra: extra,
+          required: Math.max(0, roundCents(payment - extra))
+        };
+      }
+
+      function renderMonthPlanSummary(result, firstMonth) {
         if (!monthPlanSummary || !result) return;
         var payoffDate = result.capped ? "50+ years" : addMonths(startInput.value, result.months - 1);
         var interestLabel = result.capped ? "Modeled interest" : "Total interest";
+        var totals = monthPlanTotals(firstMonth);
+        var totalBreakdown = totals.extra > EPSILON
+          ? '<small>Minimums ' + moneyCents(totals.required) + " + Extra " + moneyCents(totals.extra) + "</small>"
+          : '<small>Required payments only</small>';
         monthPlanSummary.innerHTML =
           '<div class="month-plan-summary-item"><span>Debt-free date</span><strong>' + escapeHtml(payoffDate) + "</strong></div>" +
           '<div class="month-plan-summary-item"><span>' + escapeHtml(interestLabel) + "</span><strong>" + escapeHtml(resultInterestText(result)) + "</strong></div>" +
-          '<div class="month-plan-summary-item"><span>Starting payment</span><strong>' + escapeHtml(money(result.monthlyPayment)) + "/mo</strong></div>" +
+          '<div class="month-plan-summary-item"><span>Month 1 total</span><strong>' + escapeHtml(moneyCents(totals.payment)) + "</strong>" + totalBreakdown + "</div>" +
           '<div class="month-plan-summary-item"><span>Strategy</span><strong>' + escapeHtml(methodLabel(result.method)) + "</strong></div>";
         monthPlanSummary.classList.remove("hidden");
+      }
+
+      function renderMonthPlanFocus(firstMonth, result) {
+        if (!monthPlanFocus) return null;
+        var target = monthPlanPrimaryTarget(firstMonth, result);
+        if (!target) {
+          monthPlanFocus.classList.add("hidden");
+          monthPlanFocus.innerHTML = "";
+          return null;
+        }
+        monthPlanFocus.innerHTML =
+          '<span>This month\'s focus</span>' +
+          "<strong>Pay " + escapeHtml(target.name) + " " + moneyCents(target.payment) + " total</strong>" +
+          "<p>" + moneyCents(target.required) + " required payment + " + moneyCents(target.extra) + " extra. Other debts still get their required payments below.</p>";
+        monthPlanFocus.classList.remove("hidden");
+        return target;
       }
 
       function renderMonthPlan(result) {
@@ -1871,6 +1928,10 @@
             monthPlanSummary.classList.add("hidden");
             monthPlanSummary.innerHTML = "";
           }
+          if (monthPlanFocus) {
+            monthPlanFocus.classList.add("hidden");
+            monthPlanFocus.innerHTML = "";
+          }
           if (monthPlanHint) monthPlanHint.textContent = "";
           if (monthPlanIntro) monthPlanIntro.textContent = "Preview the first month's payments; show all debts to review every row.";
           return;
@@ -1881,17 +1942,18 @@
         var isCollapsed = canCollapse && !showAllMonthPlan;
         monthPlan.classList.toggle("month-plan-collapsed", isCollapsed);
         syncMonthPlanToggles(canCollapse, result.debtNames.length);
-        renderMonthPlanSummary(result);
+        renderMonthPlanSummary(result, firstMonth);
+        var primaryTarget = renderMonthPlanFocus(firstMonth, result);
         if (monthPlanIntro) {
           monthPlanIntro.textContent = canCollapse && !isCollapsed
             ? "All " + result.debtNames.length + " first-month payments are shown."
             : canCollapse
-            ? "Previewing the first 2 debts; show all debts to review every row."
+            ? "Previewing the first 2 debts. Use the show-all control before paying to review every row."
             : "All first-month payments are shown.";
         }
         if (monthPlanHint) {
           monthPlanHint.textContent = isCollapsed
-            ? "Showing 2 of " + result.debtNames.length + " debts."
+            ? "Showing 2 of " + result.debtNames.length + " debts; " + (result.debtNames.length - 2) + " payments are hidden."
             : "All " + result.debtNames.length + " first-month payments are shown.";
         }
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
@@ -1904,8 +1966,11 @@
           var paymentHtml = extra > EPSILON
             ? moneyCents(payment) + ' total <span class="month-plan-extra-badge">' + moneyCents(requiredPayment) + " minimum + " + moneySmart(extra) + " extra</span>"
             : moneyCents(payment);
-          return "<tr>" +
-            '<td data-label="Debt">' + escapeHtml(name) + "</td>" +
+          var isPrimaryTarget = primaryTarget && primaryTarget.index === index;
+          var rowClass = isPrimaryTarget ? ' class="month-plan-target-row"' : "";
+          var targetBadge = isPrimaryTarget ? '<span class="month-plan-target-badge">Extra target</span>' : "";
+          return "<tr" + rowClass + ">" +
+            '<td data-label="Debt">' + escapeHtml(name) + targetBadge + "</td>" +
             '<td data-label="Payment">' + paymentHtml + "</td>" +
             '<td data-label="Interest">' + moneyCents(interest) + "</td>" +
             '<td data-label="Principal">' + moneyCents(Math.max(0, principal)) + "</td>" +
@@ -3629,7 +3694,12 @@
         function scrollTargetIntoView() {
           try {
             var target = document.querySelector(sharedState.targetHash);
-            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+            if (!target) return;
+            var root = document.documentElement;
+            var previousScrollBehavior = root.style.scrollBehavior;
+            root.style.scrollBehavior = "auto";
+            target.scrollIntoView({ behavior: "auto", block: "start" });
+            root.style.scrollBehavior = previousScrollBehavior;
           } catch (error) {}
         }
         setTimeout(scrollTargetIntoView, 0);

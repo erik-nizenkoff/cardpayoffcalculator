@@ -138,7 +138,11 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   await expect(page.locator("#monthPlan")).toBeVisible();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-panel/);
   await expect(page.locator("#monthPlanSummary")).toContainText("Debt-free date");
-  await expect(page.locator("#monthPlanSummary")).toContainText("Starting payment");
+  await expect(page.locator("#monthPlanSummary")).toContainText("Month 1 total");
+  await expect(page.locator("#monthPlanSummary")).toContainText("Minimums");
+  await expect(page.locator("#monthPlanFocus")).toContainText("This month's focus");
+  await expect(page.locator("#monthPlanFocus")).toContainText("Pay Visa");
+  await expect(page.locator(".month-plan-target-row")).toHaveCount(1);
   await expect(page.locator(".month-plan-back-link")).toBeVisible();
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   await expect(page.locator("#sampleButton")).toBeHidden();
@@ -222,13 +226,19 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
 
   await page.locator("#monthPlan").scrollIntoViewIfNeeded();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
-  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 debts");
-  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("Showing 2 of 4 debts.");
-  await expect(page.locator(".month-plan-back-link")).toHaveText("Summary");
-  await expect(page.locator(".month-plan-chart-link")).toHaveText("Chart");
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("2 payments hidden - show all 4 before paying");
+  await expect(page.locator("#toggleMonthPlanRows")).toContainText("2 payments hidden - show all 4 before paying");
+  await expect(page.locator("#monthPlanIntro")).toContainText("Use the show-all control before paying");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments are hidden");
+  await expect(page.locator(".month-plan-back-link")).toHaveText("Back to summary");
+  await expect(page.locator(".month-plan-chart-link")).toHaveText("Jump to chart");
   await expect(page.locator(".month-plan-chart-link")).toBeVisible();
   await expect(page.locator("#monthPlanSummary")).toContainText("Avalanche");
+  await expect(page.locator("#monthPlanSummary")).toContainText("Month 1 total");
+  await expect(page.locator("#monthPlanFocus")).toContainText("This month's focus");
+  await expect(page.locator("#monthPlanFocus")).toContainText("Pay Visa 4");
+  await expect(page.locator(".month-plan-target-row")).toHaveCount(1);
+  await expect(page.locator(".month-plan-target-badge")).toContainText("Extra target");
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
