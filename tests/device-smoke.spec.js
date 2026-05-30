@@ -261,10 +261,13 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await page.locator("#monthPlan").scrollIntoViewIfNeeded();
   await expect(page.locator("#sharedPlanResultNotice")).toContainText("4 debts loaded from a link");
   await expect(page.locator("#sharedPlanResultNotice")).toContainText("Review privacy & inputs");
-  await expect(page.locator("#sharedPlanResultNotice")).toContainText("Privacy option: do not save calculation data");
+  await expect(page.locator("#sharedPlanResultNotice")).toContainText("Do not save calculation data from this plan");
+  await expect(page.locator("#sharedPlanResultNotice")).toContainText("Applies to edits and what-if buttons.");
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Shared plan: 4 debts loaded from a link");
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Review inputs/privacy");
-  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Privacy option: do not save calculation data");
+  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Do not save calculation data from this plan");
+  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Applies to edits and what-if buttons.");
+  await expect(page.locator("#sharedPlanMonthNotice")).not.toContainText("Back to summary");
   await page.locator("#sharedMonthTelemetryOptOut").check();
   await expect(page.locator("#telemetryOptOut")).toBeChecked();
   await expect(page.locator("#sharedTelemetryOptOut")).toBeChecked();
@@ -373,10 +376,17 @@ test("schedule marks and compresses target changes on mobile", async ({ page }) 
   await expect(page.locator("#scheduleJumpLinks")).toContainText("Target changes");
   await expect(page.locator("#scheduleJumpLinks")).toContainText("First payoff");
   await expect(page.locator("#scheduleJumpLinks")).toContainText("Final month");
+  await expect(page.locator("#scheduleRows tr").first().locator("[data-schedule-detail='true']").first()).toBeHidden();
+  await expect(page.locator("#scheduleRows tr").first().getByRole("button", { name: /Show interest, principal, and balance/ })).toBeVisible();
   const firstRowHeight = await page.locator("#scheduleRows tr").first().evaluate((row) =>
     Math.round(row.getBoundingClientRect().height)
   );
-  expect(firstRowHeight).toBeLessThan(260);
+  expect(firstRowHeight).toBeLessThan(210);
+  await page.locator("#scheduleRows tr").first().getByRole("button", { name: /Show interest, principal, and balance/ }).click();
+  await expect(page.locator("#scheduleRows tr").first().locator("[data-schedule-detail='true']").first()).toBeVisible();
+  await expect(page.locator("#scheduleRows tr").first().getByRole("button", { name: /Hide interest, principal, and balance/ })).toHaveAttribute("aria-expanded", "true");
+  await page.locator("#scheduleRows tr").first().getByRole("button", { name: /Hide interest, principal, and balance/ }).click();
+  await expect(page.locator("#scheduleRows tr").first().locator("[data-schedule-detail='true']").first()).toBeHidden();
   await page.locator("#scheduleJumpLinks").getByText("Target changes").click();
   await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.id)).toBe("scheduleFirstTargetChange");
   await expect(page.locator("#scheduleFirstTargetChange")).toHaveAttribute("aria-label", /Month/);

@@ -914,7 +914,8 @@
         sharedPlanResultNotice.innerHTML =
           "<strong>" + debtText + " loaded from a link.</strong>" +
           " <p>Confirm balances, APRs, and minimum payments before relying on this payoff date.</p> " +
-          '<label class="telemetry-toggle shared-telemetry-toggle"><input id="sharedTelemetryOptOut" data-action="shared-telemetry-opt-out" type="checkbox"> Privacy option: do not save calculation data</label> ' +
+          '<label class="telemetry-toggle shared-telemetry-toggle"><input id="sharedTelemetryOptOut" data-action="shared-telemetry-opt-out" type="checkbox"> Do not save calculation data from this plan</label> ' +
+          '<p class="shared-telemetry-helper">Applies to edits and what-if buttons.</p>' +
           '<div class="shared-plan-result-actions">' +
           '<a class="secondary-link" href="#privacyOptions">Review privacy &amp; inputs</a> ' +
           '<a class="secondary-link" href="#monthPlan">Continue to payment plan</a>' +
@@ -934,10 +935,10 @@
         sharedPlanMonthNotice.innerHTML =
           "<strong>Shared plan: " + debtText + " loaded from a link.</strong>" +
           " Confirm balances, APRs, minimums, and privacy choices before paying. " +
-          '<label class="telemetry-toggle shared-telemetry-toggle"><input id="sharedMonthTelemetryOptOut" data-action="shared-telemetry-opt-out" type="checkbox"> Privacy option: do not save calculation data</label> ' +
+          '<label class="telemetry-toggle shared-telemetry-toggle"><input id="sharedMonthTelemetryOptOut" data-action="shared-telemetry-opt-out" type="checkbox"> Do not save calculation data from this plan</label> ' +
+          '<p class="shared-telemetry-helper">Applies to edits and what-if buttons.</p>' +
           '<div class="shared-plan-result-actions">' +
-          '<a class="secondary-link" href="#privacyOptions">Review inputs/privacy</a> ' +
-          '<a class="secondary-link" href="#resultsPanel">Back to summary</a>' +
+          '<a class="secondary-link" href="#privacyOptions">Review inputs/privacy</a>' +
           "</div>";
         sharedPlanMonthNotice.classList.remove("hidden");
         syncTelemetryOptOutControl();
@@ -3107,6 +3108,20 @@
         scheduleFocusAfterNavigation();
       }
 
+      function handleScheduleDetailToggle(event) {
+        var button = event.target && event.target.closest ? event.target.closest("[data-action='toggle-schedule-row-details']") : null;
+        if (!button) return;
+        var row = button.closest ? button.closest("tr") : null;
+        if (!row) return;
+        var expanded = !row.classList.contains("schedule-row-expanded");
+        row.classList.toggle("schedule-row-expanded", expanded);
+        button.setAttribute("aria-expanded", expanded ? "true" : "false");
+        button.textContent = expanded ? "Hide" : "Details";
+        var dateCell = row.querySelector("td[data-label='Date']");
+        var label = dateCell ? dateCell.textContent.trim() : "this month";
+        button.setAttribute("aria-label", (expanded ? "Hide" : "Show") + " interest, principal, and balance for " + label);
+      }
+
       function getTargetScheduleMonth(result) {
         var targetMonths = monthsBetweenInclusive(startInput.value, targetInput.value);
         if (!targetMonths || targetMonths <= 1 || !result || !result.timeline || targetMonths > result.timeline.length) return null;
@@ -3116,24 +3131,26 @@
       function scheduleRowHtml(row, targetMonth, previousRow, markerData) {
         var isTargetMonth = Boolean(targetMonth && row.month === targetMonth);
         var targetChanged = Boolean(previousRow && row.target && row.target !== previousRow.target);
+        var rowDate = addMonths(startInput.value, row.month - 1);
         var rowClasses = [];
         if (isTargetMonth) rowClasses.push("schedule-target-row");
         if (targetChanged) rowClasses.push("schedule-target-change-row");
         var markerIds = markerData && markerData.markers && markerData.markers[row.month] ? markerData.markers[row.month] : [];
-        var rowLabel = "Month " + row.month + ", " + addMonths(startInput.value, row.month - 1) + ". Payment " + moneyCents(row.payment) + ". Interest " + moneyCents(row.interest) + ". Principal " + moneyCents(row.principal) + ". Ending balance " + moneyCents(row.endingBalance) + ". " + scheduleTargetAriaLabel(row, targetChanged) + ".";
+        var rowLabel = "Month " + row.month + ", " + rowDate + ". Payment " + moneyCents(row.payment) + ". Interest " + moneyCents(row.interest) + ". Principal " + moneyCents(row.principal) + ". Ending balance " + moneyCents(row.endingBalance) + ". " + scheduleTargetAriaLabel(row, targetChanged) + ".";
         var rowAttributes = (rowClasses.length ? " class=\"" + rowClasses.join(" ") + "\"" : "") + (markerIds.length ? " id=\"" + escapeHtml(markerIds[0]) + "\"" : "") + ' tabindex="-1" aria-label="' + escapeHtml(rowLabel) + '"';
         var extraAnchors = markerIds.slice(1).map(function (id) {
           return '<span id="' + escapeHtml(id) + '" class="schedule-row-anchor" aria-hidden="true"></span>';
         }).join("");
         var targetBadge = isTargetMonth ? " <span class=\"schedule-target-badge\">Target month</span>" : "";
+        var detailButton = '<button type="button" class="schedule-row-detail-toggle" data-action="toggle-schedule-row-details" aria-expanded="false" aria-label="Show interest, principal, and balance for ' + escapeHtml(rowDate) + '">Details</button>';
         return "<tr" + rowAttributes + ">" +
           "<td data-label=\"Month\">" + extraAnchors + row.month + targetBadge + "</td>" +
-          "<td data-label=\"Date\">" + escapeHtml(addMonths(startInput.value, row.month - 1)) + "</td>" +
+          "<td data-label=\"Date\">" + escapeHtml(rowDate) + "</td>" +
           "<td data-label=\"Payment\">" + moneyCents(row.payment) + "</td>" +
-          "<td data-label=\"Interest\">" + moneyCents(row.interest) + "</td>" +
-          "<td data-label=\"Principal\">" + moneyCents(row.principal) + "</td>" +
-          "<td data-label=\"Ending Balance\">" + moneyCents(row.endingBalance) + "</td>" +
-          "<td data-label=\"Extra Payment Target\" aria-label=\"" + escapeHtml(scheduleTargetAriaLabel(row, targetChanged)) + "\">" + scheduleTargetHtml(row, targetChanged) + "</td>" +
+          "<td data-label=\"Interest\" data-schedule-detail=\"true\">" + moneyCents(row.interest) + "</td>" +
+          "<td data-label=\"Principal\" data-schedule-detail=\"true\">" + moneyCents(row.principal) + "</td>" +
+          "<td data-label=\"Ending Balance\" data-schedule-detail=\"true\">" + moneyCents(row.endingBalance) + "</td>" +
+          "<td data-label=\"Extra Payment Target\" aria-label=\"" + escapeHtml(scheduleTargetAriaLabel(row, targetChanged)) + "\">" + scheduleTargetHtml(row, targetChanged) + detailButton + "</td>" +
           "</tr>";
       }
 
@@ -4880,6 +4897,7 @@
       bind(sharedPlanMonthNotice, "change", handleSharedTelemetryOptOutChange);
       bind(scheduleJumpLinks, "click", handleScheduleAnchorClick);
       bind(targetMonthJump, "click", handleScheduleAnchorClick);
+      bind(scheduleRows, "click", handleScheduleDetailToggle);
       bind(window, "hashchange", focusScheduleHashTarget);
 
       document.addEventListener("focus", handleEditableFocus, true);

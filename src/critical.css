@@ -1320,6 +1320,14 @@
       font-size: .78rem;
     }
 
+    .shared-telemetry-helper {
+      margin: -4px 0 0;
+      color: #49627f;
+      font-size: .76rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
     .shared-plan-month-notice {
       display: grid;
       gap: 8px;
@@ -2318,6 +2326,10 @@
       line-height: 1.2;
       white-space: nowrap;
       vertical-align: middle;
+    }
+
+    .schedule-row-detail-toggle {
+      display: none;
     }
 
     .schedule-table td,
@@ -3398,6 +3410,34 @@
         margin-top: 2px;
         border-top: 1px solid #e8eef5;
         padding-top: 8px;
+      }
+
+      .schedule-table tr:not(.schedule-row-expanded) td[data-schedule-detail="true"] {
+        display: none;
+      }
+
+      .schedule-row-detail-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+        min-height: 32px;
+        margin-top: 6px;
+        border: 1px solid #cbd8e8;
+        border-radius: 999px;
+        background: #fff;
+        color: var(--navy);
+        padding: 5px 10px;
+        box-shadow: none;
+        font-size: .74rem;
+        font-weight: 900;
+      }
+
+      .schedule-row-detail-toggle:focus-visible,
+      .schedule-row-detail-toggle:hover {
+        background: #eef4fb;
+        box-shadow: 0 0 0 3px rgba(32,141,84,.1);
+        transform: none;
       }
 
       .comparison-section td::before,

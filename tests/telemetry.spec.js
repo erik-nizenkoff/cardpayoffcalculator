@@ -163,7 +163,8 @@ test("shared month plan opt-out stops quick action telemetry", async ({ page }) 
     optionScenarios: [],
     customOrder: ["card-1", "card-2"]
   }));
-  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Privacy option: do not save calculation data");
+  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Do not save calculation data from this plan");
+  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Applies to edits and what-if buttons.");
   requests.length = 0;
 
   await page.locator("#sharedMonthTelemetryOptOut").check();
