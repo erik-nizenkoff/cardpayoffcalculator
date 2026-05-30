@@ -53,6 +53,7 @@
       var heroMonthlyPaymentEl = document.getElementById("heroMonthlyPayment");
       var payoffSuggestion = document.getElementById("payoffSuggestion");
       var currentPlanSummary = document.getElementById("currentPlanSummary");
+      var paymentDropContext = document.getElementById("paymentDropContext");
       var payoffMonthsEl = document.getElementById("payoffMonths");
       var totalInterestLabel = document.getElementById("totalInterestLabel");
       var totalInterestEl = document.getElementById("totalInterest");
@@ -77,6 +78,7 @@
       var warningsEl = document.getElementById("warnings");
       var monthPlan = document.getElementById("monthPlan");
       var monthPlanIntro = document.getElementById("monthPlanIntro");
+      var sharedPlanMonthNotice = document.getElementById("sharedPlanMonthNotice");
       var monthPlanSummary = document.getElementById("monthPlanSummary");
       var monthPlanFocus = document.getElementById("monthPlanFocus");
       var monthPlanRows = document.getElementById("monthPlanRows");
@@ -145,10 +147,10 @@
         cardRows, calculatorForm, addCardButton, addLoanButton, loanRows, sampleButton,
         clearAllButton, debtSectionTitle, debtSectionIntro, entryGuide, startEntryButton, formError, methodInput, paymentModeInput, extraInput, paymentAmountLabel, paymentInputHint, startInput,
         targetInput, telemetryOptOut, telemetryOptOutStatus, resultsPanel, emptyResults, resultsContent, sharedPlanResultNotice, sampleResultBadge, sampleResultActions, sampleHeroBadge, sampleShareNote, sampleChartBadge, totalBalanceEl, totalMinimumsEl,
-        payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
+        payoffDateEl, heroMonthlyPaymentEl, payoffSuggestion, currentPlanSummary, paymentDropContext, payoffMonthsEl, totalInterestLabel, totalInterestEl, monthlyPaymentEl,
         totalPaidLabel, totalPaidEl, firstTargetEl, paymentModeSummary, targetResult, targetInlineResult, savingsResult, fixedBudgetNudge, methodRecommendation,
         resultExplainer, payoffOptions, optionScenarioList, optionCapacityNotice, optionUsageSummary, payoffOptionRows, payoffOptionNote,
-        criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, monthPlanSummary, monthPlanFocus, monthPlanRows, toggleMonthPlanRowsTop, toggleMonthPlanRows,
+        criticalWarningsEl, warningsEl, monthPlan, monthPlanIntro, sharedPlanMonthNotice, monthPlanSummary, monthPlanFocus, monthPlanRows, toggleMonthPlanRowsTop, toggleMonthPlanRows,
         comparisonRows, comparisonSection, decisionSnapshot, decisionRows, scheduleRows, scheduleNote, scheduleModeNote, targetMonthJump, toggleSchedule, scheduleJumpLinks,
         scheduleLoading, firstRunHint, sampleDataBanner, planModeStatus, enterCardsButton, resultEnterCardsButton, sampleEnterCardsButton, keepSampleButton, dismissHint, boostExtraButton, boostExtraStatus, methodDescription, customOrderPanel,
         customOrderList, printButton, copyLinkButton, copySummaryButton, copySummaryStatus, copyActionsHelp,
@@ -328,18 +330,26 @@
       }
 
       function syncTelemetryOptOutControl() {
-        if (!telemetryOptOut) return;
         var dntEnabled = browserDntEnabled();
-        telemetryOptOut.checked = telemetryDisabled();
-        telemetryOptOut.disabled = dntEnabled;
+        var disabled = telemetryDisabled();
+        if (telemetryOptOut) {
+          telemetryOptOut.checked = disabled;
+          telemetryOptOut.disabled = dntEnabled;
+        }
+        var sharedTelemetryOptOut = document.getElementById("sharedTelemetryOptOut");
+        if (sharedTelemetryOptOut) {
+          sharedTelemetryOptOut.checked = disabled;
+          sharedTelemetryOptOut.disabled = dntEnabled;
+          sharedTelemetryOptOut.title = dntEnabled ? "Your browser Do Not Track setting already opts you out." : "";
+        }
         if (telemetryOptOutStatus) {
           telemetryOptOutStatus.textContent = dntEnabled
             ? "Your browser's Do Not Track setting is already opting you out of calculation telemetry."
             : "";
           telemetryOptOutStatus.classList.toggle("hidden", !dntEnabled);
-          if (dntEnabled) {
+          if (dntEnabled && telemetryOptOut) {
             telemetryOptOut.setAttribute("aria-describedby", "telemetryOptOutStatus");
-          } else {
+          } else if (telemetryOptOut) {
             telemetryOptOut.removeAttribute("aria-describedby");
           }
         }
@@ -784,6 +794,10 @@
           currentPlanSummary.classList.add("hidden");
           currentPlanSummary.textContent = "";
         }
+        if (paymentDropContext) {
+          paymentDropContext.classList.add("hidden");
+          paymentDropContext.textContent = "";
+        }
         if (paymentModeSummary) {
           paymentModeSummary.classList.add("hidden");
           paymentModeSummary.textContent = "";
@@ -856,14 +870,18 @@
           debtSectionIntro.textContent = "Review these " + count + " loaded " + (count === 1 ? "debt" : "debts") + ", edit any details, or jump to the payoff plan.";
           entryGuide.textContent = "Loaded shared plan: confirm balances, APRs, and minimum payments before using the results.";
           startEntryButton.textContent = "Review loaded debts";
+          startEntryButton.setAttribute("href", "#privacyOptions");
           setSharedPlanResultNotice(count);
+          setSharedPlanMonthNotice(count);
           setPlanModeStatus("Shared plan loaded: " + count + " " + (count === 1 ? "debt" : "debts") + ". For privacy, the address bar no longer contains this plan. Use Copy share link to share it.");
         } else {
           debtSectionTitle.textContent = "Your debts";
           debtSectionIntro.textContent = "Start with your own debt details, or load an example to see how the calculator works.";
           entryGuide.textContent = "To get your first answer, enter three numbers per card: balance, APR, and minimum payment.";
           startEntryButton.textContent = "Start entering debts";
+          startEntryButton.setAttribute("href", "#cardInputs");
           setSharedPlanResultNotice(0);
+          setSharedPlanMonthNotice(0);
         }
         syncClearFormState();
         setTimeout(updateMobileSummaryContext, 0);
@@ -896,11 +914,31 @@
         sharedPlanResultNotice.innerHTML =
           "<strong>" + debtText + " loaded from a link.</strong>" +
           " <p>Confirm balances, APRs, and minimum payments before relying on this payoff date.</p> " +
+          '<label class="telemetry-toggle shared-telemetry-toggle"><input id="sharedTelemetryOptOut" data-action="shared-telemetry-opt-out" type="checkbox"> Privacy option: do not save calculation data</label> ' +
           '<div class="shared-plan-result-actions">' +
-          '<a class="secondary-link" href="#cardInputs">Review loaded debts</a> ' +
+          '<a class="secondary-link" href="#privacyOptions">Review privacy &amp; inputs</a> ' +
           '<a class="secondary-link" href="#monthPlan">Continue to payment plan</a>' +
           "</div>";
         sharedPlanResultNotice.classList.remove("hidden");
+        syncTelemetryOptOutControl();
+      }
+
+      function setSharedPlanMonthNotice(count) {
+        if (!sharedPlanMonthNotice) return;
+        if (!count) {
+          sharedPlanMonthNotice.classList.add("hidden");
+          sharedPlanMonthNotice.innerHTML = "";
+          return;
+        }
+        var debtText = count + " " + (count === 1 ? "debt" : "debts");
+        sharedPlanMonthNotice.innerHTML =
+          "<strong>Shared plan: " + debtText + " loaded from a link.</strong>" +
+          " Confirm balances, APRs, minimums, and privacy choices before paying. " +
+          '<div class="shared-plan-result-actions">' +
+          '<a class="secondary-link" href="#privacyOptions">Review inputs/privacy</a> ' +
+          '<a class="secondary-link" href="#resultsPanel">Back to summary</a>' +
+          "</div>";
+        sharedPlanMonthNotice.classList.remove("hidden");
       }
 
       function setModalOpenState(isOpen) {
@@ -1806,6 +1844,17 @@
             : "Next: try adding $50/month to see whether the payoff date improves enough.";
         currentPlanSummary.textContent = planText + ", this plan sends extra payment to " + firstTarget + " first. " + nextText;
         currentPlanSummary.classList.remove("hidden");
+      }
+
+      function renderPaymentDropContext(payment, result) {
+        if (!paymentDropContext || !payment || !result) return;
+        if (payment.mode === "extra" && result.method !== "minimum") {
+          paymentDropContext.textContent = "This is month 1. Total payment can drop as debts are paid off unless you use a fixed budget.";
+          paymentDropContext.classList.remove("hidden");
+          return;
+        }
+        paymentDropContext.classList.add("hidden");
+        paymentDropContext.textContent = "";
       }
 
       function renderSavings(selected, baseline, extraPayment, payment) {
@@ -2944,12 +2993,11 @@
       function scheduleTargetHtml(row, targetChanged) {
         var parts = scheduleTargetParts(row);
         if (!parts) return "-";
-        var changeBadge = targetChanged ? '<span class="schedule-target-change-badge">New target</span> ' : "";
+        var labelPrefix = targetChanged ? "New target: " : "Target: ";
         if (parts.extra <= EPSILON || parts.payment <= EPSILON) {
-          return changeBadge + '<span class="schedule-target-name">Target: ' + escapeHtml(parts.name) + '</span>';
+          return '<span class="schedule-target-name">' + labelPrefix + escapeHtml(parts.name) + '</span>';
         }
-        return changeBadge +
-          '<span class="schedule-target-name">Target: ' + escapeHtml(parts.name) + '</span> ' +
+        return '<span class="schedule-target-name">' + labelPrefix + escapeHtml(parts.name) + '</span> ' +
           '<span class="schedule-target-detail">' + moneyCents(parts.payment) + ' total (' + moneyCents(parts.minimum) + ' minimum + ' + moneySmart(parts.extra) + ' extra)</span>';
       }
 
@@ -3007,6 +3055,28 @@
         scheduleJumpLinks.classList.remove("hidden");
       }
 
+      function focusScheduleHashTarget() {
+        try {
+          var hash = String(window.location.hash || "");
+          if (!hash || hash.indexOf("#schedule") !== 0) return;
+          var target = document.getElementById(hash.slice(1));
+          if (!target) return;
+          var row = target.closest ? target.closest("tr") : null;
+          var focusTarget = row || target;
+          if (!focusTarget.hasAttribute("tabindex")) focusTarget.setAttribute("tabindex", "-1");
+          try {
+            focusTarget.focus({ preventScroll: true });
+          } catch (error) {
+            focusTarget.focus();
+          }
+        } catch (error) {}
+      }
+
+      function scheduleFocusAfterNavigation() {
+        setTimeout(focusScheduleHashTarget, 0);
+        setTimeout(focusScheduleHashTarget, 200);
+      }
+
       function getTargetScheduleMonth(result) {
         var targetMonths = monthsBetweenInclusive(startInput.value, targetInput.value);
         if (!targetMonths || targetMonths <= 1 || !result || !result.timeline || targetMonths > result.timeline.length) return null;
@@ -3020,7 +3090,8 @@
         if (isTargetMonth) rowClasses.push("schedule-target-row");
         if (targetChanged) rowClasses.push("schedule-target-change-row");
         var markerIds = markerData && markerData.markers && markerData.markers[row.month] ? markerData.markers[row.month] : [];
-        var rowAttributes = (rowClasses.length ? " class=\"" + rowClasses.join(" ") + "\"" : "") + (markerIds.length ? " id=\"" + escapeHtml(markerIds[0]) + "\"" : "");
+        var rowLabel = "Month " + row.month + ", " + addMonths(startInput.value, row.month - 1) + ". Payment " + moneyCents(row.payment) + ". Interest " + moneyCents(row.interest) + ". Principal " + moneyCents(row.principal) + ". Ending balance " + moneyCents(row.endingBalance) + ". " + scheduleTargetAriaLabel(row, targetChanged) + ".";
+        var rowAttributes = (rowClasses.length ? " class=\"" + rowClasses.join(" ") + "\"" : "") + (markerIds.length ? " id=\"" + escapeHtml(markerIds[0]) + "\"" : "") + ' tabindex="-1" aria-label="' + escapeHtml(rowLabel) + '"';
         var extraAnchors = markerIds.slice(1).map(function (id) {
           return '<span id="' + escapeHtml(id) + '" class="schedule-row-anchor" aria-hidden="true"></span>';
         }).join("");
@@ -4345,6 +4416,7 @@
         totalPaidEl.textContent = resultPaidText(result);
         firstTargetEl.textContent = result.timeline[0] ? scheduleTargetText(result.timeline[0]) : "-";
         renderCurrentPlanSummary(result, payment);
+        renderPaymentDropContext(payment, result);
         renderPaymentModeSummary(payment, result);
         updateMobileSummary(result);
 
@@ -4768,6 +4840,19 @@
         setTelemetryOptOut(telemetryOptOut.checked);
         syncTelemetryOptOutControl();
       });
+      bind(sharedPlanResultNotice, "change", function (event) {
+        var input = event.target && event.target.closest ? event.target.closest("[data-action='shared-telemetry-opt-out']") : null;
+        if (!input) return;
+        setTelemetryOptOut(input.checked);
+        syncTelemetryOptOutControl();
+      });
+      bind(scheduleJumpLinks, "click", function (event) {
+        if (event.target && event.target.closest && event.target.closest("a[href^='#schedule']")) {
+          scheduleFocusAfterNavigation();
+        }
+      });
+      bind(targetMonthJump, "click", scheduleFocusAfterNavigation);
+      bind(window, "hashchange", focusScheduleHashTarget);
 
       document.addEventListener("focus", handleEditableFocus, true);
       document.addEventListener("focusin", handleEditableFocus);

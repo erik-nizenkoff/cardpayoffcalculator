@@ -558,6 +558,15 @@
       font-size: .78rem;
     }
 
+    #privacyOptions {
+      scroll-margin-top: 16px;
+    }
+
+    #privacyOptions:focus-visible {
+      outline: 3px solid rgba(59,130,246,.35);
+      outline-offset: 3px;
+    }
+
     .payoff-settings-grid + .privacy-disclosure {
       margin: -4px 0 14px;
       border: 1px solid #bdd7ff;
@@ -1203,6 +1212,18 @@
       line-height: 1.45;
     }
 
+    .payment-drop-context {
+      margin: -6px 0 12px;
+      border: 1px solid #f6c177;
+      border-radius: 7px;
+      background: #fff8ed;
+      color: #7b341e;
+      padding: 8px 10px;
+      font-size: .82rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
     .first-run-hint {
       border: 1px solid #bdd7ff;
       background: #f0f7ff;
@@ -1290,6 +1311,31 @@
       padding: 7px 9px;
       font-size: .8rem;
       white-space: normal;
+    }
+
+    .shared-telemetry-toggle {
+      width: fit-content;
+      margin-top: 2px;
+      color: #173d70;
+      font-size: .78rem;
+    }
+
+    .shared-plan-month-notice {
+      display: grid;
+      gap: 8px;
+      margin: 0 0 12px;
+      border: 1px solid #bdd7ff;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      background: #f7fbff;
+      color: #173d70;
+      padding: 11px 12px;
+      font-size: .86rem;
+      line-height: 1.42;
+    }
+
+    .shared-plan-month-notice strong {
+      color: #123968;
     }
 
     .loan-section,
@@ -2200,6 +2246,11 @@
 
     .schedule-table tbody tr.schedule-target-row.schedule-target-change-row {
       box-shadow: inset 3px 0 0 var(--green), inset 0 3px 0 #bfe7cf;
+    }
+
+    .schedule-table tbody tr:focus-visible {
+      outline: 3px solid rgba(59,130,246,.42);
+      outline-offset: 2px;
     }
 
     .schedule-target-name {
