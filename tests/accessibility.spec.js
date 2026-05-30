@@ -60,7 +60,7 @@ test.describe("accessibility smoke", () => {
       customOrder: ["card-1", "card-2"]
     }));
     await expect(page.locator("#monthPlan")).toBeVisible();
-    await expect(page.getByRole("region", { name: "Month 1 payment breakdown and checklist" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Month 1 Payment Breakdown" })).toBeVisible();
 
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

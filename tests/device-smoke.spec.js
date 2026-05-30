@@ -166,8 +166,9 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   await expect(page.locator("#entryGuide")).toContainText("Loaded shared plan");
   await expect(page.locator("#startEntryButton")).toHaveText("Review loaded debts");
   await expect(page.locator("#startEntryButton")).toHaveAttribute("href", "#privacyOptions");
-  await expect(page.locator(".month-plan-schedule-link")).toHaveText("Jump to full schedule");
-  await expect(page.locator(".month-plan-schedule-link")).toHaveAttribute("href", "#schedulePanel");
+  await expect(page.locator(".month-plan-primary-schedule-link")).toHaveText("View month-by-month schedule");
+  await expect(page.locator(".month-plan-primary-schedule-link")).toHaveAttribute("href", "#schedulePanel");
+  await expect(page.locator(".month-plan-schedule-link")).toHaveCount(0);
   await expect(page.locator("#sampleButton")).toBeHidden();
   await expect(page.locator("#planModeStatus")).toContainText("For privacy, the address bar no longer contains this plan");
   await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.id)).toBe("monthPlan");
@@ -283,8 +284,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlanIntro")).toContainText("All 4 first-month payments are shown.");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("All 4 first-month payments are shown.");
   await expect(page.locator(".month-plan-back-link")).toHaveText("Back to summary");
-  await expect(page.locator(".month-plan-schedule-link")).toHaveText("Jump to full schedule");
-  await expect(page.locator(".month-plan-schedule-link")).toBeVisible();
+  await expect(page.locator(".month-plan-schedule-link")).toHaveCount(0);
   await expect(page.locator(".month-plan-chart-link")).toHaveText("Jump to chart");
   await expect(page.locator(".month-plan-chart-link")).toBeVisible();
   await expect(page.locator("#monthPlanSummary")).toContainText("Avalanche");
@@ -297,20 +297,22 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator(".month-plan-primary-schedule-link")).toHaveAttribute("href", "#schedulePanel");
   const focusBeforeActions = await page.evaluate(() => {
     const focus = document.querySelector("#monthPlanFocus");
+    const notice = document.querySelector("#sharedPlanMonthNotice");
     const primarySchedule = document.querySelector(".month-plan-primary-schedule-link");
     const summary = document.querySelector("#monthPlanSummary");
     const actions = document.querySelector("#monthPlan .month-plan-actions");
-    const notice = document.querySelector("#sharedPlanMonthNotice");
     return Boolean(
       focus &&
+      notice &&
       primarySchedule &&
       summary &&
       actions &&
-      notice &&
+      (focus.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+      (notice.compareDocumentPosition(primarySchedule) & Node.DOCUMENT_POSITION_FOLLOWING) &&
       (focus.compareDocumentPosition(primarySchedule) & Node.DOCUMENT_POSITION_FOLLOWING) &&
       (primarySchedule.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING) &&
       (focus.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING) &&
-      (focus.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING)
+      (notice.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING)
     );
   });
   expect(focusBeforeActions).toBe(true);
@@ -320,16 +322,30 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   await expect(page.locator("#monthPlan")).toContainText("$200 extra");
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
+  await expect(page.locator("#toggleMonthPlanMath")).toBeVisible();
+  await expect(page.locator("#toggleMonthPlanMath")).toHaveText("Show interest details");
+  await expect(page.locator("#monthPlanRows tr").first().locator("[data-month-plan-detail='true']").first()).toBeHidden();
+  await page.locator("#toggleMonthPlanMath").click();
+  await expect(page.locator("#toggleMonthPlanMath")).toHaveText("Hide interest details");
+  await expect(page.locator("#toggleMonthPlanMath")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#monthPlanRows tr").first().locator("[data-month-plan-detail='true']").first()).toBeVisible();
+  await page.locator("#toggleMonthPlanMath").click();
+  await expect(page.locator("#monthPlanRows tr").first().locator("[data-month-plan-detail='true']").first()).toBeHidden();
+  await expect(page.locator("#monthPlanSchedulePreview")).toContainText("Schedule preview");
+  await expect(page.locator("#monthPlanSchedulePreview")).toContainText("First 3 months");
+  await expect(page.locator(".month-plan-schedule-preview-link")).toHaveAttribute("href", "#schedulePanel");
   const touchTargetSizes = await page.evaluate(() => ({
     topToggle: Math.round(document.querySelector("#toggleMonthPlanRowsTop").getBoundingClientRect().height),
-    monthOptOut: Math.round(document.querySelector("#sharedMonthTelemetryOptOut").closest("label").getBoundingClientRect().height)
+    monthOptOut: Math.round(document.querySelector("#sharedMonthTelemetryOptOut").closest("label").getBoundingClientRect().height),
+    mathToggle: Math.round(document.querySelector("#toggleMonthPlanMath").getBoundingClientRect().height)
   }));
   expect(touchTargetSizes.topToggle).toBeGreaterThanOrEqual(44);
   expect(touchTargetSizes.monthOptOut).toBeGreaterThanOrEqual(44);
+  expect(touchTargetSizes.mathToggle).toBeGreaterThanOrEqual(44);
   const monthPlanRowHeights = await page.locator("#monthPlanRows tr").evaluateAll((rows) =>
     rows.map((row) => Math.round(row.getBoundingClientRect().height))
   );
-  expect(Math.max(...monthPlanRowHeights)).toBeLessThan(170);
+  expect(Math.max(...monthPlanRowHeights)).toBeLessThan(125);
   const staticTabStops = await page.evaluate(() =>
     Array.from(document.querySelectorAll("[tabindex]"))
       .filter((element) => element.tabIndex >= 0)
@@ -427,6 +443,10 @@ test("schedule marks and compresses target changes on mobile", async ({ page }) 
   await expect(page.locator("#scheduleJumpLinks")).toContainText("Final month");
   await expect(page.locator("#scheduleRows tr").first().locator("[data-schedule-detail='true']").first()).toBeHidden();
   await expect(page.locator("#scheduleRows tr").first().getByRole("button", { name: /Show interest, principal, and balance/ })).toBeVisible();
+  const detailButtonHeight = await page.locator("#scheduleRows tr").first().getByRole("button", { name: /Show interest, principal, and balance/ }).evaluate((button) =>
+    Math.round(button.getBoundingClientRect().height)
+  );
+  expect(detailButtonHeight).toBeGreaterThanOrEqual(44);
   const firstRowHeight = await page.locator("#scheduleRows tr").first().evaluate((row) =>
     Math.round(row.getBoundingClientRect().height)
   );
