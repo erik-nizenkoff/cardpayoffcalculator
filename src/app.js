@@ -171,6 +171,7 @@
       var showAllMonthPlan = false;
       var isSampleMode = false;
       var isSharedPlanLoaded = false;
+      var sharedPlanTelemetryPaused = false;
       var scheduleRenderGeneration = 0;
       var sharedPlanLoadError = "";
       var updateTimer = null;
@@ -864,6 +865,7 @@
 
       function setSharedPlanLoaded(count) {
         isSharedPlanLoaded = count > 0;
+        sharedPlanTelemetryPaused = isSharedPlanLoaded;
         document.body.classList.toggle("shared-plan-loaded", isSharedPlanLoaded);
         if (isSharedPlanLoaded) {
           debtSectionTitle.textContent = "Shared plan loaded";
@@ -936,12 +938,15 @@
           "<strong>Shared plan: " + debtText + " loaded from a link.</strong>" +
           " Confirm balances, APRs, minimums, and privacy choices before paying. " +
           '<label class="telemetry-toggle shared-telemetry-toggle"><input id="sharedMonthTelemetryOptOut" data-action="shared-telemetry-opt-out" type="checkbox"> Do not save calculation data from this plan</label> ' +
-          '<p class="shared-telemetry-helper">Applies to edits and what-if buttons.</p>' +
-          '<div class="shared-plan-result-actions">' +
-          '<a class="secondary-link" href="#privacyOptions">Review inputs/privacy</a>' +
-          "</div>";
+          '<p class="shared-telemetry-helper">Applies to edits and what-if buttons.</p>';
         sharedPlanMonthNotice.classList.remove("hidden");
         syncTelemetryOptOutControl();
+      }
+
+      function markSharedPlanEditedForTelemetry() {
+        if (isSharedPlanLoaded) {
+          sharedPlanTelemetryPaused = false;
+        }
       }
 
       function setModalOpenState(isOpen) {
@@ -3128,6 +3133,35 @@
         return targetMonths;
       }
 
+      function schedulePreviousTimelineRow(result, row) {
+        if (!result || !result.timeline || !row || row.month <= 1) return null;
+        return result.timeline[row.month - 2] || null;
+      }
+
+      function scheduleMilestoneRows(result, markerData) {
+        if (!result || !result.timeline) return [];
+        var months = {};
+        function addMonth(month) {
+          if (!month || month < 1 || month > result.timeline.length) return;
+          months[month] = true;
+        }
+        for (var month = 1; month <= Math.min(3, result.timeline.length); month += 1) {
+          addMonth(month);
+        }
+        if (markerData && markerData.links) {
+          markerData.links.forEach(function (link) {
+            addMonth(link.month);
+          });
+        }
+        return Object.keys(months).map(function (month) {
+          return Number(month);
+        }).sort(function (a, b) {
+          return a - b;
+        }).map(function (month) {
+          return result.timeline[month - 1];
+        }).filter(Boolean);
+      }
+
       function scheduleRowHtml(row, targetMonth, previousRow, markerData) {
         var isTargetMonth = Boolean(targetMonth && row.month === targetMonth);
         var targetChanged = Boolean(previousRow && row.target && row.target !== previousRow.target);
@@ -3156,15 +3190,25 @@
 
       function renderSchedule(result) {
         var generation = ++scheduleRenderGeneration;
-        var initialScheduleMonths = 12;
+        var desktopScheduleMonths = 12;
+        var mobileMilestoneMonths = 3;
         var targetMonth = getTargetScheduleMonth(result);
-        var maxDisplayRows = showAllSchedule ? Math.min(result.timeline.length, 240) : Math.min(result.timeline.length, initialScheduleMonths);
-        var rows = result.timeline.slice(0, maxDisplayRows);
-        if (!showAllSchedule && targetMonth && targetMonth > maxDisplayRows) {
-          rows.push(result.timeline[targetMonth - 1]);
-        }
         var markerData = scheduleShortcutMarkers(result, targetMonth);
-        renderScheduleJumpLinks(markerData, showAllSchedule && result.timeline.length > initialScheduleMonths);
+        var mobileMilestoneMode = !showAllSchedule && isMobileViewport() && result.timeline.length > mobileMilestoneMonths;
+        var collapsedScheduleMonths = isMobileViewport() ? mobileMilestoneMonths : desktopScheduleMonths;
+        var maxDisplayRows = showAllSchedule ? Math.min(result.timeline.length, 240) : Math.min(result.timeline.length, desktopScheduleMonths);
+        var rows = [];
+        if (showAllSchedule) {
+          rows = result.timeline.slice(0, maxDisplayRows);
+        } else if (mobileMilestoneMode) {
+          rows = scheduleMilestoneRows(result, markerData);
+        } else {
+          rows = result.timeline.slice(0, maxDisplayRows);
+          if (targetMonth && targetMonth > maxDisplayRows) {
+            rows.push(result.timeline[targetMonth - 1]);
+          }
+        }
+        renderScheduleJumpLinks(markerData, showAllSchedule && result.timeline.length > desktopScheduleMonths);
         var targetIsVisible = Boolean(targetMonth && rows.some(function (row) { return row.month === targetMonth; }));
         targetMonthJump.classList.toggle("hidden", !targetIsVisible);
         if (targetIsVisible) {
@@ -3172,8 +3216,8 @@
         }
 
         function scheduleRowsHtml(targetRows) {
-          return targetRows.map(function (row, index) {
-            return scheduleRowHtml(row, targetMonth, targetRows[index - 1], markerData);
+          return targetRows.map(function (row) {
+            return scheduleRowHtml(row, targetMonth, schedulePreviousTimelineRow(result, row), markerData);
           }).join("");
         }
 
@@ -3185,8 +3229,10 @@
 
         function scheduleStatus(count) {
           var targetMonthDate = targetMonth ? addMonths(startInput.value, targetMonth - 1) : "";
-          var note = !showAllSchedule && targetMonth && targetMonth > initialScheduleMonths
-            ? "Showing first " + Math.min(initialScheduleMonths, result.timeline.length) + " months plus target month " + targetMonthDate + "."
+          var note = mobileMilestoneMode
+            ? "Showing milestone months (" + count + " of " + result.timeline.length + "): first 3 months plus key payoff milestones."
+            : !showAllSchedule && targetMonth && targetMonth > desktopScheduleMonths
+            ? "Showing first " + Math.min(desktopScheduleMonths, result.timeline.length) + " months plus target month " + targetMonthDate + "."
             : "Showing " + count + " of " + result.timeline.length + " months.";
           if (showAllSchedule && result.timeline.length > 240) {
             note += " Schedule capped at 20 years for display. Full payoff timeline shown in the results above.";
@@ -3194,14 +3240,16 @@
           return note;
         }
 
-        if (result.timeline.length > initialScheduleMonths) {
+        if (result.timeline.length > collapsedScheduleMonths) {
           toggleSchedule.classList.remove("hidden");
-          toggleSchedule.textContent = showAllSchedule ? "Show first 12 months" : "Show all " + result.timeline.length + " months";
+          toggleSchedule.textContent = showAllSchedule
+            ? (isMobileViewport() ? "Show milestone months" : "Show first 12 months")
+            : "Show all " + result.timeline.length + " months";
         } else {
           toggleSchedule.classList.add("hidden");
         }
 
-        if (!showAllSchedule || rows.length <= initialScheduleMonths) {
+        if (!showAllSchedule || rows.length <= desktopScheduleMonths) {
           renderRowsSynchronously(rows);
           return;
         }
@@ -3214,8 +3262,8 @@
         function renderBatch() {
           if (generation !== scheduleRenderGeneration) return;
           var nextRows = rows.slice(rendered, rendered + 100);
-          scheduleRows.insertAdjacentHTML("beforeend", nextRows.map(function (row, index) {
-            return scheduleRowHtml(row, targetMonth, rows[rendered + index - 1], markerData);
+          scheduleRows.insertAdjacentHTML("beforeend", nextRows.map(function (row) {
+            return scheduleRowHtml(row, targetMonth, schedulePreviousTimelineRow(result, row), markerData);
           }).join(""));
           rendered += nextRows.length;
           scheduleNote.textContent = scheduleStatus(rendered);
@@ -3259,7 +3307,7 @@
         var targetMonth = getTargetScheduleMonth(lastResult);
         var markerData = scheduleShortcutMarkers(lastResult, targetMonth);
         renderScheduleJumpLinks(markerData, false);
-        scheduleRows.innerHTML = rows.map(function (row, index) { return scheduleRowHtml(row, targetMonth, rows[index - 1], markerData); }).join("");
+        scheduleRows.innerHTML = rows.map(function (row) { return scheduleRowHtml(row, targetMonth, schedulePreviousTimelineRow(lastResult, row), markerData); }).join("");
         scheduleNote.textContent = "Showing " + rows.length + " of " + lastResult.timeline.length + " months.";
         scheduleLoading.classList.add("hidden");
       }
@@ -4485,7 +4533,7 @@
         renderSchedule(result);
         drawCharts(result);
         renderResultExplainer(cards, loans, result, baseline, comparisonResults, payment);
-        if (!options.skipTracking && !isSampleMode) {
+        if (!options.skipTracking && !isSampleMode && !sharedPlanTelemetryPaused) {
           trackCalculation(cards, loans, {
             method: method,
             extraPayment: extra,
@@ -4634,6 +4682,7 @@
 
       bind(cardRows, "input", function (event) {
         var editedRow = event.target ? event.target.closest("tr") : null;
+        markSharedPlanEditedForTelemetry();
         if (isSampleMode) exitSampleForOwnPlan(editedRow);
         else markRowUpdated(editedRow);
         if (!sampleDataBanner.classList.contains("hidden")) sampleDataBanner.classList.add("hidden");
@@ -4655,6 +4704,7 @@
         if (input.dataset.field !== "minimum" || !row || row.nextElementSibling) return;
         if (!rowHasEnteredField(row, ["name", "balance", "apr", "minimum", "introApr", "introMonths"])) return;
         event.preventDefault();
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(row);
         var newRow = addCardRow(null, { expandOnMobile: true });
         update();
@@ -4662,6 +4712,7 @@
       });
 
       bind(optionScenarioList, "input", function (event) {
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(null);
         if (event.target && event.target.dataset && event.target.dataset.optionField === "amount") {
           event.target.dataset.optionAutoDefault = "false";
@@ -4677,6 +4728,7 @@
         var lastField = scenario.dataset.optionType === "balance-transfer" ? "postApr" : "fee";
         if (input.dataset.optionField !== lastField) return;
         event.preventDefault();
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(null);
         var newScenario = addOptionScenario(scenario.dataset.optionType);
         update();
@@ -4686,6 +4738,7 @@
         var button = event.target.closest("button[data-action]");
         if (!button) return;
         if (button.dataset.action === "add-balance-transfer") {
+          markSharedPlanEditedForTelemetry();
           if (isSampleMode) {
             exitSampleForOwnPlan(null);
           }
@@ -4698,6 +4751,7 @@
           return;
         }
         if (button.dataset.action === "add-consolidation-loan") {
+          markSharedPlanEditedForTelemetry();
           if (isSampleMode) {
             exitSampleForOwnPlan(null);
           }
@@ -4710,6 +4764,7 @@
           return;
         }
         if (button.dataset.action === "remove-option-scenario") {
+          markSharedPlanEditedForTelemetry();
           var scenario = button.closest(".option-fieldset");
           if (scenario) scenario.remove();
           updateOptionScenarioLimitState();
@@ -4729,6 +4784,7 @@
 
         var button = event.target.closest("button[data-action='remove']");
         if (button) {
+          markSharedPlanEditedForTelemetry();
           exitSampleForOwnPlan(button.closest("tr"));
           var row = button.closest("tr");
           if (row) {
@@ -4742,6 +4798,7 @@
         // Intro rate toggle
         var toggleBtn = event.target.closest("button[data-action='toggle-intro']");
         if (toggleBtn) {
+          markSharedPlanEditedForTelemetry();
           var introDiv = toggleBtn.closest("td").querySelector(".intro-fields");
           var expanded = toggleBtn.getAttribute("aria-expanded") === "true";
           if (introDiv) introDiv.classList.toggle("hidden", expanded);
@@ -4753,6 +4810,7 @@
       });
 
       bind(loanRows, "input", function () {
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(null);
         scheduleUpdate();
       });
@@ -4764,6 +4822,7 @@
         if (!row || row.nextElementSibling) return;
         if (!loanRowHasEnteredField(row)) return;
         event.preventDefault();
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(null);
         var newRow = addLoanRow();
         update();
@@ -4772,6 +4831,7 @@
       bind(loanRows, "click", function (event) {
         var button = event.target.closest("button[data-action='remove-loan']");
         if (!button) return;
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(null);
         var row = button.closest("tr");
         if (row) {
@@ -4788,6 +4848,7 @@
         if (!item) return;
         var index = customOrder.indexOf(item.dataset.id);
         if (index === -1) return;
+        markSharedPlanEditedForTelemetry();
         var direction = button.dataset.action === "custom-up" ? -1 : 1;
         var nextIndex = index + direction;
         if (nextIndex < 0 || nextIndex >= customOrder.length) return;
@@ -4798,12 +4859,14 @@
       });
 
       bind(addCardButton, "click", function () {
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(null);
         addCardRow(null, { expandOnMobile: true });
         update();
       });
 
       bind(addLoanButton, "click", function () {
+        markSharedPlanEditedForTelemetry();
         exitSampleForOwnPlan(null);
         addLoanRow();
         update();
@@ -4927,11 +4990,13 @@
 
       [methodInput, paymentModeInput, extraInput, startInput, targetInput].forEach(function (input) {
         bind(input, "input", function () {
+          markSharedPlanEditedForTelemetry();
           exitSampleForOwnPlan(null);
           if (input === paymentModeInput) syncPaymentModeValue();
           scheduleUpdate();
         });
         bind(input, "change", function () {
+          markSharedPlanEditedForTelemetry();
           if (input === paymentModeInput) syncPaymentModeValue();
           update();
         });

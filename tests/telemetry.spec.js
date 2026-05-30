@@ -174,6 +174,44 @@ test("shared month plan opt-out stops quick action telemetry", async ({ page }) 
   expect(requests).toEqual([]);
 });
 
+test("shared plan quick actions wait for manual edits before telemetry", async ({ page }) => {
+  const requests = [];
+  await page.setViewportSize({ width: 390, height: 844 });
+  await keepTelemetryAvailable(page);
+  await page.route(SUPABASE_CALCULATIONS_URL, async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({ status: 201, body: "" });
+  });
+
+  await page.goto(sharedMonthPlanUrl({
+    v: 1,
+    method: "avalanche",
+    extraPayment: 200,
+    paymentMode: "extra",
+    paymentAmount: 200,
+    startMonth: "2026-05",
+    targetMonth: "",
+    cards: [
+      { id: "card-1", name: "Private Bank Card", balance: 8500, apr: 22.99, minimum: 170 },
+      { id: "card-2", name: "Store Card", balance: 1200, apr: 28.99, minimum: 45 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1", "card-2"]
+  }));
+  requests.length = 0;
+
+  await page.getByRole("button", { name: "Try +$50/mo" }).click();
+  await page.waitForTimeout(1000);
+  expect(requests).toEqual([]);
+
+  await page.locator("#cardInputs").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Expand card details" }).first().click();
+  await page.getByRole("spinbutton", { name: "Private Bank Card balance" }).fill("8600");
+
+  await expect.poll(() => requests.length).toBeGreaterThan(0);
+});
+
 test("shared links preserve loan names when reopened", async ({ page }) => {
   await page.goto(sharedStateUrl({
     v: 1,

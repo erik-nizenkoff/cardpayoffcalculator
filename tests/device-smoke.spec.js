@@ -159,7 +159,7 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   await expect(page.locator("#monthPlanFocus")).toContainText("Pay Visa");
   await expect(page.locator(".month-plan-target-row")).toHaveCount(1);
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Shared plan: 1 debt loaded from a link");
-  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Review inputs/privacy");
+  await expect(page.locator("#sharedPlanMonthNotice")).not.toContainText("Review inputs/privacy");
   await expect(page.locator(".month-plan-back-link")).toBeVisible();
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   await expect(page.locator("#entryGuide")).toContainText("Loaded shared plan");
@@ -264,7 +264,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#sharedPlanResultNotice")).toContainText("Do not save calculation data from this plan");
   await expect(page.locator("#sharedPlanResultNotice")).toContainText("Applies to edits and what-if buttons.");
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Shared plan: 4 debts loaded from a link");
-  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Review inputs/privacy");
+  await expect(page.locator("#sharedPlanMonthNotice")).not.toContainText("Review inputs/privacy");
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Do not save calculation data from this plan");
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Applies to edits and what-if buttons.");
   await expect(page.locator("#sharedPlanMonthNotice")).not.toContainText("Back to summary");
@@ -364,8 +364,13 @@ test("schedule marks and compresses target changes on mobile", async ({ page }) 
   }));
 
   await page.locator("#schedulePanel").scrollIntoViewIfNeeded();
+  await expect(page.locator("#scheduleNote")).toContainText("Showing milestone months");
+  const milestoneRowCount = await page.locator("#scheduleRows tr").count();
+  expect(milestoneRowCount).toBeGreaterThanOrEqual(3);
+  expect(milestoneRowCount).toBeLessThan(12);
   await expect(page.locator("#toggleSchedule")).toContainText("Show all");
   await page.locator("#toggleSchedule").click();
+  await expect(page.locator("#toggleSchedule")).toContainText("Show milestone months");
 
   await expect(page.locator(".schedule-target-change-row").first()).toBeVisible();
   await expect(page.locator(".schedule-target-change-row").first()).toContainText("New target:");
