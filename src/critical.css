@@ -588,7 +588,10 @@
       align-items: center;
       gap: 8px;
       margin-top: 7px;
+      min-height: 44px;
+      padding: 4px 0;
       color: #4a5568;
+      cursor: pointer;
       font-size: .76rem;
       font-weight: 700;
       line-height: 1.35;
@@ -601,8 +604,8 @@
     }
 
     .telemetry-toggle input {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       margin: 0;
       accent-color: var(--green);
       flex: 0 0 auto;
@@ -1315,6 +1318,7 @@
 
     .shared-telemetry-toggle {
       width: fit-content;
+      max-width: 100%;
       margin-top: 2px;
       color: #173d70;
       font-size: .78rem;
@@ -1476,6 +1480,27 @@
       min-height: 38px;
       padding: 7px 10px;
       font-size: .82rem;
+    }
+
+    .month-plan-actions .month-plan-toggle-top {
+      min-height: 44px;
+    }
+
+    .month-plan-primary-schedule-link {
+      width: 100%;
+      min-height: 44px;
+      margin: -2px 0 12px;
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(39,103,73,.22);
+    }
+
+    .month-plan-primary-schedule-link:hover,
+    .month-plan-primary-schedule-link:focus-visible {
+      background: var(--green-dark);
+      color: #fff;
+      box-shadow: 0 0 0 3px rgba(32,141,84,.16);
     }
 
     .month-plan-summary {
@@ -3170,31 +3195,32 @@
 
       .month-plan-actions .month-plan-toggle-top {
         grid-column: 1 / -1;
-        justify-self: start;
-        width: auto;
-        min-height: auto;
-        border: 0;
-        background: transparent;
+        justify-self: stretch;
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid #b8c6d9;
+        border-radius: 7px;
+        background: #fff;
         color: var(--navy);
-        padding: 2px 0;
+        padding: 9px 10px;
         box-shadow: none;
         font-size: .82rem;
-        text-decoration: underline;
-        text-underline-offset: 2px;
+        text-align: center;
+        text-decoration: none;
       }
 
       .month-plan-actions .month-plan-toggle-top:hover,
       .month-plan-actions .month-plan-toggle-top:focus-visible {
-        background: transparent;
+        background: #eef4fb;
         box-shadow: none;
-        color: var(--green-dark);
+        color: var(--navy);
         transform: none;
       }
 
       .month-plan.month-plan-collapsed .month-plan-actions .month-plan-toggle-top {
         justify-self: stretch;
         width: 100%;
-        min-height: 42px;
+        min-height: 44px;
         border: 1px solid var(--green);
         border-radius: 7px;
         background: var(--green);
@@ -3237,11 +3263,14 @@
       }
 
       .month-plan tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, .86fr);
+        gap: 5px 8px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #fff;
-        margin-bottom: 10px;
-        padding: 10px;
+        margin-bottom: 8px;
+        padding: 8px;
       }
 
       .month-plan-target-badge {
@@ -3255,14 +3284,18 @@
 
       .month-plan td {
         display: grid;
-        grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
-        gap: 8px;
+        grid-template-columns: 1fr;
+        gap: 2px;
         border-bottom: 0;
-        padding: 5px 0;
-        text-align: right;
+        padding: 0;
+        font-size: .82rem;
+        line-height: 1.25;
+        text-align: left;
       }
 
       .month-plan td:first-child {
+        grid-column: 1;
+        grid-row: 1;
         display: block;
         color: var(--ink);
         font-weight: 900;
@@ -3274,27 +3307,63 @@
         display: none;
       }
 
+      .month-plan td[data-label="Payment"] {
+        grid-column: 2;
+        grid-row: 1;
+        font-weight: 900;
+        text-align: right;
+      }
+
+      .month-plan td[data-label="Interest"],
+      .month-plan td[data-label="Principal"] {
+        border-top: 1px solid #edf2f7;
+        padding-top: 5px;
+      }
+
+      .month-plan td[data-label="Interest"] {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .month-plan td[data-label="Principal"] {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      .month-plan td[data-label="Balance after payment"] {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        border-top: 1px solid #edf2f7;
+        padding-top: 4px;
+      }
+
       .month-plan td::before {
         content: attr(data-label);
         color: var(--muted);
-        font-size: .72rem;
+        font-size: .66rem;
         font-weight: 900;
+        line-height: 1.15;
         text-align: left;
         text-transform: uppercase;
+      }
+
+      .month-plan td[data-label="Payment"]::before {
+        text-align: right;
       }
 
       .month-plan-extra-badge {
         display: block;
         width: fit-content;
-        margin: 4px 0 0 auto;
+        margin: 3px 0 0 auto;
         border-radius: 999px;
         background: #f1fbf5;
         color: var(--green-dark);
-        padding: 3px 7px;
-        font-size: .72rem;
+        padding: 3px 6px;
+        font-size: .68rem;
         font-weight: 900;
         line-height: 1.2;
         text-align: right;
+        white-space: normal;
       }
 
       .month-plan-toggle {

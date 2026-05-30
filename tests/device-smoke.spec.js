@@ -293,14 +293,22 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlanSummary")).toContainText("Can decrease");
   await expect(page.locator("#monthPlanFocus")).toContainText("This month's focus");
   await expect(page.locator("#monthPlanFocus")).toContainText("Pay Visa 4");
+  await expect(page.locator(".month-plan-primary-schedule-link")).toHaveText("View month-by-month schedule");
+  await expect(page.locator(".month-plan-primary-schedule-link")).toHaveAttribute("href", "#schedulePanel");
   const focusBeforeActions = await page.evaluate(() => {
     const focus = document.querySelector("#monthPlanFocus");
+    const primarySchedule = document.querySelector(".month-plan-primary-schedule-link");
+    const summary = document.querySelector("#monthPlanSummary");
     const actions = document.querySelector("#monthPlan .month-plan-actions");
     const notice = document.querySelector("#sharedPlanMonthNotice");
     return Boolean(
       focus &&
+      primarySchedule &&
+      summary &&
       actions &&
       notice &&
+      (focus.compareDocumentPosition(primarySchedule) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+      (primarySchedule.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING) &&
       (focus.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING) &&
       (focus.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING)
     );
@@ -312,6 +320,23 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   await expect(page.locator("#monthPlan")).toContainText("$200 extra");
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
+  const touchTargetSizes = await page.evaluate(() => ({
+    topToggle: Math.round(document.querySelector("#toggleMonthPlanRowsTop").getBoundingClientRect().height),
+    monthOptOut: Math.round(document.querySelector("#sharedMonthTelemetryOptOut").closest("label").getBoundingClientRect().height)
+  }));
+  expect(touchTargetSizes.topToggle).toBeGreaterThanOrEqual(44);
+  expect(touchTargetSizes.monthOptOut).toBeGreaterThanOrEqual(44);
+  const monthPlanRowHeights = await page.locator("#monthPlanRows tr").evaluateAll((rows) =>
+    rows.map((row) => Math.round(row.getBoundingClientRect().height))
+  );
+  expect(Math.max(...monthPlanRowHeights)).toBeLessThan(170);
+  const staticTabStops = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("[tabindex]"))
+      .filter((element) => element.tabIndex >= 0)
+      .filter((element) => !element.matches("a[href], button, input, select, textarea, summary, [role='button'], [role='link']"))
+      .map((element) => element.id || element.className || element.tagName)
+  );
+  expect(staticTabStops).toEqual([]);
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
       .filter((row) => getComputedStyle(row).display !== "none");

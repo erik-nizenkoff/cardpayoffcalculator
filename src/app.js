@@ -259,10 +259,8 @@
 
       function enhanceScrollableTables(root) {
         (root || document).querySelectorAll(".table-scroll").forEach(function (region, index) {
-          region.setAttribute("tabindex", "0");
-          if (!region.hasAttribute("role")) {
-            region.setAttribute("role", "region");
-          }
+          region.removeAttribute("tabindex");
+          if (region.getAttribute("role") === "region") region.removeAttribute("role");
           if (!region.hasAttribute("aria-label")) {
             region.setAttribute("aria-label", "Scrollable table " + (index + 1));
           }
