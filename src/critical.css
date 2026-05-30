@@ -1468,6 +1468,7 @@
       gap: 8px;
       flex-wrap: wrap;
       flex: 0 0 auto;
+      margin: 0 0 12px;
     }
 
     .month-plan-actions .secondary-link,
@@ -2620,6 +2621,17 @@
       color: inherit;
     }
 
+    .feedback-privacy-summary ul {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .feedback-privacy-summary li {
+      margin: 0;
+    }
+
     .feedback-privacy-summary strong {
       color: #123968;
     }
@@ -3417,14 +3429,14 @@
 
       .schedule-table tr {
         grid-template-columns: minmax(0, .72fr) minmax(0, 1fr) minmax(0, 1fr);
-        gap: 6px 8px;
-        padding: 8px;
+        gap: 5px 7px;
+        padding: 7px;
       }
 
       .schedule-table td {
         grid-template-columns: 1fr;
         gap: 2px;
-        font-size: .82rem;
+        font-size: .8rem;
         line-height: 1.25;
       }
 
@@ -3463,11 +3475,11 @@
         grid-row: 2;
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 4px 8px;
+        gap: 3px 7px;
         align-items: center;
         margin-top: 0;
         border-top: 1px solid #e8eef5;
-        padding-top: 6px;
+        padding-top: 5px;
       }
 
       .schedule-table tr:not(.schedule-row-expanded) td[data-schedule-detail="true"] {
@@ -3485,13 +3497,13 @@
         align-items: center;
         justify-content: center;
         width: fit-content;
-        min-height: 30px;
+        min-height: 28px;
         margin: 0;
         border: 1px solid #cbd8e8;
         border-radius: 999px;
         background: #fff;
         color: var(--navy);
-        padding: 4px 9px;
+        padding: 3px 8px;
         box-shadow: none;
         font-size: .74rem;
         font-weight: 900;
@@ -3542,7 +3554,7 @@
       .schedule-target-detail {
         display: inline;
         margin: 0 0 0 4px;
-        font-size: .78rem;
+        font-size: .76rem;
       }
 
       .schedule-target-change-badge {

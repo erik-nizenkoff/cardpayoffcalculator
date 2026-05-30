@@ -287,9 +287,9 @@ test("feedback report defaults to no diagnostic input snapshot", async ({ page }
 
   await page.getByRole("button", { name: "Report an issue" }).first().click();
   await expect(page.getByRole("dialog", { name: "Report an Issue" })).toBeVisible();
-  await expect(page.getByText("Always sent:")).toBeVisible();
-  await expect(page.getByText("Only if checked:")).toBeVisible();
-  await expect(page.getByText("calculation telemetry opt-out does not block feedback submission")).toBeVisible();
+  await expect(page.getByText("Always included:")).toBeVisible();
+  await expect(page.getByText("Included only if checked:")).toBeVisible();
+  await expect(page.getByText("Do not include card numbers, account names, logins, or personal identifiers.")).toBeVisible();
   await expect(page.getByLabel("Attach current calculator inputs and result summary")).not.toBeChecked();
   await page.getByLabel("Issue or comment").fill("This is a general comment.");
   await page.getByRole("button", { name: "Submit report" }).click();

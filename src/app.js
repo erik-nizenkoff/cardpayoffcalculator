@@ -168,7 +168,7 @@
       var loanNextId = 1;
       var optionScenarioNextId = 1;
       var showAllSchedule = false;
-      var showAllMonthPlan = false;
+      var showAllMonthPlan = true;
       var isSampleMode = false;
       var isSharedPlanLoaded = false;
       var sharedPlanTelemetryPaused = false;
@@ -1950,7 +1950,7 @@
       function syncMonthPlanToggles(canCollapse, count) {
         var hiddenCount = Math.max(0, count - 2);
         var helper = hiddenCount + " payments hidden before paying.";
-        var label = showAllMonthPlan ? "Collapse to first 2 debts" : "Show all " + count + " debts";
+        var label = showAllMonthPlan ? "Collapse to first 2 payments" : "Show all " + count + " payments before paying";
         [toggleMonthPlanRowsTop, toggleMonthPlanRows].forEach(function (button) {
           if (!button) return;
           button.classList.toggle("hidden", !canCollapse);
@@ -2004,7 +2004,7 @@
           ? '<small>Minimums ' + moneyCents(totals.required) + " + Extra " + moneyCents(totals.extra) + "</small>"
           : '<small>Required payments only</small>';
         var paymentDropNote = paymentMode() === "extra" && result.method !== "minimum" && totals.extra > EPSILON
-          ? '<div class="month-plan-summary-item month-plan-summary-note"><span>Later monthly totals</span><strong>May drop</strong><small>As debts are paid off unless you use a fixed budget.</small></div>'
+          ? '<div class="month-plan-summary-item month-plan-summary-note"><span>Later monthly totals</span><strong>Can decrease</strong><small>As debts are paid off unless you use a fixed budget.</small></div>'
           : "";
         monthPlanSummary.innerHTML =
           '<div class="month-plan-summary-item"><span>Debt-free date</span><strong>' + escapeHtml(payoffDate) + "</strong></div>" +
@@ -2062,12 +2062,12 @@
           monthPlanIntro.textContent = canCollapse && !isCollapsed
             ? "All " + result.debtNames.length + " first-month payments are shown."
             : canCollapse
-            ? "Previewing the first 2 debts. " + (result.debtNames.length - 2) + " payments are hidden before paying."
+            ? "Previewing the first 2 payments. Show all " + result.debtNames.length + " payments before paying."
             : "All first-month payments are shown.";
         }
         if (monthPlanHint) {
           monthPlanHint.textContent = isCollapsed
-            ? (result.debtNames.length - 2) + " payments hidden before paying. Show all " + result.debtNames.length + " debts to review the full month-one breakdown."
+            ? (result.debtNames.length - 2) + " payments hidden before paying. Show all " + result.debtNames.length + " payments before paying."
             : "All " + result.debtNames.length + " first-month payments are shown.";
         }
         monthPlanRows.innerHTML = result.debtNames.map(function (name, index) {
@@ -2987,7 +2987,7 @@
         var parts = scheduleTargetParts(row);
         if (!parts) return "-";
         if (parts.extra <= EPSILON || parts.payment <= EPSILON) return parts.name;
-        return parts.name + " " + moneyCents(parts.payment) + " total (" + moneyCents(parts.minimum) + " minimum + " + moneySmart(parts.extra) + " extra)";
+        return parts.name + " " + moneyCents(parts.payment) + " total (+" + moneySmart(parts.extra) + " extra)";
       }
 
       function scheduleTargetParts(row) {
@@ -3011,7 +3011,7 @@
           return '<span class="schedule-target-name">' + labelPrefix + escapeHtml(parts.name) + '</span>';
         }
         return '<span class="schedule-target-name">' + labelPrefix + escapeHtml(parts.name) + '</span> ' +
-          '<span class="schedule-target-detail">' + moneyCents(parts.payment) + ' total (' + moneyCents(parts.minimum) + ' minimum + ' + moneySmart(parts.extra) + ' extra)</span>';
+          '<span class="schedule-target-detail">' + moneyCents(parts.payment) + ' total (+' + moneySmart(parts.extra) + ' extra)</span>';
       }
 
       function scheduleTargetAriaLabel(row, targetChanged) {
@@ -4270,7 +4270,7 @@
           }).slice(0, 60);
         }
         setSampleMode(false);
-        showAllMonthPlan = sharedState.targetHash === "#monthPlan" && !isMobileViewport();
+        showAllMonthPlan = true;
         updateAddButton();
         collapseOptionalDetails({ all: true });
         update({ skipTracking: true, skipUrlUpdate: true });
@@ -4558,6 +4558,7 @@
         loanNextId = 1;
         customOrder = [];
         showAllSchedule = false;
+        showAllMonthPlan = true;
         [
           { name: "Sample Visa", balance: 8500, apr: 22.99, minimum: 170 },
           { name: "Sample Store Card", balance: 1200, apr: 28.99, minimum: 45 },
@@ -4608,6 +4609,7 @@
         loanNextId = 1;
         customOrder = [];
         showAllSchedule = false;
+        showAllMonthPlan = true;
         addCardRow({ name: "", balance: "", apr: "", minimum: "" }, { expandOnMobile: true });
         methodInput.value = "avalanche";
         paymentModeInput.value = "extra";

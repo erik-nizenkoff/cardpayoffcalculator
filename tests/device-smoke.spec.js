@@ -132,7 +132,7 @@ test("payment mode switch converts between extra and total budget amounts", asyn
   await expect.poll(() => page.locator("#extraPayment").inputValue()).toBe("200");
   await expect(page.getByRole("spinbutton", { name: "Extra monthly payment" })).toHaveValue("200");
   await expect(page.locator("#currentPlanSummary")).toContainText("With $200 extra");
-  await expect(page.locator("#scheduleRows tr").first()).toContainText("Visa $250.00 total ($50.00 minimum + $200 extra)");
+  await expect(page.locator("#scheduleRows tr").first()).toContainText("Visa $250.00 total (+$200 extra)");
 });
 
 test("shared result links collapse optional panels for a cleaner deep link", async ({ page }) => {
@@ -224,7 +224,7 @@ test("legacy query share links keep the section anchor after loading", async ({ 
   await expect(page.locator("#monthPlanRows tr")).toHaveCount(4);
   await page.locator("#toggleMonthPlanRowsTop").click();
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
-  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 debts");
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 payments before paying");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments hidden before paying");
   const visibleRows = await page.locator("#monthPlanRows tr").evaluateAll((rows) =>
     rows.filter((row) => getComputedStyle(row).display !== "none").length
@@ -277,11 +277,11 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#sharedMonthTelemetryOptOut")).toBeChecked();
   await expect(page.locator("#paymentDropContext")).toContainText("This is month 1");
   await expect(page.locator("#paymentDropContext")).toContainText("can drop");
-  await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
-  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 debts");
-  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 debts");
-  await expect(page.locator("#monthPlanIntro")).toContainText("2 payments are hidden before paying");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments hidden before paying");
+  await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Collapse to first 2 payments");
+  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Collapse to first 2 payments");
+  await expect(page.locator("#monthPlanIntro")).toContainText("All 4 first-month payments are shown.");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("All 4 first-month payments are shown.");
   await expect(page.locator(".month-plan-back-link")).toHaveText("Back to summary");
   await expect(page.locator(".month-plan-schedule-link")).toHaveText("Jump to full schedule");
   await expect(page.locator(".month-plan-schedule-link")).toBeVisible();
@@ -290,13 +290,28 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlanSummary")).toContainText("Avalanche");
   await expect(page.locator("#monthPlanSummary")).toContainText("Month 1 total");
   await expect(page.locator("#monthPlanSummary")).toContainText("Later monthly totals");
-  await expect(page.locator("#monthPlanSummary")).toContainText("May drop");
+  await expect(page.locator("#monthPlanSummary")).toContainText("Can decrease");
   await expect(page.locator("#monthPlanFocus")).toContainText("This month's focus");
   await expect(page.locator("#monthPlanFocus")).toContainText("Pay Visa 4");
+  const focusBeforeActions = await page.evaluate(() => {
+    const focus = document.querySelector("#monthPlanFocus");
+    const actions = document.querySelector("#monthPlan .month-plan-actions");
+    const notice = document.querySelector("#sharedPlanMonthNotice");
+    return Boolean(
+      focus &&
+      actions &&
+      notice &&
+      (focus.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+      (focus.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING)
+    );
+  });
+  expect(focusBeforeActions).toBe(true);
   await expect(page.locator(".month-plan-target-row")).toHaveCount(1);
   await expect(page.locator(".month-plan-target-row td").first()).toHaveAttribute("aria-label", /Extra payment target/);
   await expect(page.locator(".month-plan-target-badge")).toContainText("Extra target");
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
+  await expect(page.locator("#monthPlan")).toContainText("$200 extra");
+  await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
   const toggleGap = await page.evaluate(() => {
     const visibleRows = Array.from(document.querySelectorAll("#monthPlanRows tr"))
       .filter((row) => getComputedStyle(row).display !== "none");
@@ -307,13 +322,11 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   });
   expect(toggleGap).toBeGreaterThanOrEqual(0);
   await page.locator("#toggleMonthPlanRows").click();
-  await expect(page.locator("#monthPlan")).not.toHaveClass(/month-plan-collapsed/);
-  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Collapse to first 2 debts");
-  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Collapse to first 2 debts");
-  await expect(page.locator("#monthPlanIntro")).toContainText("All 4 first-month payments are shown.");
-  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("All 4 first-month payments are shown.");
-  await expect(page.locator("#monthPlan")).toContainText("$200 extra");
-  await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
+  await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
+  await expect(page.locator("#toggleMonthPlanRowsTop")).toContainText("Show all 4 payments before paying");
+  await expect(page.locator("#toggleMonthPlanRows")).toContainText("Show all 4 payments before paying");
+  await expect(page.locator("#monthPlanIntro")).toContainText("Show all 4 payments before paying");
+  await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments hidden before paying");
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveAttribute("data-label", "Extra Payment Target");
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveCSS("white-space", "normal");
   await expect(page.locator("#scheduleRows tr").first().locator(".schedule-target-copy")).toBeVisible();
