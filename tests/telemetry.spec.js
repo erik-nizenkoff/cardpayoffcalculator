@@ -21,6 +21,15 @@ function legacySharedStateUrl(state) {
   return "/?q=" + encoded;
 }
 
+function sharedMonthPlanUrl(state) {
+  const encoded = Buffer.from(JSON.stringify(state), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  return "/?q=" + encoded + "#monthPlan";
+}
+
 async function keepTelemetryAvailable(page) {
   await page.addInitScript(() => {
     Object.defineProperty(Navigator.prototype, "doNotTrack", {
@@ -124,6 +133,41 @@ test("telemetry excludes debt nicknames and opt-out stops later sends", async ({
   requests.length = 0;
   await page.getByLabel("Privacy option: Do not use my calculator inputs to improve this site").check();
   await page.getByRole("spinbutton", { name: "Private Bank Card balance" }).fill("9200");
+  await page.waitForTimeout(1000);
+
+  expect(requests).toEqual([]);
+});
+
+test("shared month plan opt-out stops quick action telemetry", async ({ page }) => {
+  const requests = [];
+  await page.setViewportSize({ width: 390, height: 844 });
+  await keepTelemetryAvailable(page);
+  await page.route(SUPABASE_CALCULATIONS_URL, async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({ status: 201, body: "" });
+  });
+
+  await page.goto(sharedMonthPlanUrl({
+    v: 1,
+    method: "avalanche",
+    extraPayment: 200,
+    paymentMode: "extra",
+    paymentAmount: 200,
+    startMonth: "2026-05",
+    targetMonth: "",
+    cards: [
+      { id: "card-1", name: "Private Bank Card", balance: 8500, apr: 22.99, minimum: 170 },
+      { id: "card-2", name: "Store Card", balance: 1200, apr: 28.99, minimum: 45 }
+    ],
+    loans: [],
+    optionScenarios: [],
+    customOrder: ["card-1", "card-2"]
+  }));
+  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Privacy option: do not save calculation data");
+  requests.length = 0;
+
+  await page.locator("#sharedMonthTelemetryOptOut").check();
+  await page.getByRole("button", { name: "Try +$50/mo" }).click();
   await page.waitForTimeout(1000);
 
   expect(requests).toEqual([]);

@@ -336,12 +336,12 @@
           telemetryOptOut.checked = disabled;
           telemetryOptOut.disabled = dntEnabled;
         }
-        var sharedTelemetryOptOut = document.getElementById("sharedTelemetryOptOut");
-        if (sharedTelemetryOptOut) {
+        var sharedTelemetryOptOuts = Array.prototype.slice.call(document.querySelectorAll("[data-action='shared-telemetry-opt-out']"));
+        sharedTelemetryOptOuts.forEach(function (sharedTelemetryOptOut) {
           sharedTelemetryOptOut.checked = disabled;
           sharedTelemetryOptOut.disabled = dntEnabled;
           sharedTelemetryOptOut.title = dntEnabled ? "Your browser Do Not Track setting already opts you out." : "";
-        }
+        });
         if (telemetryOptOutStatus) {
           telemetryOptOutStatus.textContent = dntEnabled
             ? "Your browser's Do Not Track setting is already opting you out of calculation telemetry."
@@ -934,11 +934,13 @@
         sharedPlanMonthNotice.innerHTML =
           "<strong>Shared plan: " + debtText + " loaded from a link.</strong>" +
           " Confirm balances, APRs, minimums, and privacy choices before paying. " +
+          '<label class="telemetry-toggle shared-telemetry-toggle"><input id="sharedMonthTelemetryOptOut" data-action="shared-telemetry-opt-out" type="checkbox"> Privacy option: do not save calculation data</label> ' +
           '<div class="shared-plan-result-actions">' +
           '<a class="secondary-link" href="#privacyOptions">Review inputs/privacy</a> ' +
           '<a class="secondary-link" href="#resultsPanel">Back to summary</a>' +
           "</div>";
         sharedPlanMonthNotice.classList.remove("hidden");
+        syncTelemetryOptOutControl();
       }
 
       function setModalOpenState(isOpen) {
@@ -1995,11 +1997,15 @@
         var totalBreakdown = totals.extra > EPSILON
           ? '<small>Minimums ' + moneyCents(totals.required) + " + Extra " + moneyCents(totals.extra) + "</small>"
           : '<small>Required payments only</small>';
+        var paymentDropNote = paymentMode() === "extra" && result.method !== "minimum" && totals.extra > EPSILON
+          ? '<div class="month-plan-summary-item month-plan-summary-note"><span>Later monthly totals</span><strong>May drop</strong><small>As debts are paid off unless you use a fixed budget.</small></div>'
+          : "";
         monthPlanSummary.innerHTML =
           '<div class="month-plan-summary-item"><span>Debt-free date</span><strong>' + escapeHtml(payoffDate) + "</strong></div>" +
           '<div class="month-plan-summary-item"><span>' + escapeHtml(interestLabel) + "</span><strong>" + escapeHtml(resultInterestText(result)) + "</strong></div>" +
           '<div class="month-plan-summary-item"><span>Month 1 total</span><strong>' + escapeHtml(moneyCents(totals.payment)) + "</strong>" + totalBreakdown + "</div>" +
-          '<div class="month-plan-summary-item"><span>Strategy</span><strong>' + escapeHtml(methodLabel(result.method)) + "</strong></div>";
+          '<div class="month-plan-summary-item"><span>Strategy</span><strong>' + escapeHtml(methodLabel(result.method)) + "</strong></div>" +
+          paymentDropNote;
         monthPlanSummary.classList.remove("hidden");
       }
 
@@ -2070,9 +2076,10 @@
             : moneyCents(payment);
           var isPrimaryTarget = primaryTarget && primaryTarget.index === index;
           var rowClass = isPrimaryTarget ? ' class="month-plan-target-row"' : "";
-          var targetBadge = isPrimaryTarget ? '<span class="month-plan-target-badge">Extra target</span>' : "";
+          var targetBadge = isPrimaryTarget ? ' <span class="month-plan-target-badge">Extra target</span>' : "";
+          var debtLabel = "Debt: " + name + (isPrimaryTarget ? ". Extra payment target." : ".");
           return "<tr" + rowClass + ">" +
-            '<td data-label="Debt">' + escapeHtml(name) + targetBadge + "</td>" +
+            '<td data-label="Debt" aria-label="' + escapeHtml(debtLabel) + '">' + escapeHtml(name) + targetBadge + "</td>" +
             '<td data-label="Payment">' + paymentHtml + "</td>" +
             '<td data-label="Interest">' + moneyCents(interest) + "</td>" +
             '<td data-label="Principal">' + moneyCents(Math.max(0, principal)) + "</td>" +
@@ -3064,6 +3071,12 @@
           var row = target.closest ? target.closest("tr") : null;
           var focusTarget = row || target;
           if (!focusTarget.hasAttribute("tabindex")) focusTarget.setAttribute("tabindex", "-1");
+          var previousScrollBehavior = document.documentElement.style.scrollBehavior;
+          document.documentElement.style.scrollBehavior = "auto";
+          var rect = focusTarget.getBoundingClientRect();
+          var top = Math.max(0, rect.top + window.pageYOffset - Math.max(16, (window.innerHeight - rect.height) / 2));
+          window.scrollTo(window.pageXOffset, top);
+          document.documentElement.style.scrollBehavior = previousScrollBehavior;
           try {
             focusTarget.focus({ preventScroll: true });
           } catch (error) {
@@ -3075,6 +3088,23 @@
       function scheduleFocusAfterNavigation() {
         setTimeout(focusScheduleHashTarget, 0);
         setTimeout(focusScheduleHashTarget, 200);
+        setTimeout(focusScheduleHashTarget, 500);
+      }
+
+      function handleScheduleAnchorClick(event) {
+        var link = event.target && event.target.closest ? event.target.closest("a[href^='#schedule']") : null;
+        if (!link) return;
+        var hash = link.getAttribute("href") || "";
+        if (!hash) return;
+        event.preventDefault();
+        if (window.location.hash !== hash) {
+          try {
+            window.history.pushState(null, "", hash);
+          } catch (error) {
+            window.location.hash = hash;
+          }
+        }
+        scheduleFocusAfterNavigation();
       }
 
       function getTargetScheduleMonth(result) {
@@ -4840,18 +4870,16 @@
         setTelemetryOptOut(telemetryOptOut.checked);
         syncTelemetryOptOutControl();
       });
-      bind(sharedPlanResultNotice, "change", function (event) {
+      function handleSharedTelemetryOptOutChange(event) {
         var input = event.target && event.target.closest ? event.target.closest("[data-action='shared-telemetry-opt-out']") : null;
         if (!input) return;
         setTelemetryOptOut(input.checked);
         syncTelemetryOptOutControl();
-      });
-      bind(scheduleJumpLinks, "click", function (event) {
-        if (event.target && event.target.closest && event.target.closest("a[href^='#schedule']")) {
-          scheduleFocusAfterNavigation();
-        }
-      });
-      bind(targetMonthJump, "click", scheduleFocusAfterNavigation);
+      }
+      bind(sharedPlanResultNotice, "change", handleSharedTelemetryOptOutChange);
+      bind(sharedPlanMonthNotice, "change", handleSharedTelemetryOptOutChange);
+      bind(scheduleJumpLinks, "click", handleScheduleAnchorClick);
+      bind(targetMonthJump, "click", handleScheduleAnchorClick);
       bind(window, "hashchange", focusScheduleHashTarget);
 
       document.addEventListener("focus", handleEditableFocus, true);

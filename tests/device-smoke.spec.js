@@ -262,11 +262,13 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#sharedPlanResultNotice")).toContainText("4 debts loaded from a link");
   await expect(page.locator("#sharedPlanResultNotice")).toContainText("Review privacy & inputs");
   await expect(page.locator("#sharedPlanResultNotice")).toContainText("Privacy option: do not save calculation data");
-  await page.locator("#sharedTelemetryOptOut").check();
-  await expect(page.locator("#telemetryOptOut")).toBeChecked();
-  await expect(page.locator("#sharedTelemetryOptOut")).toBeChecked();
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Shared plan: 4 debts loaded from a link");
   await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Review inputs/privacy");
+  await expect(page.locator("#sharedPlanMonthNotice")).toContainText("Privacy option: do not save calculation data");
+  await page.locator("#sharedMonthTelemetryOptOut").check();
+  await expect(page.locator("#telemetryOptOut")).toBeChecked();
+  await expect(page.locator("#sharedTelemetryOptOut")).toBeChecked();
+  await expect(page.locator("#sharedMonthTelemetryOptOut")).toBeChecked();
   await expect(page.locator("#paymentDropContext")).toContainText("This is month 1");
   await expect(page.locator("#paymentDropContext")).toContainText("can drop");
   await expect(page.locator("#monthPlan")).toHaveClass(/month-plan-collapsed/);
@@ -279,9 +281,12 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator(".month-plan-chart-link")).toBeVisible();
   await expect(page.locator("#monthPlanSummary")).toContainText("Avalanche");
   await expect(page.locator("#monthPlanSummary")).toContainText("Month 1 total");
+  await expect(page.locator("#monthPlanSummary")).toContainText("Later monthly totals");
+  await expect(page.locator("#monthPlanSummary")).toContainText("May drop");
   await expect(page.locator("#monthPlanFocus")).toContainText("This month's focus");
   await expect(page.locator("#monthPlanFocus")).toContainText("Pay Visa 4");
   await expect(page.locator(".month-plan-target-row")).toHaveCount(1);
+  await expect(page.locator(".month-plan-target-row td").first()).toHaveAttribute("aria-label", /Extra payment target/);
   await expect(page.locator(".month-plan-target-badge")).toContainText("Extra target");
   await expect(page.locator(".month-plan-summary-link")).toHaveCount(0);
   const toggleGap = await page.evaluate(() => {
@@ -368,9 +373,17 @@ test("schedule marks and compresses target changes on mobile", async ({ page }) 
   await expect(page.locator("#scheduleJumpLinks")).toContainText("Target changes");
   await expect(page.locator("#scheduleJumpLinks")).toContainText("First payoff");
   await expect(page.locator("#scheduleJumpLinks")).toContainText("Final month");
+  const firstRowHeight = await page.locator("#scheduleRows tr").first().evaluate((row) =>
+    Math.round(row.getBoundingClientRect().height)
+  );
+  expect(firstRowHeight).toBeLessThan(260);
   await page.locator("#scheduleJumpLinks").getByText("Target changes").click();
   await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.id)).toBe("scheduleFirstTargetChange");
   await expect(page.locator("#scheduleFirstTargetChange")).toHaveAttribute("aria-label", /Month/);
+  await expect.poll(() => page.locator("#scheduleFirstTargetChange").evaluate((row) => {
+    const rect = row.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= window.innerHeight;
+  })).toBe(true);
 });
 
 test("mobile sample mode prioritizes the sample payoff plan action", async ({ page }) => {
