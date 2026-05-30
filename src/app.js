@@ -880,8 +880,8 @@
           debtSectionTitle.textContent = "Your debts";
           debtSectionIntro.textContent = "Start with your own debt details, or load an example to see how the calculator works.";
           entryGuide.textContent = "To get your first answer, enter three numbers per card: balance, APR, and minimum payment.";
-          startEntryButton.textContent = "Start entering debts";
-          startEntryButton.setAttribute("href", "#cardInputs");
+          startEntryButton.textContent = "Review privacy and enter debts";
+          startEntryButton.setAttribute("href", "#privacyOptions");
           setSharedPlanResultNotice(0);
           setSharedPlanMonthNotice(0);
         }
@@ -3177,6 +3177,7 @@
         }).join("");
         var targetBadge = isTargetMonth ? " <span class=\"schedule-target-badge\">Target month</span>" : "";
         var detailButton = '<button type="button" class="schedule-row-detail-toggle" data-action="toggle-schedule-row-details" aria-expanded="false" aria-label="Show interest, principal, and balance for ' + escapeHtml(rowDate) + '">Details</button>';
+        var targetHtml = '<span class="schedule-target-copy">' + scheduleTargetHtml(row, targetChanged) + "</span>";
         return "<tr" + rowAttributes + ">" +
           "<td data-label=\"Month\">" + extraAnchors + row.month + targetBadge + "</td>" +
           "<td data-label=\"Date\">" + escapeHtml(rowDate) + "</td>" +
@@ -3184,7 +3185,7 @@
           "<td data-label=\"Interest\" data-schedule-detail=\"true\">" + moneyCents(row.interest) + "</td>" +
           "<td data-label=\"Principal\" data-schedule-detail=\"true\">" + moneyCents(row.principal) + "</td>" +
           "<td data-label=\"Ending Balance\" data-schedule-detail=\"true\">" + moneyCents(row.endingBalance) + "</td>" +
-          "<td data-label=\"Extra Payment Target\" aria-label=\"" + escapeHtml(scheduleTargetAriaLabel(row, targetChanged)) + "\">" + scheduleTargetHtml(row, targetChanged) + detailButton + "</td>" +
+          "<td data-label=\"Extra Payment Target\" aria-label=\"" + escapeHtml(scheduleTargetAriaLabel(row, targetChanged)) + "\">" + targetHtml + detailButton + "</td>" +
           "</tr>";
       }
 

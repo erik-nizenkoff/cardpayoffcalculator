@@ -42,7 +42,8 @@ for (const viewport of viewports) {
     await expect(page.locator("#clearAllButton")).toBeHidden();
     await expect(page.getByRole("button", { name: "Load example" })).toBeVisible();
     if (viewport.name === "phone") {
-      await expect(page.getByRole("link", { name: "Start entering debts" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Review privacy and enter debts" })).toBeVisible();
+      await expect(page.locator("#startEntryButton")).toHaveAttribute("href", "#privacyOptions");
     }
     await expect(page.getByRole("spinbutton", { name: "Card balance" })).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Payoff Strategy" })).toBeVisible();
@@ -165,6 +166,8 @@ test("shared result links collapse optional panels for a cleaner deep link", asy
   await expect(page.locator("#entryGuide")).toContainText("Loaded shared plan");
   await expect(page.locator("#startEntryButton")).toHaveText("Review loaded debts");
   await expect(page.locator("#startEntryButton")).toHaveAttribute("href", "#privacyOptions");
+  await expect(page.locator(".month-plan-schedule-link")).toHaveText("Jump to full schedule");
+  await expect(page.locator(".month-plan-schedule-link")).toHaveAttribute("href", "#schedulePanel");
   await expect(page.locator("#sampleButton")).toBeHidden();
   await expect(page.locator("#planModeStatus")).toContainText("For privacy, the address bar no longer contains this plan");
   await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.id)).toBe("monthPlan");
@@ -280,6 +283,8 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator("#monthPlanIntro")).toContainText("2 payments are hidden before paying");
   await expect(page.locator("#monthPlan .scroll-hint")).toContainText("2 payments hidden before paying");
   await expect(page.locator(".month-plan-back-link")).toHaveText("Back to summary");
+  await expect(page.locator(".month-plan-schedule-link")).toHaveText("Jump to full schedule");
+  await expect(page.locator(".month-plan-schedule-link")).toBeVisible();
   await expect(page.locator(".month-plan-chart-link")).toHaveText("Jump to chart");
   await expect(page.locator(".month-plan-chart-link")).toBeVisible();
   await expect(page.locator("#monthPlanSummary")).toContainText("Avalanche");
@@ -311,6 +316,7 @@ test("month one plan collapses long mobile debt lists", async ({ page }) => {
   await expect(page.locator(".month-plan-extra-badge")).toHaveCSS("display", "block");
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveAttribute("data-label", "Extra Payment Target");
   await expect(page.locator("#scheduleRows tr").first().locator("td").nth(6)).toHaveCSS("white-space", "normal");
+  await expect(page.locator("#scheduleRows tr").first().locator(".schedule-target-copy")).toBeVisible();
   await expect(page.locator(".schedule-panel .scroll-hint")).toBeHidden();
   await expect(page.locator("#scheduleRows tr").first()).toHaveCSS("display", "grid");
 });

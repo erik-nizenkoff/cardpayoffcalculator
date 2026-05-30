@@ -359,6 +359,7 @@ test("mobile feedback validation keeps the dialog header visible", async ({ page
 
   await expect(page.locator("#feedbackMessage-error")).toContainText("Enter at least 5 characters.");
   await expect(page.locator("#feedbackDialog .feedback-head")).toBeVisible();
+  await expect(page.locator("#feedbackDialog .feedback-actions")).toBeVisible();
   const headerStaysInsideDialog = await page.evaluate(() => {
     const dialog = document.querySelector("#feedbackDialog");
     const head = document.querySelector("#feedbackDialog .feedback-head");
@@ -368,4 +369,11 @@ test("mobile feedback validation keeps the dialog header visible", async ({ page
     return headRect.top >= dialogRect.top - 1 && headRect.bottom <= dialogRect.bottom + 1;
   });
   expect(headerStaysInsideDialog).toBe(true);
+  const actionsStayInsideViewport = await page.evaluate(() => {
+    const actions = document.querySelector("#feedbackDialog .feedback-actions");
+    if (!actions) return false;
+    const rect = actions.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= window.innerHeight + 1;
+  });
+  expect(actionsStayInsideViewport).toBe(true);
 });

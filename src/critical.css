@@ -2287,6 +2287,11 @@
       overflow-wrap: anywhere;
     }
 
+    .schedule-target-copy {
+      display: block;
+      min-width: 0;
+    }
+
     .schedule-row-anchor {
       display: block;
       position: relative;
@@ -2497,6 +2502,7 @@
       color: var(--text);
       padding: 0;
       box-shadow: 0 24px 80px rgba(15,36,68,0.28);
+      overflow: auto;
     }
 
     .feedback-dialog::backdrop {
@@ -2571,6 +2577,16 @@
       justify-content: flex-end;
       gap: 10px;
       flex-wrap: wrap;
+    }
+
+    #feedbackDialog .feedback-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      margin: 0 -20px -20px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+      padding: 10px 20px 12px;
     }
 
     .share-data-summary {
@@ -2869,6 +2885,11 @@
       .feedback-actions {
         display: grid;
         grid-template-columns: 1fr;
+      }
+
+      #feedbackDialog .feedback-actions {
+        margin: 0 -16px -16px;
+        padding: 10px 16px 12px;
       }
 
       .settings-grid,
@@ -3395,25 +3416,68 @@
       }
 
       .schedule-table tr {
-        gap: 5px;
-        padding: 9px;
+        grid-template-columns: minmax(0, .72fr) minmax(0, 1fr) minmax(0, 1fr);
+        gap: 6px 8px;
+        padding: 8px;
       }
 
       .schedule-table td {
-        gap: 6px;
-        line-height: 1.35;
+        grid-template-columns: 1fr;
+        gap: 2px;
+        font-size: .82rem;
+        line-height: 1.25;
+      }
+
+      .schedule-table td[data-label="Month"] {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .schedule-table td[data-label="Date"] {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .schedule-table td[data-label="Payment"] {
+        grid-column: 3;
+        grid-row: 1;
+      }
+
+      .schedule-table td[data-label="Interest"] {
+        grid-column: 1;
+        grid-row: 3;
+      }
+
+      .schedule-table td[data-label="Principal"] {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      .schedule-table td[data-label="Ending Balance"] {
+        grid-column: 3;
+        grid-row: 3;
       }
 
       .schedule-table td[data-label="Extra Payment Target"] {
-        grid-template-columns: 1fr;
-        gap: 4px;
-        margin-top: 2px;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 4px 8px;
+        align-items: center;
+        margin-top: 0;
         border-top: 1px solid #e8eef5;
-        padding-top: 8px;
+        padding-top: 6px;
       }
 
       .schedule-table tr:not(.schedule-row-expanded) td[data-schedule-detail="true"] {
         display: none;
+      }
+
+      .schedule-table tr.schedule-row-expanded td[data-schedule-detail="true"] {
+        display: grid;
+        border-top: 1px solid #edf2f7;
+        padding-top: 5px;
       }
 
       .schedule-row-detail-toggle {
@@ -3421,16 +3485,19 @@
         align-items: center;
         justify-content: center;
         width: fit-content;
-        min-height: 32px;
-        margin-top: 6px;
+        min-height: 30px;
+        margin: 0;
         border: 1px solid #cbd8e8;
         border-radius: 999px;
         background: #fff;
         color: var(--navy);
-        padding: 5px 10px;
+        padding: 4px 9px;
         box-shadow: none;
         font-size: .74rem;
         font-weight: 900;
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        align-self: center;
       }
 
       .schedule-row-detail-toggle:focus-visible,
@@ -3445,10 +3512,18 @@
       .schedule-table td::before {
         content: attr(data-label);
         color: var(--muted);
-        font-size: .72rem;
+        font-size: .68rem;
         font-weight: 900;
         text-transform: uppercase;
-        line-height: 1.3;
+        line-height: 1.15;
+      }
+
+      .schedule-table td[data-label="Extra Payment Target"]::before {
+        display: none;
+      }
+
+      .schedule-target-copy {
+        min-width: 0;
       }
 
       .schedule-target-badge {
@@ -3460,18 +3535,19 @@
         border-top: 3px solid #bfe7cf;
       }
 
-      .schedule-target-name,
-      .schedule-target-detail {
-        display: block;
+      .schedule-target-name {
+        display: inline;
       }
 
       .schedule-target-detail {
-        margin-top: 3px;
+        display: inline;
+        margin: 0 0 0 4px;
+        font-size: .78rem;
       }
 
       .schedule-target-change-badge {
-        display: flex;
-        margin: 0 0 5px;
+        display: inline-flex;
+        margin: 0 5px 0 0;
       }
 
       .intro-fields {
